@@ -946,7 +946,7 @@ document.querySelectorAll(".modal-overlay").forEach(m => {
 // ============================================================
 
 const GROQ_KEY = "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";
-const GROQ_MODEL = "llama-3.1-70b-versatile";
+const GROQ_MODEL = "llama-3.1-8b-instant";
 
 async function groqAsk(prompt, systemMsg = "") {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -956,7 +956,7 @@ async function groqAsk(prompt, systemMsg = "") {
       "Authorization": `Bearer ${GROQ_KEY}`
     },
     body: JSON.stringify({
-      model: "llama-3.1-70b-versatile",
+      model: GROQ_MODEL,
       messages: [
         ...(systemMsg ? [{ role: "system", content: systemMsg }] : []),
         { role: "user", content: prompt }
