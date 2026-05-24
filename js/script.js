@@ -946,7 +946,7 @@ document.querySelectorAll(".modal-overlay").forEach(m => {
 // ============================================================
 
 const GROQ_KEY = "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";
-const GROQ_MODEL = "llama3-70b-8192";
+const GROQ_MODEL = "llama-3.1-70b-versatile";
 
 async function groqAsk(prompt, systemMsg = "") {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -956,7 +956,7 @@ async function groqAsk(prompt, systemMsg = "") {
       "Authorization": `Bearer ${GROQ_KEY}`
     },
     body: JSON.stringify({
-      model: GROQ_MODEL,
+      model: llama-3.1-70b-versatile,
       messages: [
         ...(systemMsg ? [{ role: "system", content: systemMsg }] : []),
         { role: "user", content: prompt }
@@ -965,11 +965,20 @@ async function groqAsk(prompt, systemMsg = "") {
       temperature: 0.7
     })
   });
-  const json = await res.json();
+
+  const text = await res.text();
+
+  let json;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    throw new Error("Resposta inválida da Groq: " + text);
+  }
+
   if (!res.ok) throw new Error(json.error?.message || "Groq error");
+
   return json.choices[0].message.content;
 }
-
 // ============================================================
 // SISTEMA DE FASES / TRILHA DUOLINGO-STYLE
 // ============================================================
