@@ -762,7 +762,7 @@ const firebaseConfig = {
 };
 
 const GROQ_KEY   = "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";
-const GROQ_MODEL = ""llama-3.1-8b-instant"";
+const GROQ_MODEL = "llama-3.3-70b-versatile";
 const IMGBB_KEY  = "86427cccd2a94fb42a0754ffd7f19e79";
 
 // Lista de admins autorizados (adicione UIDs ou emails aqui)
@@ -1405,7 +1405,7 @@ async function groqFetch(prompt) {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions",{
     method:"POST",
     headers:{"Content-Type":"application/json","Authorization":`Bearer ${GROQ_KEY}`},
-    body:JSON.stringify({model:"llama-3.1-8b-instant",messages:[{role:"user",content:prompt}],max_tokens:2000,temperature:0.7})
+    body:JSON.stringify({model:"llama-3.3-70b-versatile",messages:[{role:"user",content:prompt}],max_tokens:2000,temperature:0.7})
   });
   const json = await res.json();
   if(!res.ok) throw new Error(json.error?.message||"Groq error");
