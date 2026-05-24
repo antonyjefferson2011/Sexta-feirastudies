@@ -961,7 +961,7 @@ async function groqAsk(prompt, systemMsg = "") {
         ...(systemMsg ? [{ role: "system", content: systemMsg }] : []),
         { role: "user", content: prompt }
       ],
-      max_tokens: 200,
+      max_tokens: 2000,
       temperature: 0.7
     })
   });
