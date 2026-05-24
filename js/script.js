@@ -59,11 +59,16 @@ function switchTab(tab, btn) {
   showTab(tab);
   document.querySelectorAll(".nav-item[data-tab]").forEach(b => b.classList.remove("active"));
   if (btn) btn.classList.add("active");
-  if (tab === "ranking") loadRanking();
+  if (tab === "fases")  loadFases();
   if (tab === "perfil") loadMyModulos();
 }
 
 window.switchTab = switchTab;
+
+window.showRankingModal = function() {
+  openModal("ranking-modal");
+  loadRanking();
+};
 
 function openModal(id) {
   const m = document.getElementById(id);
@@ -861,63 +866,6 @@ window.answerQuiz = async function(modId, qi, selected, correct) {
 };
 
 // ============================================================
-// RANKING
-// ============================================================
-
-async function loadRanking() {
-  const rankRef = query(ref(db, "users"), orderByChild("xp"), limitToLast(20));
-  const snap = await get(rankRef);
-  const users = [];
-  snap.forEach(c => users.unshift({ uid: c.key, ...c.val() }));
-  renderRanking(users);
-}
-
-function renderRanking(users) {
-  const podium = document.getElementById("ranking-podium");
-  const list   = document.getElementById("ranking-list");
-
-  const top3 = users.slice(0, 3);
-  const rest  = users.slice(3);
-
-  // Podium (1st goes center, 2nd left, 3rd right)
-  const order = [top3[1], top3[0], top3[2]].filter(Boolean);
-  const pClass = ["p2", "p1", "p3"];
-  const pCrown = ["🥈", "👑", "🥉"];
-  podium.innerHTML = order.map((u, i) => {
-    if (!u) return "";
-    const ph = u.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name||"?")}&background=00C9B1&color=fff`;
-    const pos = pClass[i] === "p1" ? 1 : pClass[i] === "p2" ? 2 : 3;
-    return `<div class="podium-item ${pClass[i]}">
-      <span class="podium-crown">${pCrown[i]}</span>
-      <img class="podium-avatar" src="${ph}" alt="" />
-      <span class="podium-name">${escHtml((u.name||"?").split(" ")[0])}</span>
-      <span class="podium-xp">${u.xp||0} XP</span>
-      <div class="podium-block">${pos}º</div>
-    </div>`;
-  }).join("");
-
-  list.innerHTML = rest.map((u, i) => {
-    const ph = u.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name||"?")}&background=00C9B1&color=fff`;
-    const pos = i + 4;
-    const mine = u.uid === currentUser?.uid ? "mine" : "";
-    return `<div class="ranking-item ${mine}">
-      <span class="ranking-pos">${pos}º</span>
-      <img src="${ph}" alt="" />
-      <div class="ranking-item-info">
-        <strong>${escHtml(u.name||"Anônimo")}</strong>
-        <small>Nível ${levelFromXP(u.xp||0)}</small>
-      </div>
-      <span class="ranking-item-xp">${u.xp||0} XP</span>
-    </div>`;
-  }).join("");
-
-  if (!users.length) {
-    podium.innerHTML = "";
-    list.innerHTML = `<div class="empty-state"><span class="material-icons-round">emoji_events</span><p>Nenhum dado de ranking ainda.</p></div>`;
-  }
-}
-
-// ============================================================
 // PERFIL
 // ============================================================
 
@@ -994,8 +942,355 @@ document.querySelectorAll(".modal-overlay").forEach(m => {
 });
 
 // ============================================================
-// ESCAPE HTML
+// GROQ API
 // ============================================================
+
+const GROQ_KEY = "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";
+const GROQ_MODEL = "llama3-70b-8192";
+
+async function groqAsk(prompt, systemMsg = "") {
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${GROQ_KEY}`
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: [
+        ...(systemMsg ? [{ role: "system", content: systemMsg }] : []),
+        { role: "user", content: prompt }
+      ],
+      max_tokens: 2000,
+      temperature: 0.7
+    })
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error?.message || "Groq error");
+  return json.choices[0].message.content;
+}
+
+// ============================================================
+// SISTEMA DE FASES / TRILHA DUOLINGO-STYLE
+// ============================================================
+
+// Definição estática das fases (expandível pelo admin via Firebase)
+const FASES_BASE = [
+  { id:"f01", emoji:"🌱", titulo:"Primeiros Passos",    materia:"Geral",       xpReq:0,   xpGanho:20,  dificuldade:1 },
+  { id:"f02", emoji:"📐", titulo:"Matemática Básica",   materia:"Matemática",  xpReq:20,  xpGanho:25,  dificuldade:1 },
+  { id:"f03", emoji:"📚", titulo:"Leitura e Escrita",   materia:"Português",   xpReq:40,  xpGanho:25,  dificuldade:1 },
+  { id:"f04", emoji:"🌍", titulo:"O Mundo ao Redor",    materia:"Geografia",   xpReq:65,  xpGanho:30,  dificuldade:2 },
+  { id:"f05", emoji:"🏛️", titulo:"Raízes Históricas",   materia:"História",    xpReq:95,  xpGanho:30,  dificuldade:2 },
+  { id:"f06", emoji:"🔬", titulo:"Ciências da Vida",    materia:"Ciências",    xpReq:125, xpGanho:35,  dificuldade:2 },
+  { id:"f07", emoji:"⚛️", titulo:"Física e Movimento",  materia:"Física",      xpReq:160, xpGanho:40,  dificuldade:3 },
+  { id:"f08", emoji:"🧪", titulo:"Reações Químicas",    materia:"Química",     xpReq:200, xpGanho:40,  dificuldade:3 },
+  { id:"f09", emoji:"🧬", titulo:"DNA e Evolução",      materia:"Biologia",    xpReq:240, xpGanho:45,  dificuldade:3 },
+  { id:"f10", emoji:"🇬🇧", titulo:"English Time",        materia:"Inglês",      xpReq:285, xpGanho:45,  dificuldade:3 },
+  { id:"f11", emoji:"🤔", titulo:"Pensamento Crítico",  materia:"Filosofia",   xpReq:330, xpGanho:50,  dificuldade:4 },
+  { id:"f12", emoji:"💻", titulo:"Mundo da Programação",materia:"Programação", xpReq:380, xpGanho:55,  dificuldade:4 },
+  { id:"f13", emoji:"🧑‍🤝‍🧑", titulo:"Sociedade e Cultura",materia:"Sociologia",  xpReq:435, xpGanho:55,  dificuldade:4 },
+  { id:"f14", emoji:"🏆", titulo:"Desafio Final",        materia:"Geral",       xpReq:500, xpGanho:100, dificuldade:5 },
+];
+
+const POSITIONS = ["left","center","right","center","left","center","right","center","left","center","right","center","left","center"];
+
+async function loadFases() {
+  const xp = currentUserData?.xp || 0;
+
+  // Atualiza barra de nível
+  const nivel = levelFromXP(xp);
+  const pct   = progressPct(xp);
+  const xpNoNivel = xp % 100;
+  const elBar   = document.getElementById("nivel-xp-bar");
+  const elLabel = document.getElementById("nivel-label");
+  const elTxt   = document.getElementById("nivel-xp-txt");
+  if (elBar)   elBar.style.width    = pct + "%";
+  if (elLabel) elLabel.textContent  = "Nível " + nivel;
+  if (elTxt)   elTxt.textContent    = xpNoNivel + " / 100 XP";
+
+  // Pega fases extras do Firebase (adicionadas pelo admin)
+  const snap = await get(ref(db, "fases_oficiais"));
+  let fases = [...FASES_BASE];
+  if (snap.exists()) {
+    snap.forEach(c => {
+      const f = { id: c.key, ...c.val() };
+      if (!fases.find(x => x.id === f.id)) fases.push(f);
+    });
+  }
+
+  // Progresso do usuário
+  const progSnap = await get(ref(db, `users/${currentUser.uid}/fases_concluidas`));
+  const concluidas = progSnap.exists() ? progSnap.val() : {};
+
+  renderFases(fases, xp, concluidas);
+}
+
+function renderFases(fases, xpUsuario, concluidas) {
+  const wrap = document.getElementById("fases-trilha");
+  let html = "";
+
+  fases.forEach((f, i) => {
+    const done      = !!concluidas[f.id];
+    const available = !done && xpUsuario >= f.xpReq;
+    const locked    = !done && !available;
+    const pos       = POSITIONS[i % POSITIONS.length];
+    const stars     = done ? "⭐⭐⭐" : available ? "⭐☆☆" : "☆☆☆";
+    let btnClass    = locked ? "locked" : available ? "available" : "completed";
+    if (f.oficial) btnClass += " official";
+
+    // Conector
+    if (i > 0) {
+      const prevDone = !!concluidas[fases[i-1].id];
+      html += `<div class="fase-connector ${prevDone ? "done" : ""}"></div>`;
+    }
+
+    html += `<div class="fase-row ${pos}">
+      <div class="fase-node" onclick="openFase('${f.id}')">
+        <button class="fase-btn ${btnClass}" ${locked ? "disabled" : ""}>
+          ${locked ? `<span style="font-size:2rem">🔒</span>` : f.emoji}
+          ${f.oficial ? `<span style="position:absolute;top:-4px;right:-4px;font-size:.7rem;background:#FFD700;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center">⭐</span>` : ""}
+        </button>
+        <span class="fase-label">${escHtml(f.titulo)}</span>
+        <span class="fase-stars">${stars}</span>
+      </div>
+    </div>`;
+  });
+
+  wrap.innerHTML = html;
+}
+
+window.openFase = async function(faseId) {
+  const xp = currentUserData?.xp || 0;
+  const progSnap = await get(ref(db, `users/${currentUser.uid}/fases_concluidas`));
+  const concluidas = progSnap.exists() ? progSnap.val() : {};
+
+  const fases = FASES_BASE;
+  const f = fases.find(x => x.id === faseId);
+  if (!f) return;
+
+  const done      = !!concluidas[f.id];
+  const available = !done && xp >= f.xpReq;
+  const locked    = !done && !available;
+
+  const body   = document.getElementById("fase-detail-body");
+  const footer = document.getElementById("fase-detail-footer");
+
+  const estrelas = done ? "⭐⭐⭐" : available ? "⭐☆☆" : "☆☆☆";
+  const dif = ["","🟢 Fácil","🟡 Médio","🟠 Difícil","🔴 Avançado","💀 Extremo"][f.dificuldade];
+
+  body.innerHTML = `
+    <div class="fase-detail-header">
+      <div class="fase-detail-icon">${f.emoji}</div>
+      <div class="fase-detail-title">${escHtml(f.titulo)}</div>
+      <div class="fase-detail-sub">${f.materia} · ${dif}</div>
+      <div class="fase-detail-xp"><span class="material-icons-round" style="font-size:14px">bolt</span> +${f.xpGanho} XP ao concluir</div>
+      <div style="margin-top:.5rem;font-size:1.5rem">${estrelas}</div>
+    </div>
+    ${locked ? `<div class="empty-state"><span class="material-icons-round">lock</span><p>Você precisa de <strong>${f.xpReq} XP</strong> para desbloquear.<br>Você tem <strong>${xp} XP</strong> agora.</p></div>` : ""}
+    ${done ? `<div class="empty-state" style="color:var(--sucesso)"><span class="material-icons-round" style="color:#4CAF50">check_circle</span><p>Você já concluiu esta fase!</p></div>` : ""}
+    <div id="fase-quiz-area"></div>`;
+
+  if (locked) {
+    footer.innerHTML = `<button class="btn-primary" style="background:var(--cinza-borda);color:var(--cinza-texto);box-shadow:none;cursor:not-allowed">🔒 Fase bloqueada</button>`;
+  } else if (done) {
+    footer.innerHTML = `<button class="btn-primary" onclick="iniciarFase('${f.id}')"><span class="material-icons-round">replay</span> Refazer fase</button>`;
+  } else {
+    footer.innerHTML = `<button class="btn-primary" onclick="iniciarFase('${f.id}')"><span class="material-icons-round">play_arrow</span> Iniciar fase</button>`;
+  }
+
+  openModal("modal-fase-detail");
+};
+
+window.iniciarFase = async function(faseId) {
+  const f = FASES_BASE.find(x => x.id === faseId);
+  if (!f) return;
+
+  const area = document.getElementById("fase-quiz-area");
+  const footer = document.getElementById("fase-detail-footer");
+  footer.innerHTML = "";
+  area.innerHTML = `<div class="ia-generating"><div class="spinner"></div><p>A IA está gerando sua fase de <strong>${f.materia}</strong>...<br><small>Isso pode levar alguns segundos.</small></p></div>`;
+
+  try {
+    const nivelNome = ["","Iniciante","Básico","Intermediário","Avançado","Expert"][f.dificuldade];
+    const prompt = `Crie um quiz educativo sobre "${f.materia}" com nível de dificuldade "${nivelNome}" para estudantes brasileiros do ensino médio.
+
+Gere exatamente 5 perguntas. Responda APENAS com JSON válido, sem nenhum texto antes ou depois, sem markdown, sem backticks.
+
+Formato obrigatório:
+{"perguntas":[{"pergunta":"texto da pergunta","opcoes":["A","B","C","D"],"correta":0,"explicacao":"explicação da resposta correta"}]}
+
+"correta" deve ser o índice (0,1,2 ou 3) da opção correta no array "opcoes".`;
+
+    const resposta = await groqAsk(prompt);
+
+    // Limpa a resposta de possíveis marcadores markdown
+    const jsonStr = resposta.replace(/```json|```/g,"").trim();
+    const data = JSON.parse(jsonStr);
+
+    renderFaseQuiz(data.perguntas, f);
+
+  } catch(e) {
+    area.innerHTML = `<div class="empty-state"><span class="material-icons-round">error</span><p>Erro ao gerar a fase: ${escHtml(e.message)}<br><small>Verifique sua conexão e tente novamente.</small></p></div>`;
+    footer.innerHTML = `<button class="btn-primary" onclick="iniciarFase('${faseId}')"><span class="material-icons-round">refresh</span> Tentar novamente</button>`;
+  }
+};
+
+function renderFaseQuiz(perguntas, fase) {
+  const area = document.getElementById("fase-quiz-area");
+  let acertos = 0;
+  let respondidas = 0;
+
+  area.innerHTML = `
+    <div style="padding:1rem 1rem 0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <strong style="font-size:.9rem">Quiz — ${escHtml(fase.materia)}</strong>
+        <span id="fase-acertos-badge" style="background:var(--turquesa-light);color:var(--turquesa-dark);padding:.2rem .6rem;border-radius:999px;font-size:.78rem;font-weight:800">0/${perguntas.length}</span>
+      </div>
+      ${perguntas.map((q, qi) => `
+        <div class="quiz-item" style="margin-bottom:1.25rem" id="fase-q-${qi}">
+          <p class="quiz-question-text">${qi+1}. ${escHtml(q.pergunta)}</p>
+          <div class="quiz-options">
+            ${q.opcoes.map((op, oi) => `
+              <button class="quiz-option" id="fqopt-${qi}-${oi}"
+                onclick="responderFaseQ(${qi},${oi},${q.correta},${perguntas.length},${fase.xpGanho},'${fase.id}',${JSON.stringify(q.explicacao).replace(/'/g,"\\'")})"
+              >${"ABCD"[oi]}) ${escHtml(op)}</button>`).join("")}
+          </div>
+          <div id="fase-fb-${qi}"></div>
+        </div>`).join("")}
+    </div>`;
+}
+
+window.responderFaseQ = async function(qi, sel, correta, total, xpGanho, faseId, explicacao) {
+  const opts = document.querySelectorAll(`[id^="fqopt-${qi}-"]`);
+  opts.forEach(b => b.disabled = true);
+
+  const selBtn  = document.getElementById(`fqopt-${qi}-${sel}`);
+  const corrBtn = document.getElementById(`fqopt-${qi}-${correta}`);
+  const fb      = document.getElementById(`fase-fb-${qi}`);
+
+  const acertou = sel === correta;
+  if (acertou) selBtn.classList.add("correct");
+  else { selBtn.classList.add("wrong"); corrBtn.classList.add("correct"); }
+
+  fb.innerHTML = `
+    <div style="margin-top:.5rem">
+      <span class="quiz-feedback ${acertou?"ok":"fail"}">${acertou?"✅ Correto!":"❌ Errado"}</span>
+      <p style="font-size:.8rem;color:var(--texto-suave);margin-top:.4rem;line-height:1.5">${escHtml(explicacao)}</p>
+    </div>`;
+
+  // Conta quantas foram respondidas
+  const respondidas = document.querySelectorAll(".quiz-option:disabled").length / 4;
+  if (acertou) await addXP(Math.round(xpGanho / total));
+
+  // Atualiza badge
+  const acertosBadge = document.getElementById("fase-acertos-badge");
+  if (acertosBadge) {
+    const corretos = document.querySelectorAll(".quiz-option.correct").length;
+    acertosBadge.textContent = corretos + "/" + total;
+  }
+
+  // Verifica se completou todas
+  const totalRespondidas = document.querySelectorAll(".quiz-item [disabled]").length;
+  if (totalRespondidas >= total * 4) {
+    const totalCorretos = document.querySelectorAll(".quiz-option.correct").length;
+    setTimeout(() => finalizarFase(faseId, totalCorretos, total, xpGanho), 600);
+  }
+};
+
+async function finalizarFase(faseId, acertos, total, xpGanho) {
+  const pct = Math.round((acertos / total) * 100);
+  const estrelas = pct >= 80 ? "⭐⭐⭐" : pct >= 50 ? "⭐⭐☆" : "⭐☆☆";
+
+  // Salva progresso
+  await set(ref(db, `users/${currentUser.uid}/fases_concluidas/${faseId}`), {
+    concluidaEm: Date.now(), acertos, total, estrelas
+  });
+
+  const footer = document.getElementById("fase-detail-footer");
+  const area   = document.getElementById("fase-quiz-area");
+
+  area.insertAdjacentHTML("beforeend", `
+    <div class="quiz-score" style="margin:1rem">
+      <h3>${estrelas}</h3>
+      <h3 style="margin-top:.5rem">${pct}% de acerto!</h3>
+      <p>${acertos} de ${total} perguntas corretas</p>
+      <p style="color:var(--turquesa);font-weight:800;margin-top:.5rem">+${xpGanho} XP ganhos! 🎉</p>
+    </div>`);
+
+  footer.innerHTML = `
+    <div style="display:flex;gap:.5rem">
+      <button class="btn-outline-sm" style="flex:1" onclick="closeModal('modal-fase-detail');loadFases()">
+        <span class="material-icons-round">map</span> Ver trilha
+      </button>
+      <button class="btn-primary" style="flex:1" onclick="iniciarFase('${faseId}')">
+        <span class="material-icons-round">replay</span> Refazer
+      </button>
+    </div>`;
+
+  showToast(`Fase concluída! ${estrelas} +${xpGanho} XP`, "success");
+
+  // Recarrega dados do usuário
+  await loadUserData();
+  updateHeaderUI();
+  updateProfileUI();
+}
+
+// ============================================================
+// RANKING (agora em modal)
+// ============================================================
+
+async function loadRanking() {
+  const rankRef = query(ref(db, "users"), orderByChild("xp"), limitToLast(20));
+  const snap = await get(rankRef);
+  const users = [];
+  snap.forEach(c => users.unshift({ uid: c.key, ...c.val() }));
+  renderRanking(users);
+}
+
+function renderRanking(users) {
+  const podium = document.getElementById("ranking-podium");
+  const list   = document.getElementById("ranking-list");
+  if (!podium || !list) return;
+
+  const top3 = users.slice(0, 3);
+  const rest  = users.slice(3);
+
+  const order  = [top3[1], top3[0], top3[2]].filter(Boolean);
+  const pClass = ["p2","p1","p3"];
+  const pCrown = ["🥈","👑","🥉"];
+
+  podium.innerHTML = order.map((u, i) => {
+    if (!u) return "";
+    const ph  = u.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name||"?")}&background=00C9B1&color=fff`;
+    const pos = pClass[i] === "p1" ? 1 : pClass[i] === "p2" ? 2 : 3;
+    return `<div class="podium-item ${pClass[i]}">
+      <span class="podium-crown">${pCrown[i]}</span>
+      <img class="podium-avatar" src="${ph}" alt="" />
+      <span class="podium-name">${escHtml((u.name||"?").split(" ")[0])}</span>
+      <span class="podium-xp">${u.xp||0} XP</span>
+      <div class="podium-block">${pos}º</div>
+    </div>`;
+  }).join("");
+
+  list.innerHTML = rest.length ? rest.map((u, i) => {
+    const ph   = u.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name||"?")}&background=00C9B1&color=fff`;
+    const mine = u.uid === currentUser?.uid ? "mine" : "";
+    return `<div class="ranking-item ${mine}">
+      <span class="ranking-pos">${i+4}º</span>
+      <img src="${ph}" alt="" />
+      <div class="ranking-item-info">
+        <strong>${escHtml(u.name||"Anônimo")}</strong>
+        <small>Nível ${levelFromXP(u.xp||0)}</small>
+      </div>
+      <span class="ranking-item-xp">${u.xp||0} XP</span>
+    </div>`;
+  }).join("") : `<p style="text-align:center;color:var(--cinza-texto);padding:1rem;font-size:.85rem">Jogue para aparecer no ranking!</p>`;
+
+  if (!users.length) {
+    podium.innerHTML = "";
+    list.innerHTML = `<div class="empty-state"><span class="material-icons-round">emoji_events</span><p>Nenhum dado ainda.</p></div>`;
+  }
+}
 
 function escHtml(str) {
   if (!str) return "";
