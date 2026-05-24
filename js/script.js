@@ -956,12 +956,12 @@ async function groqAsk(prompt, systemMsg = "") {
       "Authorization": `Bearer ${GROQ_KEY}`
     },
     body: JSON.stringify({
-      model: llama-3.1-70b-versatile,
+      model: "llama-3.1-70b-versatile",
       messages: [
         ...(systemMsg ? [{ role: "system", content: systemMsg }] : []),
         { role: "user", content: prompt }
       ],
-      max_tokens: 2000,
+      max_tokens: 200,
       temperature: 0.7
     })
   });
