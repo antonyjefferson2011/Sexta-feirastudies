@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sexta Feira Studies</title>
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ==================== TELA DE LOGIN ==================== -->
+  <div id="screen-login" class="screen active">
+    <div class="login-bg">
+      <div class="login-blob b1"></div>
+      <div class="login-blob b2"></div>
+      <div class="login-blob b3"></div>
+    </div>
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="logo-icon">
+          <span class="material-icons-round">auto_stories</span>
+        </div>
+        <h1 class="logo-title">Sexta Feira<br><span>Studies</span></h1>
+      </div>
+      <p class="login-tagline">Aprender nunca foi tão <strong>incrível</strong>.</p>
+
+      <!-- TABS LOGIN / CADASTRO -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login-btn" onclick="switchAuthTab('login')">Entrar</button>
+        <button class="auth-tab" id="tab-register-btn" onclick="switchAuthTab('register')">Criar conta</button>
+      </div>
+
+      <!-- PAINEL: ENTRAR -->
+      <div id="auth-panel-login">
+        <button id="btn-google-login" class="btn-google">
+          <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Continuar com Google
+        </button>
+        <div class="login-divider"><span>ou com e-mail</span></div>
+        <div class="login-form">
+          <div class="input-group">
+            <span class="material-icons-round">mail</span>
+            <input type="email" id="login-email" placeholder="E-mail" />
+          </div>
+          <div class="input-group">
+            <span class="material-icons-round">lock</span>
+            <input type="password" id="login-senha" placeholder="Senha" />
+            <button class="toggle-pass" onclick="togglePass('login-senha', this)" type="button">
+              <span class="material-icons-round">visibility</span>
+            </button>
+          </div>
+          <div id="login-error" class="auth-error" style="display:none"></div>
+          <button class="btn-email" id="btn-email-login" onclick="loginEmail()">
+            <span class="material-icons-round">login</span> Entrar
+          </button>
+        </div>
+      </div>
+
+      <!-- PAINEL: CRIAR CONTA -->
+      <div id="auth-panel-register" style="display:none">
+        <div class="login-form">
+          <div class="input-group">
+            <span class="material-icons-round">person</span>
+            <input type="text" id="reg-nome" placeholder="Seu nome completo" />
+          </div>
+          <div class="input-group">
+            <span class="material-icons-round">mail</span>
+            <input type="email" id="reg-email" placeholder="E-mail" />
+          </div>
+          <div class="input-group">
+            <span class="material-icons-round">lock</span>
+            <input type="password" id="reg-senha" placeholder="Senha (mín. 6 caracteres)" />
+            <button class="toggle-pass" onclick="togglePass('reg-senha', this)" type="button">
+              <span class="material-icons-round">visibility</span>
+            </button>
+          </div>
+          <div class="input-group">
+            <span class="material-icons-round">lock_reset</span>
+            <input type="password" id="reg-confirma" placeholder="Confirmar senha" />
+          </div>
+          <div id="register-error" class="auth-error" style="display:none"></div>
+          <button class="btn-email" id="btn-email-register" onclick="registerEmail()">
+            <span class="material-icons-round">person_add</span> Criar minha conta
+          </button>
+          <div class="login-divider"><span>ou</span></div>
+          <button id="btn-google-register" class="btn-google">
+            <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+            Cadastrar com Google
+          </button>
+        </div>
+      </div>
+
+      <p class="login-footer">Ao entrar, você concorda com os <a href="#">Termos de Uso</a></p>
+    </div>
+  </div>
+
+  <!-- ==================== APP PRINCIPAL ==================== -->
+  <div id="screen-app" class="screen">
+
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="header-logo">
+          <span class="material-icons-round">auto_stories</span>
+          <span>SF Studies</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="header-xp-pill" id="header-xp">
+          <span class="material-icons-round">bolt</span>
+          <span id="xp-count">0 XP</span>
+        </button>
+        <button class="header-streak" id="header-streak">
+          <span class="material-icons-round">local_fire_department</span>
+          <span id="streak-count">0</span>
+        </button>
+        <div class="header-avatar" id="header-avatar" onclick="showScreen('perfil')">
+          <img id="header-avatar-img" src="" alt="Avatar" />
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTEÚDO DAS TELAS -->
+    <main class="app-main">
+
+      <!-- ===== HOME / FEED ===== -->
+      <section id="tab-home" class="tab-content active">
+        <div class="feed-top">
+          <div class="feed-greeting">
+            <h2>Olá, <span id="greeting-name">estudante</span>! 👋</h2>
+            <p>Continue de onde parou.</p>
+          </div>
+          <div class="progress-ring-wrap">
+            <svg class="progress-ring" width="60" height="60">
+              <circle class="ring-bg" cx="30" cy="30" r="24"/>
+              <circle class="ring-fill" id="ring-fill" cx="30" cy="30" r="24" stroke-dasharray="150.8" stroke-dashoffset="150.8"/>
+            </svg>
+            <span class="ring-label" id="ring-label">0%</span>
+          </div>
+        </div>
+
+        <!-- STREAK CARD -->
+        <div class="streak-banner" id="streak-banner">
+          <span class="material-icons-round">local_fire_department</span>
+          <div>
+            <strong>Sequência de <span id="streak-banner-val">0</span> dias!</strong>
+            <p>Estude hoje para manter sua chama.</p>
+          </div>
+          <div class="streak-flame-anim">🔥</div>
+        </div>
+
+        <!-- CRIAR POST -->
+        <div class="create-post-bar" onclick="openModal('modal-create-post')">
+          <img id="create-post-avatar" src="" alt="" />
+          <span>Compartilhe algo com a comunidade...</span>
+          <button class="btn-icon-sm"><span class="material-icons-round">add_photo_alternate</span></button>
+        </div>
+
+        <!-- FEED -->
+        <div id="feed-list" class="feed-list">
+          <div class="feed-loading">
+            <div class="spinner"></div>
+            <p>Carregando feed...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== MÓDULOS ===== -->
+      <section id="tab-modulos" class="tab-content">
+        <div class="section-header">
+          <h2>Módulos de Estudo</h2>
+          <button class="btn-primary-sm" onclick="openModal('modal-create-module')">
+            <span class="material-icons-round">add</span> Criar
+          </button>
+        </div>
+
+        <!-- FILTROS MATÉRIA -->
+        <div class="materia-chips" id="materia-chips">
+          <button class="chip active" data-materia="Todos">Todos</button>
+          <button class="chip" data-materia="Matemática">📐 Matemática</button>
+          <button class="chip" data-materia="Português">📚 Português</button>
+          <button class="chip" data-materia="História">🏛️ História</button>
+          <button class="chip" data-materia="Geografia">🌍 Geografia</button>
+          <button class="chip" data-materia="Ciências">🔬 Ciências</button>
+          <button class="chip" data-materia="Biologia">🧬 Biologia</button>
+          <button class="chip" data-materia="Física">⚛️ Física</button>
+          <button class="chip" data-materia="Química">🧪 Química</button>
+          <button class="chip" data-materia="Inglês">🇬🇧 Inglês</button>
+          <button class="chip" data-materia="Filosofia">🤔 Filosofia</button>
+          <button class="chip" data-materia="Sociologia">🧑‍🤝‍🧑 Sociologia</button>
+          <button class="chip" data-materia="Programação">💻 Programação</button>
+        </div>
+
+        <div id="modulos-list" class="modulos-grid">
+          <div class="feed-loading">
+            <div class="spinner"></div>
+            <p>Carregando módulos...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== RANKING ===== -->
+      <section id="tab-ranking" class="tab-content">
+        <div class="section-header">
+          <h2>🏆 Ranking</h2>
+        </div>
+        <div class="ranking-podium" id="ranking-podium"></div>
+        <div id="ranking-list" class="ranking-list">
+          <div class="feed-loading"><div class="spinner"></div><p>Carregando ranking...</p></div>
+        </div>
+      </section>
+
+      <!-- ===== PERFIL ===== -->
+      <section id="tab-perfil" class="tab-content">
+        <div class="profile-hero">
+          <div class="profile-cover"></div>
+          <div class="profile-info">
+            <div class="profile-avatar-wrap">
+              <img id="profile-avatar-img" src="" alt="Avatar" />
+              <button class="profile-avatar-edit" onclick="document.getElementById('input-avatar-file').click()">
+                <span class="material-icons-round">photo_camera</span>
+              </button>
+              <input type="file" id="input-avatar-file" accept="image/*" style="display:none" />
+            </div>
+            <div class="profile-texts">
+              <h2 id="profile-name">Carregando...</h2>
+              <p id="profile-bio" class="profile-bio-text">Sem bio ainda.</p>
+            </div>
+          </div>
+          <div class="profile-stats">
+            <div class="stat-pill">
+              <span class="material-icons-round">bolt</span>
+              <div><strong id="stat-xp">0</strong><small>XP</small></div>
+            </div>
+            <div class="stat-pill">
+              <span class="material-icons-round">military_tech</span>
+              <div><strong id="stat-nivel">1</strong><small>Nível</small></div>
+            </div>
+            <div class="stat-pill">
+              <span class="material-icons-round">layers</span>
+              <div><strong id="stat-modulos">0</strong><small>Módulos</small></div>
+            </div>
+            <div class="stat-pill">
+              <span class="material-icons-round">local_fire_department</span>
+              <div><strong id="stat-streak">0</strong><small>Dias</small></div>
+            </div>
+          </div>
+          <button class="btn-edit-profile" onclick="openModal('modal-edit-profile')">
+            <span class="material-icons-round">edit</span> Editar perfil
+          </button>
+          <button class="btn-logout" onclick="handleLogout()">
+            <span class="material-icons-round">logout</span> Sair
+          </button>
+        </div>
+        <div class="section-header" style="margin-top:1.5rem">
+          <h3>Meus módulos</h3>
+        </div>
+        <div id="my-modulos-list" class="modulos-grid"></div>
+      </section>
+
+    </main>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-tab="home" onclick="switchTab('home', this)">
+        <span class="material-icons-round">home</span>
+        <span>Home</span>
+      </button>
+      <button class="nav-item" data-tab="modulos" onclick="switchTab('modulos', this)">
+        <span class="material-icons-round">layers</span>
+        <span>Módulos</span>
+      </button>
+      <button class="nav-item nav-criar" onclick="openModal('modal-create-post')">
+        <div class="nav-criar-btn">
+          <span class="material-icons-round">add</span>
+        </div>
+      </button>
+      <button class="nav-item" data-tab="ranking" onclick="switchTab('ranking', this)">
+        <span class="material-icons-round">emoji_events</span>
+        <span>Ranking</span>
+      </button>
+      <button class="nav-item" data-tab="perfil" onclick="switchTab('perfil', this)">
+        <span class="material-icons-round">person</span>
+        <span>Perfil</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- ==================== MODAL: VER MÓDULO ==================== -->
+  <div id="modal-view-module" class="modal-overlay">
+    <div class="modal-sheet modal-full">
+      <div class="modal-handle"></div>
+      <button class="modal-close" onclick="closeModal('modal-view-module')"><span class="material-icons-round">close</span></button>
+      <div id="module-view-content"></div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: CRIAR POST ==================== -->
+  <div id="modal-create-post" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h3>Nova publicação</h3>
+        <button class="modal-close-x" onclick="closeModal('modal-create-post')"><span class="material-icons-round">close</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="post-author-row">
+          <img id="post-author-avatar" src="" alt="" />
+          <span id="post-author-name"></span>
+        </div>
+        <textarea id="post-text" placeholder="O que você quer compartilhar?" rows="4"></textarea>
+        <div id="post-image-preview" class="image-preview-wrap" style="display:none">
+          <img id="post-preview-img" src="" alt="" />
+          <button class="remove-img" onclick="removePostImage()"><span class="material-icons-round">close</span></button>
+        </div>
+        <div class="post-actions-bar">
+          <button class="btn-icon" onclick="document.getElementById('post-img-input').click()">
+            <span class="material-icons-round">add_photo_alternate</span> Imagem
+          </button>
+          <input type="file" id="post-img-input" accept="image/*" style="display:none" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="btn-publish-post" onclick="publishPost()">
+          <span class="material-icons-round">send</span> Publicar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: CRIAR MÓDULO ==================== -->
+  <div id="modal-create-module" class="modal-overlay">
+    <div class="modal-sheet modal-tall">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h3>Novo Módulo</h3>
+        <button class="modal-close-x" onclick="closeModal('modal-create-module')"><span class="material-icons-round">close</span></button>
+      </div>
+      <div class="modal-body scrollable">
+        <div class="form-group">
+          <label>Título do módulo</label>
+          <input type="text" id="mod-titulo" placeholder="Ex: Álgebra Linear para o ENEM" />
+        </div>
+        <div class="form-group">
+          <label>Descrição</label>
+          <textarea id="mod-desc" placeholder="Descreva do que se trata este módulo..." rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Matéria</label>
+          <select id="mod-materia">
+            <option value="">Selecione...</option>
+            <option>Matemática</option><option>Português</option><option>História</option>
+            <option>Geografia</option><option>Ciências</option><option>Biologia</option>
+            <option>Física</option><option>Química</option><option>Inglês</option>
+            <option>Filosofia</option><option>Sociologia</option><option>Programação</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Imagem de capa</label>
+          <div class="capa-upload" id="capa-upload-area" onclick="document.getElementById('mod-capa-input').click()">
+            <span class="material-icons-round">add_photo_alternate</span>
+            <span>Clique para adicionar capa</span>
+            <img id="capa-preview" src="" alt="" style="display:none" />
+            <input type="file" id="mod-capa-input" accept="image/*" style="display:none" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Introdução / Conteúdo</label>
+          <textarea id="mod-intro" placeholder="Escreva a introdução e conteúdo do módulo..." rows="5"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Vídeos do YouTube</label>
+          <div id="videos-list">
+            <div class="video-input-row">
+              <input type="text" class="video-url-input" placeholder="Cole a URL do YouTube aqui..." />
+              <button class="btn-icon-sm" onclick="addVideoInput()"><span class="material-icons-round">add</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Quiz</label>
+          <div id="quiz-builder">
+            <div class="quiz-question-block" data-q="0">
+              <div class="quiz-q-header">
+                <input type="text" class="quiz-q-text" placeholder="Pergunta 1..." />
+                <button class="btn-icon-sm" onclick="removeQuestion(this)"><span class="material-icons-round">delete</span></button>
+              </div>
+              <div class="quiz-options">
+                <div class="quiz-opt-row">
+                  <input type="radio" name="correct-0" value="0" checked />
+                  <input type="text" class="quiz-opt-input" placeholder="Alternativa A (correta)" />
+                </div>
+                <div class="quiz-opt-row">
+                  <input type="radio" name="correct-0" value="1" />
+                  <input type="text" class="quiz-opt-input" placeholder="Alternativa B" />
+                </div>
+                <div class="quiz-opt-row">
+                  <input type="radio" name="correct-0" value="2" />
+                  <input type="text" class="quiz-opt-input" placeholder="Alternativa C" />
+                </div>
+                <div class="quiz-opt-row">
+                  <input type="radio" name="correct-0" value="3" />
+                  <input type="text" class="quiz-opt-input" placeholder="Alternativa D" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="btn-outline-sm" onclick="addQuestion()" style="margin-top:.5rem">
+            <span class="material-icons-round">add</span> Adicionar pergunta
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="btn-save-module" onclick="saveModule()">
+          <span class="material-icons-round">save</span> Salvar módulo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: EDITAR PERFIL ==================== -->
+  <div id="modal-edit-profile" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h3>Editar Perfil</h3>
+        <button class="modal-close-x" onclick="closeModal('modal-edit-profile')"><span class="material-icons-round">close</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nome de exibição</label>
+          <input type="text" id="edit-name" placeholder="Seu nome" />
+        </div>
+        <div class="form-group">
+          <label>Bio</label>
+          <textarea id="edit-bio" placeholder="Fale um pouco sobre você..." rows="3"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" onclick="saveProfile()">
+          <span class="material-icons-round">save</span> Salvar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: VER POST ==================== -->
+  <div id="modal-view-post" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h3>Publicação</h3>
+        <button class="modal-close-x" onclick="closeModal('modal-view-post')"><span class="material-icons-round">close</span></button>
+      </div>
+      <div id="post-detail-content" class="modal-body"></div>
+      <div class="modal-body" id="comments-section">
+        <h4>Comentários</h4>
+        <div id="comments-list"></div>
+        <div class="comment-input-row">
+          <img id="comment-avatar" src="" alt="" />
+          <input type="text" id="comment-input" placeholder="Escreva um comentário..." />
+          <button class="btn-icon" onclick="submitComment()"><span class="material-icons-round">send</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Firebase -->
+  <script type="module" src="js/script.js"></script>
+</body>
+</html>
