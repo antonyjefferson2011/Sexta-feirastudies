@@ -2,13 +2,17 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#00C9B1" />
   <title>Sexta Feira Studies</title>
-  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="apple-touch-icon" href="assets/favicon.png" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
-  <!-- Material Icons -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
 </head>
 <body>
@@ -204,16 +208,45 @@
         </div>
       </section>
 
-      <!-- ===== RANKING ===== -->
-      <section id="tab-ranking" class="tab-content">
+      <!-- ===== FASES / TRILHA ===== -->
+      <section id="tab-fases" class="tab-content">
         <div class="section-header">
-          <h2>🏆 Ranking</h2>
+          <h2>🗺️ Trilha de Aprendizado</h2>
+          <button class="btn-primary-sm" onclick="switchTab('ranking', null); showRankingModal()">
+            <span class="material-icons-round">emoji_events</span> Ranking
+          </button>
         </div>
-        <div class="ranking-podium" id="ranking-podium"></div>
-        <div id="ranking-list" class="ranking-list">
-          <div class="feed-loading"><div class="spinner"></div><p>Carregando ranking...</p></div>
+        <div class="nivel-info-bar" id="nivel-info-bar">
+          <div class="nivel-badge" id="nivel-badge">
+            <span class="material-icons-round">military_tech</span>
+            <span id="nivel-label">Nível 1</span>
+          </div>
+          <div class="nivel-xp-bar-wrap">
+            <div class="nivel-xp-bar" id="nivel-xp-bar"></div>
+          </div>
+          <span class="nivel-xp-txt" id="nivel-xp-txt">0 / 100 XP</span>
+        </div>
+        <div id="fases-trilha" class="fases-trilha">
+          <div class="feed-loading"><div class="spinner"></div><p>Carregando trilha...</p></div>
         </div>
       </section>
+
+      <!-- RANKING (modal interno) -->
+      <div id="ranking-modal" class="modal-overlay">
+        <div class="modal-sheet modal-tall">
+          <div class="modal-handle"></div>
+          <div class="modal-header">
+            <h3>🏆 Ranking Global</h3>
+            <button class="modal-close-x" onclick="closeModal('ranking-modal')"><span class="material-icons-round">close</span></button>
+          </div>
+          <div class="modal-body">
+            <div class="ranking-podium" id="ranking-podium"></div>
+            <div id="ranking-list" class="ranking-list">
+              <div class="feed-loading"><div class="spinner"></div><p>Carregando...</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- ===== PERFIL ===== -->
       <section id="tab-perfil" class="tab-content">
@@ -280,9 +313,9 @@
           <span class="material-icons-round">add</span>
         </div>
       </button>
-      <button class="nav-item" data-tab="ranking" onclick="switchTab('ranking', this)">
+      <button class="nav-item" data-tab="fases" onclick="switchTab('fases', this)">
         <span class="material-icons-round">emoji_events</span>
-        <span>Ranking</span>
+        <span>Fases</span>
       </button>
       <button class="nav-item" data-tab="perfil" onclick="switchTab('perfil', this)">
         <span class="material-icons-round">person</span>
@@ -468,6 +501,15 @@
           <button class="btn-icon" onclick="submitComment()"><span class="material-icons-round">send</span></button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: DETALHE DA FASE ==================== -->
+  <div id="modal-fase-detail" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div id="fase-detail-body" class="modal-body" style="padding-top:0"></div>
+      <div class="modal-footer" id="fase-detail-footer"></div>
     </div>
   </div>
 
