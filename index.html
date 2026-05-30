@@ -1,522 +1,335 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="theme-color" content="#00C9B1" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="theme-color" content="#00C9B1"/>
   <title>Sexta Feira Studies</title>
-  <link rel="icon" type="image/png" href="assets/favicon.png" />
-  <link rel="apple-touch-icon" href="assets/favicon.png" />
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="assets/favicon.png"/>
+  <link rel="apple-touch-icon" href="assets/favicon.png"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
 </head>
 <body>
 
-  <!-- ==================== TELA DE LOGIN ==================== -->
-  <div id="screen-login" class="screen active">
-    <div class="login-bg">
-      <div class="login-blob b1"></div>
-      <div class="login-blob b2"></div>
-      <div class="login-blob b3"></div>
-    </div>
-    <div class="login-card">
-      <div class="login-logo">
-        <div class="logo-icon">
-          <span class="material-icons-round">auto_stories</span>
-        </div>
-        <h1 class="logo-title">Sexta Feira<br><span>Studies</span></h1>
-      </div>
-      <p class="login-tagline">Aprender nunca foi tão <strong>incrível</strong>.</p>
-
-      <!-- TABS LOGIN / CADASTRO -->
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="tab-login-btn" onclick="switchAuthTab('login')">Entrar</button>
-        <button class="auth-tab" id="tab-register-btn" onclick="switchAuthTab('register')">Criar conta</button>
-      </div>
-
-      <!-- PAINEL: ENTRAR -->
-      <div id="auth-panel-login">
-        <button id="btn-google-login" class="btn-google">
-          <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-          Continuar com Google
-        </button>
-        <div class="login-divider"><span>ou com e-mail</span></div>
-        <div class="login-form">
-          <div class="input-group">
-            <span class="material-icons-round">mail</span>
-            <input type="email" id="login-email" placeholder="E-mail" />
-          </div>
-          <div class="input-group">
-            <span class="material-icons-round">lock</span>
-            <input type="password" id="login-senha" placeholder="Senha" />
-            <button class="toggle-pass" onclick="togglePass('login-senha', this)" type="button">
-              <span class="material-icons-round">visibility</span>
-            </button>
-          </div>
-          <div id="login-error" class="auth-error" style="display:none"></div>
-          <button class="btn-email" id="btn-email-login" onclick="loginEmail()">
-            <span class="material-icons-round">login</span> Entrar
-          </button>
-        </div>
-      </div>
-
-      <!-- PAINEL: CRIAR CONTA -->
-      <div id="auth-panel-register" style="display:none">
-        <div class="login-form">
-          <div class="input-group">
-            <span class="material-icons-round">person</span>
-            <input type="text" id="reg-nome" placeholder="Seu nome completo" />
-          </div>
-          <div class="input-group">
-            <span class="material-icons-round">mail</span>
-            <input type="email" id="reg-email" placeholder="E-mail" />
-          </div>
-          <div class="input-group">
-            <span class="material-icons-round">lock</span>
-            <input type="password" id="reg-senha" placeholder="Senha (mín. 6 caracteres)" />
-            <button class="toggle-pass" onclick="togglePass('reg-senha', this)" type="button">
-              <span class="material-icons-round">visibility</span>
-            </button>
-          </div>
-          <div class="input-group">
-            <span class="material-icons-round">lock_reset</span>
-            <input type="password" id="reg-confirma" placeholder="Confirmar senha" />
-          </div>
-          <div id="register-error" class="auth-error" style="display:none"></div>
-          <button class="btn-email" id="btn-email-register" onclick="registerEmail()">
-            <span class="material-icons-round">person_add</span> Criar minha conta
-          </button>
-          <div class="login-divider"><span>ou</span></div>
-          <button id="btn-google-register" class="btn-google">
-            <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-            Cadastrar com Google
-          </button>
-        </div>
-      </div>
-
-      <p class="login-footer">Ao entrar, você concorda com os <a href="#">Termos de Uso</a></p>
-    </div>
+<!-- ==================== LOGIN ==================== -->
+<div id="screen-login" class="screen active">
+  <div class="login-bg">
+    <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
   </div>
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon"><span class="material-icons-round">auto_stories</span></div>
+      <h1 class="logo-title">Sexta Feira<br><span>Studies</span></h1>
+    </div>
+    <p class="login-tagline">Aprender nunca foi tão <strong>incrível</strong>.</p>
 
-  <!-- ==================== APP PRINCIPAL ==================== -->
-  <div id="screen-app" class="screen">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-entrar-btn"   onclick="switchAuthTab('entrar')">Entrar</button>
+      <button class="auth-tab"        id="tab-cadastro-btn" onclick="switchAuthTab('cadastro')">Criar conta</button>
+    </div>
 
-    <!-- HEADER -->
-    <header class="app-header">
-      <div class="header-left">
-        <div class="header-logo">
-          <span class="material-icons-round">auto_stories</span>
-          <span>SF Studies</span>
+    <!-- ENTRAR -->
+    <div id="panel-entrar">
+      <button id="btn-google-login" class="btn-google">
+        <svg width="20" height="20" viewBox="0 0 48 48">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        Continuar com Google
+      </button>
+      <div class="divider"><span>ou com e-mail</span></div>
+      <div class="input-wrap"><span class="material-icons-round">mail</span><input type="email" id="login-email" placeholder="E-mail"/></div>
+      <div class="input-wrap"><span class="material-icons-round">lock</span><input type="password" id="login-senha" placeholder="Senha"/><button class="eye-btn" onclick="toggleEye('login-senha',this)"><span class="material-icons-round">visibility</span></button></div>
+      <div id="login-err" class="auth-err" style="display:none"></div>
+      <button class="btn-email" id="btn-login-email" onclick="loginEmail()"><span class="material-icons-round">login</span> Entrar</button>
+    </div>
+
+    <!-- CADASTRO -->
+    <div id="panel-cadastro" style="display:none">
+      <div class="input-wrap"><span class="material-icons-round">person</span><input type="text"  id="reg-nome"     placeholder="Seu nome"/></div>
+      <div class="input-wrap"><span class="material-icons-round">mail</span><input type="email" id="reg-email"    placeholder="E-mail"/></div>
+      <div class="input-wrap"><span class="material-icons-round">lock</span><input type="password" id="reg-senha"    placeholder="Senha (mín. 6 caracteres)"/><button class="eye-btn" onclick="toggleEye('reg-senha',this)"><span class="material-icons-round">visibility</span></button></div>
+      <div class="input-wrap"><span class="material-icons-round">lock_reset</span><input type="password" id="reg-confirma" placeholder="Confirmar senha"/></div>
+      <div id="reg-err" class="auth-err" style="display:none"></div>
+      <button class="btn-email" id="btn-reg-email" onclick="registrarEmail()"><span class="material-icons-round">person_add</span> Criar conta</button>
+      <div class="divider"><span>ou</span></div>
+      <button id="btn-google-reg" class="btn-google">
+        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Cadastrar com Google
+      </button>
+    </div>
+    <p class="login-footer">Ao entrar, você concorda com os <a href="#">Termos de Uso</a></p>
+  </div>
+</div>
+
+<!-- ==================== APP ==================== -->
+<div id="screen-app" class="screen">
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="hdr-logo"><span class="material-icons-round">auto_stories</span><span>SF Studies</span></div>
+    <div class="hdr-right">
+      <button class="xp-pill"><span class="material-icons-round">bolt</span><span id="hdr-xp">0 XP</span></button>
+      <button class="streak-pill"><span class="material-icons-round">local_fire_department</span><span id="hdr-streak">0</span></button>
+      <div class="hdr-avatar" onclick="goTab('perfil')"><img id="hdr-avatar-img" src="" alt=""/></div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="app-main">
+
+    <!-- HOME -->
+    <section id="tab-home" class="tab active">
+      <div class="feed-top">
+        <div><h2 class="greeting">Olá, <span id="greeting-name">estudante</span>! 👋</h2><p class="greeting-sub">Continue de onde parou.</p></div>
+        <div class="ring-wrap">
+          <svg width="60" height="60"><circle class="ring-bg" cx="30" cy="30" r="24"/><circle class="ring-fg" id="ring-fg" cx="30" cy="30" r="24" stroke-dasharray="150.8" stroke-dashoffset="150.8"/></svg>
+          <span class="ring-lbl" id="ring-lbl">0%</span>
         </div>
       </div>
-      <div class="header-right">
-        <button class="header-xp-pill" id="header-xp">
-          <span class="material-icons-round">bolt</span>
-          <span id="xp-count">0 XP</span>
-        </button>
-        <button class="header-streak" id="header-streak">
-          <span class="material-icons-round">local_fire_department</span>
-          <span id="streak-count">0</span>
-        </button>
-        <div class="header-avatar" id="header-avatar" onclick="showScreen('perfil')">
-          <img id="header-avatar-img" src="" alt="Avatar" />
-        </div>
+
+      <div id="streak-bar" class="streak-bar" style="display:none">
+        <span class="material-icons-round">local_fire_department</span>
+        <div><strong>🔥 Sequência de <span id="streak-val">0</span> dias!</strong><p>Estude hoje para manter a chama.</p></div>
       </div>
-    </header>
 
-    <!-- CONTEÚDO DAS TELAS -->
-    <main class="app-main">
+      <!-- Aviso global -->
+      <div id="aviso-global-box" style="display:none" class="aviso-global-box">
+        <div id="aviso-global-content"></div>
+        <button class="aviso-close" onclick="document.getElementById('aviso-global-box').style.display='none'"><span class="material-icons-round">close</span></button>
+      </div>
 
-      <!-- ===== HOME / FEED ===== -->
-      <section id="tab-home" class="tab-content active">
-        <div class="feed-top">
-          <div class="feed-greeting">
-            <h2>Olá, <span id="greeting-name">estudante</span>! 👋</h2>
-            <p>Continue de onde parou.</p>
+      <div class="create-bar" id="btn-open-post">
+        <img id="bar-avatar" src="" alt=""/>
+        <span>Compartilhe algo com a comunidade...</span>
+        <span class="material-icons-round">add_photo_alternate</span>
+      </div>
+
+      <div id="feed-list" class="feed-list">
+        <div class="loading-state"><div class="spinner"></div><p>Carregando feed...</p></div>
+      </div>
+    </section>
+
+    <!-- MÓDULOS -->
+    <section id="tab-modulos" class="tab">
+      <div class="sec-header">
+        <h2>Módulos de Estudo</h2>
+        <button class="btn-sm" id="btn-open-module">+ Criar</button>
+      </div>
+      <div class="chips" id="chips">
+        <button class="chip active" data-m="Todos">Todos</button>
+        <button class="chip" data-m="Matemática">📐 Mat.</button>
+        <button class="chip" data-m="Português">📚 Port.</button>
+        <button class="chip" data-m="História">🏛️ Hist.</button>
+        <button class="chip" data-m="Geografia">🌍 Geo.</button>
+        <button class="chip" data-m="Ciências">🔬 Ciênc.</button>
+        <button class="chip" data-m="Biologia">🧬 Bio.</button>
+        <button class="chip" data-m="Física">⚛️ Fís.</button>
+        <button class="chip" data-m="Química">🧪 Quím.</button>
+        <button class="chip" data-m="Inglês">🇬🇧 Ing.</button>
+        <button class="chip" data-m="Filosofia">🤔 Fil.</button>
+        <button class="chip" data-m="Sociologia">🧑‍🤝‍🧑 Soc.</button>
+        <button class="chip" data-m="Programação">💻 Prog.</button>
+      </div>
+      <div id="mods-grid" class="mods-grid">
+        <div class="loading-state"><div class="spinner"></div><p>Carregando...</p></div>
+      </div>
+    </section>
+
+    <!-- FASES -->
+    <section id="tab-fases" class="tab">
+      <div class="sec-header"><h2>🗺️ Trilha de Aprendizado</h2></div>
+      <div class="nivel-bar">
+        <div class="nivel-badge"><span class="material-icons-round">military_tech</span><span id="nivel-txt">Nível 1</span></div>
+        <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xp-bar-fill"></div></div>
+        <span class="xp-bar-lbl" id="xp-bar-lbl">0/100 XP</span>
+      </div>
+      <div id="trilha-wrap" class="trilha-wrap">
+        <div class="loading-state"><div class="spinner"></div><p>Carregando trilha...</p></div>
+      </div>
+    </section>
+
+    <!-- RANKING -->
+    <section id="tab-ranking" class="tab">
+      <div class="sec-header"><h2>🏆 Ranking</h2></div>
+      <div id="podium" class="podium"></div>
+      <div id="rank-list" class="rank-list">
+        <div class="loading-state"><div class="spinner"></div><p>Carregando...</p></div>
+      </div>
+    </section>
+
+    <!-- PERFIL -->
+    <section id="tab-perfil" class="tab">
+      <div class="profile-card">
+        <div class="profile-cover"></div>
+        <div class="profile-top">
+          <div class="profile-av-wrap">
+            <img id="pf-avatar" src="" alt=""/>
+            <button class="av-edit-btn" onclick="document.getElementById('pf-file').click()"><span class="material-icons-round">photo_camera</span></button>
+            <input type="file" id="pf-file" accept="image/*" style="display:none"/>
           </div>
-          <div class="progress-ring-wrap">
-            <svg class="progress-ring" width="60" height="60">
-              <circle class="ring-bg" cx="30" cy="30" r="24"/>
-              <circle class="ring-fill" id="ring-fill" cx="30" cy="30" r="24" stroke-dasharray="150.8" stroke-dashoffset="150.8"/>
-            </svg>
-            <span class="ring-label" id="ring-label">0%</span>
-          </div>
-        </div>
-
-        <!-- STREAK CARD -->
-        <div class="streak-banner" id="streak-banner">
-          <span class="material-icons-round">local_fire_department</span>
           <div>
-            <strong>Sequência de <span id="streak-banner-val">0</span> dias!</strong>
-            <p>Estude hoje para manter sua chama.</p>
-          </div>
-          <div class="streak-flame-anim">🔥</div>
-        </div>
-
-        <!-- CRIAR POST -->
-        <div class="create-post-bar" onclick="openModal('modal-create-post')">
-          <img id="create-post-avatar" src="" alt="" />
-          <span>Compartilhe algo com a comunidade...</span>
-          <button class="btn-icon-sm"><span class="material-icons-round">add_photo_alternate</span></button>
-        </div>
-
-        <!-- FEED -->
-        <div id="feed-list" class="feed-list">
-          <div class="feed-loading">
-            <div class="spinner"></div>
-            <p>Carregando feed...</p>
+            <h2 id="pf-name">---</h2>
+            <p id="pf-bio" class="pf-bio">---</p>
           </div>
         </div>
-      </section>
-
-      <!-- ===== MÓDULOS ===== -->
-      <section id="tab-modulos" class="tab-content">
-        <div class="section-header">
-          <h2>Módulos de Estudo</h2>
-          <button class="btn-primary-sm" onclick="openModal('modal-create-module')">
-            <span class="material-icons-round">add</span> Criar
-          </button>
+        <div class="pf-stats">
+          <div class="pf-stat"><span class="material-icons-round">bolt</span><strong id="pf-xp">0</strong><small>XP</small></div>
+          <div class="pf-stat"><span class="material-icons-round">military_tech</span><strong id="pf-nivel">1</strong><small>Nível</small></div>
+          <div class="pf-stat"><span class="material-icons-round">layers</span><strong id="pf-mods">0</strong><small>Módulos</small></div>
+          <div class="pf-stat"><span class="material-icons-round">local_fire_department</span><strong id="pf-streak">0</strong><small>Streak</small></div>
         </div>
-
-        <!-- FILTROS MATÉRIA -->
-        <div class="materia-chips" id="materia-chips">
-          <button class="chip active" data-materia="Todos">Todos</button>
-          <button class="chip" data-materia="Matemática">📐 Matemática</button>
-          <button class="chip" data-materia="Português">📚 Português</button>
-          <button class="chip" data-materia="História">🏛️ História</button>
-          <button class="chip" data-materia="Geografia">🌍 Geografia</button>
-          <button class="chip" data-materia="Ciências">🔬 Ciências</button>
-          <button class="chip" data-materia="Biologia">🧬 Biologia</button>
-          <button class="chip" data-materia="Física">⚛️ Física</button>
-          <button class="chip" data-materia="Química">🧪 Química</button>
-          <button class="chip" data-materia="Inglês">🇬🇧 Inglês</button>
-          <button class="chip" data-materia="Filosofia">🤔 Filosofia</button>
-          <button class="chip" data-materia="Sociologia">🧑‍🤝‍🧑 Sociologia</button>
-          <button class="chip" data-materia="Programação">💻 Programação</button>
-        </div>
-
-        <div id="modulos-list" class="modulos-grid">
-          <div class="feed-loading">
-            <div class="spinner"></div>
-            <p>Carregando módulos...</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- ===== FASES / TRILHA ===== -->
-      <section id="tab-fases" class="tab-content">
-        <div class="section-header">
-          <h2>🗺️ Trilha de Aprendizado</h2>
-          <button class="btn-primary-sm" onclick="switchTab('ranking', null); showRankingModal()">
-            <span class="material-icons-round">emoji_events</span> Ranking
-          </button>
-        </div>
-        <div class="nivel-info-bar" id="nivel-info-bar">
-          <div class="nivel-badge" id="nivel-badge">
-            <span class="material-icons-round">military_tech</span>
-            <span id="nivel-label">Nível 1</span>
-          </div>
-          <div class="nivel-xp-bar-wrap">
-            <div class="nivel-xp-bar" id="nivel-xp-bar"></div>
-          </div>
-          <span class="nivel-xp-txt" id="nivel-xp-txt">0 / 100 XP</span>
-        </div>
-        <div id="fases-trilha" class="fases-trilha">
-          <div class="feed-loading"><div class="spinner"></div><p>Carregando trilha...</p></div>
-        </div>
-      </section>
-
-      <!-- RANKING (modal interno) -->
-      <div id="ranking-modal" class="modal-overlay">
-        <div class="modal-sheet modal-tall">
-          <div class="modal-handle"></div>
-          <div class="modal-header">
-            <h3>🏆 Ranking Global</h3>
-            <button class="modal-close-x" onclick="closeModal('ranking-modal')"><span class="material-icons-round">close</span></button>
-          </div>
-          <div class="modal-body">
-            <div class="ranking-podium" id="ranking-podium"></div>
-            <div id="ranking-list" class="ranking-list">
-              <div class="feed-loading"><div class="spinner"></div><p>Carregando...</p></div>
-            </div>
-          </div>
+        <div style="padding:0 1rem 1rem;display:flex;gap:.5rem">
+          <button class="btn-edit-pf" onclick="abrirModal('modal-edit-pf')"><span class="material-icons-round">edit</span> Editar perfil</button>
+          <button class="btn-logout" onclick="fazerLogout()"><span class="material-icons-round">logout</span> Sair</button>
         </div>
       </div>
+      <div class="sec-header" style="margin-top:1rem"><h3>Meus módulos</h3></div>
+      <div id="meus-mods" class="mods-grid"></div>
+    </section>
 
-      <!-- ===== PERFIL ===== -->
-      <section id="tab-perfil" class="tab-content">
-        <div class="profile-hero">
-          <div class="profile-cover"></div>
-          <div class="profile-info">
-            <div class="profile-avatar-wrap">
-              <img id="profile-avatar-img" src="" alt="Avatar" />
-              <button class="profile-avatar-edit" onclick="document.getElementById('input-avatar-file').click()">
-                <span class="material-icons-round">photo_camera</span>
-              </button>
-              <input type="file" id="input-avatar-file" accept="image/*" style="display:none" />
-            </div>
-            <div class="profile-texts">
-              <h2 id="profile-name">Carregando...</h2>
-              <p id="profile-bio" class="profile-bio-text">Sem bio ainda.</p>
-            </div>
-          </div>
-          <div class="profile-stats">
-            <div class="stat-pill">
-              <span class="material-icons-round">bolt</span>
-              <div><strong id="stat-xp">0</strong><small>XP</small></div>
-            </div>
-            <div class="stat-pill">
-              <span class="material-icons-round">military_tech</span>
-              <div><strong id="stat-nivel">1</strong><small>Nível</small></div>
-            </div>
-            <div class="stat-pill">
-              <span class="material-icons-round">layers</span>
-              <div><strong id="stat-modulos">0</strong><small>Módulos</small></div>
-            </div>
-            <div class="stat-pill">
-              <span class="material-icons-round">local_fire_department</span>
-              <div><strong id="stat-streak">0</strong><small>Dias</small></div>
-            </div>
-          </div>
-          <button class="btn-edit-profile" onclick="openModal('modal-edit-profile')">
-            <span class="material-icons-round">edit</span> Editar perfil
-          </button>
-          <button class="btn-logout" onclick="handleLogout()">
-            <span class="material-icons-round">logout</span> Sair
-          </button>
-        </div>
-        <div class="section-header" style="margin-top:1.5rem">
-          <h3>Meus módulos</h3>
-        </div>
-        <div id="my-modulos-list" class="modulos-grid"></div>
-      </section>
+  </main>
 
-    </main>
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-tab="home"    onclick="goTab('home',this)"><span class="material-icons-round">home</span><span>Home</span></button>
+    <button class="nav-btn"        data-tab="modulos" onclick="goTab('modulos',this)"><span class="material-icons-round">layers</span><span>Módulos</span></button>
+    <button class="nav-btn nav-add" onclick="abrirModal('modal-post')"><div class="nav-add-btn"><span class="material-icons-round">add</span></div></button>
+    <button class="nav-btn"        data-tab="fases"   onclick="goTab('fases',this)"><span class="material-icons-round">map</span><span>Fases</span></button>
+    <button class="nav-btn"        data-tab="ranking" onclick="goTab('ranking',this)"><span class="material-icons-round">emoji_events</span><span>Ranking</span></button>
+    <button class="nav-btn"        data-tab="perfil"  onclick="goTab('perfil',this)"><span class="material-icons-round">person</span><span>Perfil</span></button>
+  </nav>
+</div>
 
-    <!-- BOTTOM NAV -->
-    <nav class="bottom-nav">
-      <button class="nav-item active" data-tab="home" onclick="switchTab('home', this)">
-        <span class="material-icons-round">home</span>
-        <span>Home</span>
-      </button>
-      <button class="nav-item" data-tab="modulos" onclick="switchTab('modulos', this)">
-        <span class="material-icons-round">layers</span>
-        <span>Módulos</span>
-      </button>
-      <button class="nav-item nav-criar" onclick="openModal('modal-create-post')">
-        <div class="nav-criar-btn">
-          <span class="material-icons-round">add</span>
-        </div>
-      </button>
-      <button class="nav-item" data-tab="fases" onclick="switchTab('fases', this)">
-        <span class="material-icons-round">emoji_events</span>
-        <span>Fases</span>
-      </button>
-      <button class="nav-item" data-tab="perfil" onclick="switchTab('perfil', this)">
-        <span class="material-icons-round">person</span>
-        <span>Perfil</span>
-      </button>
-    </nav>
+<!-- ==================== MODAIS ==================== -->
 
-  </div>
-
-  <!-- ==================== MODAL: VER MÓDULO ==================== -->
-  <div id="modal-view-module" class="modal-overlay">
-    <div class="modal-sheet modal-full">
-      <div class="modal-handle"></div>
-      <button class="modal-close" onclick="closeModal('modal-view-module')"><span class="material-icons-round">close</span></button>
-      <div id="module-view-content"></div>
+<!-- MODAL POST -->
+<div id="modal-post" class="modal-ov" style="display:none">
+  <div class="modal-sheet">
+    <div class="modal-drag"></div>
+    <div class="modal-hdr"><h3>Nova publicação</h3><button class="modal-x" onclick="fecharModal('modal-post')"><span class="material-icons-round">close</span></button></div>
+    <div class="modal-body">
+      <div class="post-author-row"><img id="post-av" src="" alt=""/><span id="post-autor-nome"></span></div>
+      <textarea id="post-texto" placeholder="O que você quer compartilhar?" rows="4"></textarea>
+      <div id="post-img-prev" style="display:none;position:relative;margin-top:.5rem">
+        <img id="post-prev-img" src="" style="width:100%;border-radius:12px;max-height:220px;object-fit:cover"/>
+        <button onclick="limparImgPost()" style="position:absolute;top:.4rem;right:.4rem;background:rgba(0,0,0,.5);border:none;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer"><span class="material-icons-round" style="color:#fff;font-size:15px">close</span></button>
+      </div>
+      <div style="border-top:1px solid var(--borda);margin-top:.75rem;padding-top:.75rem">
+        <button class="btn-icon" onclick="document.getElementById('post-file').click()"><span class="material-icons-round">add_photo_alternate</span> Imagem</button>
+        <input type="file" id="post-file" accept="image/*" style="display:none"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" id="btn-publicar" onclick="publicarPost()"><span class="material-icons-round">send</span> Publicar</button>
     </div>
   </div>
+</div>
 
-  <!-- ==================== MODAL: CRIAR POST ==================== -->
-  <div id="modal-create-post" class="modal-overlay">
-    <div class="modal-sheet">
-      <div class="modal-handle"></div>
-      <div class="modal-header">
-        <h3>Nova publicação</h3>
-        <button class="modal-close-x" onclick="closeModal('modal-create-post')"><span class="material-icons-round">close</span></button>
-      </div>
-      <div class="modal-body">
-        <div class="post-author-row">
-          <img id="post-author-avatar" src="" alt="" />
-          <span id="post-author-name"></span>
-        </div>
-        <textarea id="post-text" placeholder="O que você quer compartilhar?" rows="4"></textarea>
-        <div id="post-image-preview" class="image-preview-wrap" style="display:none">
-          <img id="post-preview-img" src="" alt="" />
-          <button class="remove-img" onclick="removePostImage()"><span class="material-icons-round">close</span></button>
-        </div>
-        <div class="post-actions-bar">
-          <button class="btn-icon" onclick="document.getElementById('post-img-input').click()">
-            <span class="material-icons-round">add_photo_alternate</span> Imagem
-          </button>
-          <input type="file" id="post-img-input" accept="image/*" style="display:none" />
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-primary" id="btn-publish-post" onclick="publishPost()">
-          <span class="material-icons-round">send</span> Publicar
-        </button>
+<!-- MODAL VER POST / COMENTÁRIOS -->
+<div id="modal-ver-post" class="modal-ov" style="display:none">
+  <div class="modal-sheet">
+    <div class="modal-drag"></div>
+    <div class="modal-hdr"><h3>Publicação</h3><button class="modal-x" onclick="fecharModal('modal-ver-post')"><span class="material-icons-round">close</span></button></div>
+    <div id="post-detalhe" class="modal-body"></div>
+    <div class="modal-body" style="border-top:1px solid var(--borda)">
+      <h4 style="font-size:.88rem;font-weight:800;margin-bottom:.75rem">Comentários</h4>
+      <div id="lista-comentarios"></div>
+      <div class="comentario-input-row">
+        <img id="comment-av" src="" alt=""/>
+        <input type="text" id="comentario-txt" placeholder="Escreva um comentário..."/>
+        <button onclick="enviarComentario()"><span class="material-icons-round">send</span></button>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- ==================== MODAL: CRIAR MÓDULO ==================== -->
-  <div id="modal-create-module" class="modal-overlay">
-    <div class="modal-sheet modal-tall">
-      <div class="modal-handle"></div>
-      <div class="modal-header">
-        <h3>Novo Módulo</h3>
-        <button class="modal-close-x" onclick="closeModal('modal-create-module')"><span class="material-icons-round">close</span></button>
+<!-- MODAL CRIAR MÓDULO -->
+<div id="modal-modulo" class="modal-ov" style="display:none">
+  <div class="modal-sheet modal-tall">
+    <div class="modal-drag"></div>
+    <div class="modal-hdr"><h3>Novo Módulo</h3><button class="modal-x" onclick="fecharModal('modal-modulo')"><span class="material-icons-round">close</span></button></div>
+    <div class="modal-body modal-scroll">
+      <div class="fgroup"><label>Título *</label><input type="text" id="m-titulo" placeholder="Ex: Álgebra Linear para o ENEM"/></div>
+      <div class="fgroup"><label>Descrição</label><textarea id="m-desc" rows="2" placeholder="Sobre o que é este módulo..."></textarea></div>
+      <div class="fgroup"><label>Matéria *</label>
+        <select id="m-materia">
+          <option value="">Selecione...</option>
+          <option>Matemática</option><option>Português</option><option>História</option>
+          <option>Geografia</option><option>Ciências</option><option>Biologia</option>
+          <option>Física</option><option>Química</option><option>Inglês</option>
+          <option>Filosofia</option><option>Sociologia</option><option>Programação</option>
+        </select>
       </div>
-      <div class="modal-body scrollable">
-        <div class="form-group">
-          <label>Título do módulo</label>
-          <input type="text" id="mod-titulo" placeholder="Ex: Álgebra Linear para o ENEM" />
-        </div>
-        <div class="form-group">
-          <label>Descrição</label>
-          <textarea id="mod-desc" placeholder="Descreva do que se trata este módulo..." rows="3"></textarea>
-        </div>
-        <div class="form-group">
-          <label>Matéria</label>
-          <select id="mod-materia">
-            <option value="">Selecione...</option>
-            <option>Matemática</option><option>Português</option><option>História</option>
-            <option>Geografia</option><option>Ciências</option><option>Biologia</option>
-            <option>Física</option><option>Química</option><option>Inglês</option>
-            <option>Filosofia</option><option>Sociologia</option><option>Programação</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Imagem de capa</label>
-          <div class="capa-upload" id="capa-upload-area" onclick="document.getElementById('mod-capa-input').click()">
-            <span class="material-icons-round">add_photo_alternate</span>
-            <span>Clique para adicionar capa</span>
-            <img id="capa-preview" src="" alt="" style="display:none" />
-            <input type="file" id="mod-capa-input" accept="image/*" style="display:none" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Introdução / Conteúdo</label>
-          <textarea id="mod-intro" placeholder="Escreva a introdução e conteúdo do módulo..." rows="5"></textarea>
-        </div>
-        <div class="form-group">
-          <label>Vídeos do YouTube</label>
-          <div id="videos-list">
-            <div class="video-input-row">
-              <input type="text" class="video-url-input" placeholder="Cole a URL do YouTube aqui..." />
-              <button class="btn-icon-sm" onclick="addVideoInput()"><span class="material-icons-round">add</span></button>
-            </div>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Quiz</label>
-          <div id="quiz-builder">
-            <div class="quiz-question-block" data-q="0">
-              <div class="quiz-q-header">
-                <input type="text" class="quiz-q-text" placeholder="Pergunta 1..." />
-                <button class="btn-icon-sm" onclick="removeQuestion(this)"><span class="material-icons-round">delete</span></button>
-              </div>
-              <div class="quiz-options">
-                <div class="quiz-opt-row">
-                  <input type="radio" name="correct-0" value="0" checked />
-                  <input type="text" class="quiz-opt-input" placeholder="Alternativa A (correta)" />
-                </div>
-                <div class="quiz-opt-row">
-                  <input type="radio" name="correct-0" value="1" />
-                  <input type="text" class="quiz-opt-input" placeholder="Alternativa B" />
-                </div>
-                <div class="quiz-opt-row">
-                  <input type="radio" name="correct-0" value="2" />
-                  <input type="text" class="quiz-opt-input" placeholder="Alternativa C" />
-                </div>
-                <div class="quiz-opt-row">
-                  <input type="radio" name="correct-0" value="3" />
-                  <input type="text" class="quiz-opt-input" placeholder="Alternativa D" />
-                </div>
-              </div>
-            </div>
-          </div>
-          <button class="btn-outline-sm" onclick="addQuestion()" style="margin-top:.5rem">
-            <span class="material-icons-round">add</span> Adicionar pergunta
-          </button>
+      <div class="fgroup">
+        <label>Capa</label>
+        <div class="capa-area" id="capa-area" onclick="document.getElementById('m-capa-file').click()">
+          <span class="material-icons-round">add_photo_alternate</span><span>Clique para adicionar</span>
+          <img id="capa-prev" src="" style="display:none"/>
+          <input type="file" id="m-capa-file" accept="image/*" style="display:none"/>
         </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn-primary" id="btn-save-module" onclick="saveModule()">
-          <span class="material-icons-round">save</span> Salvar módulo
-        </button>
+      <div class="fgroup"><label>Conteúdo / Introdução</label><textarea id="m-intro" rows="5" placeholder="Escreva o conteúdo do módulo..."></textarea></div>
+      <div class="fgroup">
+        <label>Vídeos do YouTube</label>
+        <div id="videos-wrap">
+          <div class="video-row"><input type="text" class="video-input" placeholder="Cole a URL do YouTube..."/><button class="btn-icon-sm" onclick="addVideo()"><span class="material-icons-round">add</span></button></div>
+        </div>
+      </div>
+      <div class="fgroup">
+        <label>Quiz</label>
+        <div id="quiz-wrap"></div>
+        <button class="btn-outline" onclick="addQuestao()" style="margin-top:.5rem"><span class="material-icons-round">add</span> Adicionar pergunta</button>
       </div>
     </div>
-  </div>
-
-  <!-- ==================== MODAL: EDITAR PERFIL ==================== -->
-  <div id="modal-edit-profile" class="modal-overlay">
-    <div class="modal-sheet">
-      <div class="modal-handle"></div>
-      <div class="modal-header">
-        <h3>Editar Perfil</h3>
-        <button class="modal-close-x" onclick="closeModal('modal-edit-profile')"><span class="material-icons-round">close</span></button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Nome de exibição</label>
-          <input type="text" id="edit-name" placeholder="Seu nome" />
-        </div>
-        <div class="form-group">
-          <label>Bio</label>
-          <textarea id="edit-bio" placeholder="Fale um pouco sobre você..." rows="3"></textarea>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-primary" onclick="saveProfile()">
-          <span class="material-icons-round">save</span> Salvar
-        </button>
-      </div>
+    <div class="modal-footer">
+      <button class="btn-primary" id="btn-salvar-mod" onclick="salvarModulo()"><span class="material-icons-round">save</span> Salvar módulo</button>
     </div>
   </div>
+</div>
 
-  <!-- ==================== MODAL: VER POST ==================== -->
-  <div id="modal-view-post" class="modal-overlay">
-    <div class="modal-sheet">
-      <div class="modal-handle"></div>
-      <div class="modal-header">
-        <h3>Publicação</h3>
-        <button class="modal-close-x" onclick="closeModal('modal-view-post')"><span class="material-icons-round">close</span></button>
-      </div>
-      <div id="post-detail-content" class="modal-body"></div>
-      <div class="modal-body" id="comments-section">
-        <h4>Comentários</h4>
-        <div id="comments-list"></div>
-        <div class="comment-input-row">
-          <img id="comment-avatar" src="" alt="" />
-          <input type="text" id="comment-input" placeholder="Escreva um comentário..." />
-          <button class="btn-icon" onclick="submitComment()"><span class="material-icons-round">send</span></button>
-        </div>
-      </div>
+<!-- MODAL VER MÓDULO -->
+<div id="modal-ver-mod" class="modal-ov" style="display:none">
+  <div class="modal-sheet modal-full">
+    <div class="modal-drag"></div>
+    <button class="modal-x-abs" onclick="fecharModal('modal-ver-mod')"><span class="material-icons-round">close</span></button>
+    <div id="mod-conteudo" class="modal-full-body"></div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR PERFIL -->
+<div id="modal-edit-pf" class="modal-ov" style="display:none">
+  <div class="modal-sheet">
+    <div class="modal-drag"></div>
+    <div class="modal-hdr"><h3>Editar Perfil</h3><button class="modal-x" onclick="fecharModal('modal-edit-pf')"><span class="material-icons-round">close</span></button></div>
+    <div class="modal-body">
+      <div class="fgroup"><label>Nome</label><input type="text" id="edit-nome"/></div>
+      <div class="fgroup"><label>Bio</label><textarea id="edit-bio" rows="3"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="salvarPerfil()"><span class="material-icons-round">save</span> Salvar</button>
     </div>
   </div>
+</div>
 
-  <!-- ==================== MODAL: DETALHE DA FASE ==================== -->
-  <div id="modal-fase-detail" class="modal-overlay">
-    <div class="modal-sheet">
-      <div class="modal-handle"></div>
-      <div id="fase-detail-body" class="modal-body" style="padding-top:0"></div>
-      <div class="modal-footer" id="fase-detail-footer"></div>
-    </div>
+<!-- MODAL FASE DETALHE -->
+<div id="modal-fase" class="modal-ov" style="display:none">
+  <div class="modal-sheet">
+    <div class="modal-drag"></div>
+    <div id="fase-detalhe-body" class="modal-body" style="padding-top:0"></div>
+    <div class="modal-footer" id="fase-detalhe-footer"></div>
   </div>
+</div>
 
-  <!-- TOAST -->
-  <div id="toast" class="toast"></div>
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
 
-  <!-- Firebase -->
-  <script type="module" src="js/script.js"></script>
+<script type="module" src="js/script.js"></script>
 </body>
 </html>
