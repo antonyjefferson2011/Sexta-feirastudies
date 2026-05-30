@@ -1,1416 +1,446 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Painel Admin — Sexta Feira Studies</title>
-  <link rel="icon" type="image/png" href="assets/favicon.png" />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --turq: #00C9B1; --turq-d: #00A896; --turq-l: #E0FAF7;
-      --verde: #1A5C52; --verde-d: #0F3D36;
-      --bg: #F0F4F8; --card: #fff; --borda: #E2E8F0;
-      --texto: #1A202C; --suave: #4A5568; --cinza: #8A9BB0;
-      --perigo: #E53E3E; --aviso: #DD6B20; --ok: #38A169;
-      --sombra: 0 2px 16px rgba(0,0,0,.07);
-      --r: 14px; --font: 'Plus Jakarta Sans', sans-serif;
-      --sidebar: 240px;
-    }
-    html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--texto); }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    /* ---- LOGIN ---- */
-    #login-screen {
-      position: fixed; inset: 0; z-index: 1000;
-      background: linear-gradient(135deg, var(--verde-d), var(--turq));
-      display: flex; align-items: center; justify-content: center;
-    }
-    .admin-login-card {
-      background: rgba(255,255,255,.1); backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,.2); border-radius: 24px;
-      padding: 2.5rem; width: min(400px, 92vw);
-      display: flex; flex-direction: column; gap: 1.25rem;
-      animation: cardIn .5s ease both;
-    }
-    @keyframes cardIn { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:none} }
-    .admin-login-logo { display:flex; align-items:center; gap:.75rem; }
-    .admin-login-logo .material-icons-round { font-size:36px; color:var(--turq); }
-    .admin-login-logo h1 { font-size:1.3rem; font-weight:800; color:#fff; }
-    .admin-login-logo h1 span { color:var(--turq); }
-    .admin-badge {
-      background: var(--turq); color:#fff; font-size:.7rem; font-weight:800;
-      padding:.2rem .6rem; border-radius:999px; margin-left:.5rem;
-    }
-    .admin-login-card p { color:rgba(255,255,255,.7); font-size:.9rem; }
-    .admin-input {
-      display:flex; align-items:center; gap:.6rem;
-      background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2);
-      border-radius:10px; padding:.7rem 1rem;
-    }
-    .admin-input .material-icons-round { color:rgba(255,255,255,.5); font-size:20px; }
-    .admin-input input {
-      flex:1; background:none; border:none; outline:none;
-      color:#fff; font-family:var(--font); font-size:.9rem;
-    }
-    .admin-input input::placeholder { color:rgba(255,255,255,.45); }
-    .btn-admin-login {
-      background:var(--turq); color:#fff; border:none; border-radius:999px;
-      padding:.9rem; font-family:var(--font); font-size:.95rem; font-weight:700;
-      cursor:pointer; transition:all .2s; display:flex; align-items:center;
-      justify-content:center; gap:.5rem;
-    }
-    .btn-admin-login:hover { background:var(--turq-d); transform:translateY(-1px); }
-    #login-error { color:#FFC3C3; font-size:.83rem; display:none; }
+<title>Sexta Feira Studies</title>
 
-    /* ---- APP SHELL ---- */
-    #app-shell { display:none; height:100vh; }
+<link rel="stylesheet" href="css/style.css">
 
-    /* SIDEBAR */
-    .sidebar {
-      position:fixed; top:0; left:0; bottom:0; width:var(--sidebar);
-      background: linear-gradient(180deg, var(--verde-d) 0%, var(--verde) 100%);
-      display:flex; flex-direction:column; z-index:100;
-      box-shadow: 4px 0 20px rgba(0,0,0,.15);
-    }
-    .sidebar-logo {
-      padding:1.5rem 1.25rem 1rem; display:flex; align-items:center; gap:.75rem;
-      border-bottom:1px solid rgba(255,255,255,.1);
-    }
-    .sidebar-logo .material-icons-round { color:var(--turq); font-size:26px; }
-    .sidebar-logo span { font-size:.95rem; font-weight:800; color:#fff; }
-    .sidebar-logo small { font-size:.65rem; color:rgba(255,255,255,.5); display:block; }
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    .sidebar-nav { flex:1; padding:.75rem 0; overflow-y:auto; }
-    .sidebar-section {
-      font-size:.65rem; font-weight:800; color:rgba(255,255,255,.35);
-      text-transform:uppercase; letter-spacing:.1em;
-      padding:.75rem 1.25rem .3rem;
-    }
-    .nav-link {
-      display:flex; align-items:center; gap:.75rem;
-      padding:.65rem 1.25rem; cursor:pointer; transition:all .15s;
-      color:rgba(255,255,255,.65); font-size:.88rem; font-weight:600;
-      border-left:3px solid transparent; text-decoration:none;
-    }
-    .nav-link .material-icons-round { font-size:20px; }
-    .nav-link:hover { background:rgba(255,255,255,.08); color:#fff; }
-    .nav-link.active {
-      background:rgba(0,201,177,.2); color:var(--turq);
-      border-left-color:var(--turq);
-    }
-    .nav-badge {
-      margin-left:auto; background:var(--turq); color:#fff;
-      font-size:.65rem; font-weight:800; padding:.15rem .5rem;
-      border-radius:999px; min-width:20px; text-align:center;
-    }
-
-    .sidebar-footer {
-      padding:1rem 1.25rem; border-top:1px solid rgba(255,255,255,.1);
-    }
-    .sidebar-user {
-      display:flex; align-items:center; gap:.6rem; margin-bottom:.75rem;
-    }
-    .sidebar-user img { width:34px; height:34px; border-radius:50%; object-fit:cover; border:2px solid var(--turq); }
-    .sidebar-user div strong { font-size:.82rem; color:#fff; display:block; }
-    .sidebar-user div small { font-size:.7rem; color:rgba(255,255,255,.5); }
-    .btn-logout-admin {
-      width:100%; display:flex; align-items:center; justify-content:center; gap:.4rem;
-      background:rgba(255,255,255,.08); border:none; border-radius:8px;
-      color:rgba(255,255,255,.6); font-family:var(--font); font-size:.82rem;
-      padding:.5rem; cursor:pointer; transition:all .2s;
-    }
-    .btn-logout-admin:hover { background:rgba(255,255,255,.15); color:#fff; }
-    .btn-logout-admin .material-icons-round { font-size:16px; }
-
-    /* MAIN */
-    .main-area {
-      margin-left:var(--sidebar); height:100vh; overflow-y:auto;
-      display:flex; flex-direction:column;
-    }
-    .topbar {
-      background:var(--card); border-bottom:1px solid var(--borda);
-      padding:.85rem 1.5rem; display:flex; align-items:center; gap:1rem;
-      position:sticky; top:0; z-index:50;
-      box-shadow:0 2px 8px rgba(0,0,0,.04);
-    }
-    .topbar h2 { font-size:1.1rem; font-weight:800; flex:1; }
-    .topbar-actions { display:flex; gap:.5rem; }
-
-    .page { display:none; padding:1.5rem; }
-    .page.active { display:block; }
-
-    /* STATS GRID */
-    .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:1rem; margin-bottom:1.5rem; }
-    .stat-card {
-      background:var(--card); border-radius:var(--r); box-shadow:var(--sombra);
-      padding:1.25rem; display:flex; align-items:center; gap:1rem;
-    }
-    .stat-icon {
-      width:48px; height:48px; border-radius:12px;
-      display:flex; align-items:center; justify-content:center;
-    }
-    .stat-icon .material-icons-round { font-size:24px; color:#fff; }
-    .stat-card h3 { font-size:1.6rem; font-weight:800; }
-    .stat-card p  { font-size:.78rem; color:var(--cinza); font-weight:600; }
-
-    /* TABLE */
-    .table-card { background:var(--card); border-radius:var(--r); box-shadow:var(--sombra); overflow:hidden; }
-    .table-header {
-      padding:1rem 1.25rem; border-bottom:1px solid var(--borda);
-      display:flex; align-items:center; gap:.75rem;
-    }
-    .table-header h3 { font-size:.95rem; font-weight:800; flex:1; }
-    .search-bar {
-      display:flex; align-items:center; gap:.5rem;
-      background:var(--bg); border:1px solid var(--borda);
-      border-radius:999px; padding:.35rem .85rem;
-    }
-    .search-bar .material-icons-round { font-size:18px; color:var(--cinza); }
-    .search-bar input {
-      border:none; background:none; outline:none;
-      font-family:var(--font); font-size:.85rem; color:var(--texto); width:160px;
-    }
-    table { width:100%; border-collapse:collapse; }
-    thead tr { background:var(--bg); }
-    th { padding:.65rem 1rem; text-align:left; font-size:.75rem; font-weight:800; color:var(--cinza); text-transform:uppercase; letter-spacing:.05em; }
-    td { padding:.75rem 1rem; border-top:1px solid var(--borda); font-size:.85rem; vertical-align:middle; }
-    tr:hover td { background:#FAFBFC; }
-    .user-cell { display:flex; align-items:center; gap:.6rem; }
-    .user-cell img { width:32px; height:32px; border-radius:50%; object-fit:cover; }
-    .user-cell div strong { font-size:.85rem; display:block; }
-    .user-cell div small { font-size:.73rem; color:var(--cinza); }
-    .badge {
-      padding:.2rem .55rem; border-radius:999px;
-      font-size:.72rem; font-weight:700; display:inline-flex; align-items:center; gap:.2rem;
-    }
-    .badge-ok    { background:#C6F6D5; color:#276749; }
-    .badge-ban   { background:#FED7D7; color:#9B2C2C; }
-    .badge-admin { background:var(--turq-l); color:var(--turq-d); }
-    .badge-user  { background:#EDF2F7; color:var(--suave); }
-
-    /* ACTION BUTTONS */
-    .actions { display:flex; gap:.35rem; flex-wrap:wrap; }
-    .btn-act {
-      display:flex; align-items:center; gap:.25rem;
-      padding:.3rem .65rem; border-radius:8px; border:none;
-      font-family:var(--font); font-size:.75rem; font-weight:700;
-      cursor:pointer; transition:all .15s;
-    }
-    .btn-act .material-icons-round { font-size:14px; }
-    .btn-act-view  { background:var(--turq-l); color:var(--turq-d); }
-    .btn-act-edit  { background:#EDF2F7; color:var(--suave); }
-    .btn-act-ban   { background:#FED7D7; color:var(--perigo); }
-    .btn-act-unban { background:#C6F6D5; color:var(--ok); }
-    .btn-act-del   { background:#FED7D7; color:var(--perigo); }
-    .btn-act-warn  { background:#FEEBC8; color:var(--aviso); }
-    .btn-act-admin { background:var(--turq-l); color:var(--turq-d); }
-    .btn-act:hover { opacity:.8; transform:scale(.97); }
-
-    /* FORM */
-    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
-    .form-group { display:flex; flex-direction:column; gap:.4rem; }
-    .form-group.full { grid-column:1/-1; }
-    .form-group label { font-size:.8rem; font-weight:700; color:var(--suave); }
-    .form-group input, .form-group textarea, .form-group select {
-      border:1.5px solid var(--borda); border-radius:10px;
-      padding:.65rem .9rem; font-family:var(--font); font-size:.88rem; outline:none;
-      transition:border-color .2s; background:var(--bg); color:var(--texto);
-      resize:vertical;
-    }
-    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-      border-color:var(--turq); background:#fff;
-    }
-    .btn-primary-admin {
-      display:flex; align-items:center; justify-content:center; gap:.4rem;
-      background:linear-gradient(135deg,var(--turq),var(--verde));
-      color:#fff; border:none; border-radius:999px;
-      padding:.8rem 1.75rem; font-family:var(--font); font-size:.9rem; font-weight:700;
-      cursor:pointer; transition:all .2s; box-shadow:0 4px 14px rgba(0,201,177,.3);
-    }
-    .btn-primary-admin:hover { opacity:.9; transform:translateY(-1px); }
-    .btn-primary-admin:disabled { opacity:.5; cursor:not-allowed; transform:none; }
-    .btn-primary-admin .material-icons-round { font-size:18px; }
-
-    /* MODAL */
-    .modal-bg {
-      display:none; position:fixed; inset:0; background:rgba(0,0,0,.5);
-      backdrop-filter:blur(4px); z-index:500;
-      align-items:center; justify-content:center;
-    }
-    .modal-bg.open { display:flex; animation:fadeIn .2s ease; }
-    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-    .modal-box {
-      background:var(--card); border-radius:20px; padding:1.5rem;
-      width:min(560px,92vw); max-height:90vh; overflow-y:auto;
-      animation:scaleIn .25s ease;
-    }
-    @keyframes scaleIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:none} }
-    .modal-title {
-      font-size:1rem; font-weight:800; margin-bottom:1.25rem;
-      display:flex; align-items:center; gap:.5rem; justify-content:space-between;
-    }
-    .modal-close-btn {
-      background:var(--bg); border:none; border-radius:50%;
-      width:30px; height:30px; display:flex; align-items:center; justify-content:center;
-      cursor:pointer;
-    }
-    .modal-close-btn .material-icons-round { font-size:17px; }
-
-    /* USER PROFILE MODAL */
-    .user-profile-modal { }
-    .upm-header {
-      display:flex; align-items:center; gap:1rem; margin-bottom:1.25rem;
-      padding-bottom:1rem; border-bottom:1px solid var(--borda);
-    }
-    .upm-avatar { position:relative; }
-    .upm-avatar img { width:72px; height:72px; border-radius:50%; object-fit:cover; border:3px solid var(--turq); }
-    .upm-change-photo {
-      position:absolute; bottom:0; right:0; background:var(--turq); border:2px solid #fff;
-      border-radius:50%; width:24px; height:24px; display:flex; align-items:center;
-      justify-content:center; cursor:pointer; border:none;
-    }
-    .upm-change-photo .material-icons-round { font-size:13px; color:#fff; }
-    .upm-info h3 { font-size:1rem; font-weight:800; }
-    .upm-info p  { font-size:.8rem; color:var(--cinza); }
-    .upm-stats { display:flex; gap:.5rem; margin-top:.5rem; flex-wrap:wrap; }
-    .upm-stat {
-      background:var(--bg); border-radius:8px; padding:.3rem .65rem;
-      font-size:.75rem; font-weight:700;
-    }
-    .section-title { font-size:.82rem; font-weight:800; color:var(--cinza); text-transform:uppercase; letter-spacing:.06em; margin:.75rem 0 .4rem; }
-    .post-item, .module-item, .comment-item-admin {
-      background:var(--bg); border-radius:10px; padding:.75rem; margin-bottom:.5rem;
-    }
-    .post-item-header, .module-item-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:.35rem; }
-    .post-item-text, .module-item-desc { font-size:.85rem; color:var(--suave); line-height:1.5; }
-    .post-item-meta { font-size:.72rem; color:var(--cinza); margin-top:.3rem; }
-    .item-actions { display:flex; gap:.25rem; }
-
-    /* TOAST */
-    .admin-toast {
-      position:fixed; bottom:1.5rem; right:1.5rem; z-index:9999;
-      background:var(--texto); color:#fff; padding:.6rem 1.2rem;
-      border-radius:999px; font-size:.85rem; font-weight:600;
-      opacity:0; transform:translateY(10px); transition:all .3s; pointer-events:none;
-    }
-    .admin-toast.show { opacity:1; transform:translateY(0); }
-    .admin-toast.ok   { background:var(--ok); }
-    .admin-toast.err  { background:var(--perigo); }
-
-    /* LOADING */
-    .spinner { width:28px; height:28px; border:3px solid var(--borda); border-top-color:var(--turq); border-radius:50%; animation:spin .7s linear infinite; }
-    @keyframes spin { to{transform:rotate(360deg)} }
-    .loading-row { display:flex; align-items:center; gap:.75rem; padding:1.5rem; color:var(--cinza); }
-
-    /* WARN MODAL */
-    .warn-textarea { width:100%; border:1.5px solid var(--borda); border-radius:10px; padding:.7rem; font-family:var(--font); font-size:.88rem; resize:vertical; min-height:100px; outline:none; }
-    .warn-textarea:focus { border-color:var(--turq); }
-
-    /* Módulos oficiais IA */
-    .ia-steps { display:flex; flex-direction:column; gap:.5rem; margin-bottom:1rem; }
-    .ia-step {
-      display:flex; align-items:center; gap:.75rem;
-      padding:.6rem .85rem; background:var(--bg); border-radius:10px;
-    }
-    .ia-step .step-num {
-      width:24px; height:24px; border-radius:50%;
-      background:var(--turq); color:#fff; font-size:.75rem; font-weight:800;
-      display:flex; align-items:center; justify-content:center; flex-shrink:0;
-    }
-    .ia-step p { font-size:.82rem; color:var(--suave); }
-    .ia-result { background:var(--bg); border-radius:12px; padding:1rem; margin-top:1rem; }
-    .ia-result h4 { font-size:.9rem; font-weight:800; margin-bottom:.5rem; }
-    .ia-result pre { font-size:.78rem; color:var(--suave); white-space:pre-wrap; line-height:1.6; max-height:300px; overflow-y:auto; }
-
-    /* Avisos list */
-    .aviso-item {
-      background:var(--bg); border-radius:10px; padding:.75rem;
-      display:flex; align-items:flex-start; gap:.75rem; margin-bottom:.5rem;
-    }
-    .aviso-icon { font-size:1.5rem; flex-shrink:0; }
-    .aviso-body { flex:1; }
-    .aviso-body strong { font-size:.88rem; display:block; }
-    .aviso-body small  { font-size:.75rem; color:var(--cinza); }
-    .aviso-body p { font-size:.83rem; color:var(--suave); margin-top:.2rem; }
-
-    @media (max-width:768px) {
-      :root { --sidebar:0px; }
-      .sidebar { transform:translateX(-100%); transition:transform .3s; }
-      .sidebar.open { transform:translateX(0); --sidebar:240px; }
-      .main-area { margin-left:0; }
-      .mobile-menu-btn { display:flex !important; }
-      .stats-grid { grid-template-columns:1fr 1fr; }
-      .form-grid { grid-template-columns:1fr; }
-    }
-    .mobile-menu-btn { display:none; background:none; border:none; cursor:pointer; }
-    .mobile-menu-btn .material-icons-round { font-size:24px; }
-  </style>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 </head>
+
 <body>
 
-<!-- LOGIN ADMIN -->
-<div id="login-screen">
-  <div class="admin-login-card">
-    <div class="admin-login-logo">
-      <span class="material-icons-round">admin_panel_settings</span>
-      <h1>SF Studies <span>Admin</span></h1>
-    </div>
-    <p>Área restrita. Somente administradores autorizados.</p>
-    <div class="admin-input">
-      <span class="material-icons-round">mail</span>
-      <input type="email" id="adm-email" placeholder="E-mail de administrador" />
-    </div>
-    <div class="admin-input">
-      <span class="material-icons-round">lock</span>
-      <input type="password" id="adm-senha" placeholder="Senha" />
-    </div>
-    <p id="login-error" style="display:none;color:#FFC3C3;font-size:.83rem"></p>
-    <button class="btn-admin-login" onclick="adminLogin()">
-      <span class="material-icons-round">login</span> Entrar no painel
-    </button>
-  </div>
+<!-- LOADING -->
+<div id="loading-screen">
+
+<div class="loading-logo">
+📚
 </div>
 
-<!-- APP SHELL -->
-<div id="app-shell">
+<h1>Sexta Feira Studies</h1>
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-      <span class="material-icons-round">auto_stories</span>
-      <div>
-        <span>SF Studies</span>
-        <small>Painel Admin</small>
-      </div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="sidebar-section">Visão Geral</div>
-      <a class="nav-link active" onclick="showPage('dashboard')">
-        <span class="material-icons-round">dashboard</span> Dashboard
-      </a>
+<div class="loading-spinner"></div>
 
-      <div class="sidebar-section">Usuários</div>
-      <a class="nav-link" onclick="showPage('usuarios')">
-        <span class="material-icons-round">group</span> Usuários
-        <span class="nav-badge" id="badge-usuarios">0</span>
-      </a>
-
-      <div class="sidebar-section">Conteúdo</div>
-      <a class="nav-link" onclick="showPage('posts')">
-        <span class="material-icons-round">feed</span> Posts
-      </a>
-      <a class="nav-link" onclick="showPage('modulos')">
-        <span class="material-icons-round">layers</span> Módulos
-      </a>
-      <a class="nav-link" onclick="showPage('modulos-oficiais')">
-        <span class="material-icons-round">star</span> Módulos Oficiais IA
-      </a>
-      <a class="nav-link" onclick="showPage('fases')">
-        <span class="material-icons-round">map</span> Fases / Trilha
-      </a>
-
-      <div class="sidebar-section">Comunicação</div>
-      <a class="nav-link" onclick="showPage('avisos')">
-        <span class="material-icons-round">notifications</span> Avisos Globais
-      </a>
-    </nav>
-    <div class="sidebar-footer">
-      <div class="sidebar-user">
-        <img id="admin-avatar" src="" alt="" />
-        <div>
-          <strong id="admin-name">Admin</strong>
-          <small id="admin-email-txt"></small>
-        </div>
-      </div>
-      <button class="btn-logout-admin" onclick="adminLogout()">
-        <span class="material-icons-round">logout</span> Sair
-      </button>
-    </div>
-  </aside>
-
-  <!-- MAIN -->
-  <div class="main-area">
-    <div class="topbar">
-      <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">
-        <span class="material-icons-round">menu</span>
-      </button>
-      <h2 id="page-title">Dashboard</h2>
-      <div class="topbar-actions" id="topbar-actions"></div>
-    </div>
-
-    <!-- ===== DASHBOARD ===== -->
-    <div id="page-dashboard" class="page active">
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon" style="background:linear-gradient(135deg,#00C9B1,#00A896)">
-            <span class="material-icons-round">group</span>
-          </div>
-          <div><h3 id="stat-total-users">0</h3><p>Usuários cadastrados</p></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:linear-gradient(135deg,#667eea,#764ba2)">
-            <span class="material-icons-round">layers</span>
-          </div>
-          <div><h3 id="stat-total-mods">0</h3><p>Módulos criados</p></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:linear-gradient(135deg,#f093fb,#f5576c)">
-            <span class="material-icons-round">feed</span>
-          </div>
-          <div><h3 id="stat-total-posts">0</h3><p>Posts no feed</p></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:linear-gradient(135deg,#4facfe,#00f2fe)">
-            <span class="material-icons-round">block</span>
-          </div>
-          <div><h3 id="stat-banned">0</h3><p>Usuários banidos</p></div>
-        </div>
-      </div>
-
-      <div class="table-card">
-        <div class="table-header">
-          <h3>🏆 Top 10 Ranking</h3>
-        </div>
-        <table>
-          <thead><tr><th>#</th><th>Usuário</th><th>XP</th><th>Nível</th><th>Módulos</th></tr></thead>
-          <tbody id="dash-ranking"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ===== USUÁRIOS ===== -->
-    <div id="page-usuarios" class="page">
-      <div class="table-card">
-        <div class="table-header">
-          <h3>Todos os usuários</h3>
-          <div class="search-bar">
-            <span class="material-icons-round">search</span>
-            <input type="text" id="search-users" placeholder="Buscar..." oninput="filterUsers(this.value)" />
-          </div>
-        </div>
-        <table>
-          <thead><tr><th>Usuário</th><th>XP</th><th>Nível</th><th>Status</th><th>Ações</th></tr></thead>
-          <tbody id="users-tbody">
-            <tr><td colspan="5"><div class="loading-row"><div class="spinner"></div><span>Carregando...</span></div></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ===== POSTS ===== -->
-    <div id="page-posts" class="page">
-      <div class="table-card">
-        <div class="table-header">
-          <h3>Posts da comunidade</h3>
-          <div class="search-bar">
-            <span class="material-icons-round">search</span>
-            <input type="text" id="search-posts" placeholder="Buscar..." oninput="filterPosts(this.value)" />
-          </div>
-        </div>
-        <table>
-          <thead><tr><th>Autor</th><th>Conteúdo</th><th>Curtidas</th><th>Comentários</th><th>Data</th><th>Ações</th></tr></thead>
-          <tbody id="posts-tbody">
-            <tr><td colspan="6"><div class="loading-row"><div class="spinner"></div><span>Carregando...</span></div></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ===== MÓDULOS ===== -->
-    <div id="page-modulos" class="page">
-      <div class="table-card">
-        <div class="table-header">
-          <h3>Módulos de estudo</h3>
-          <div class="search-bar">
-            <span class="material-icons-round">search</span>
-            <input type="text" id="search-mods" placeholder="Buscar..." oninput="filterMods(this.value)" />
-          </div>
-        </div>
-        <table>
-          <thead><tr><th>Título</th><th>Matéria</th><th>Autor</th><th>Vídeos</th><th>Quiz</th><th>Ações</th></tr></thead>
-          <tbody id="mods-tbody">
-            <tr><td colspan="6"><div class="loading-row"><div class="spinner"></div><span>Carregando...</span></div></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ===== MÓDULOS OFICIAIS IA ===== -->
-    <div id="page-modulos-oficiais" class="page">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
-        <div>
-          <div class="table-card" style="padding:1.25rem;margin-bottom:1.5rem">
-            <h3 style="font-size:.95rem;font-weight:800;margin-bottom:1rem">✨ Gerar módulo oficial com IA</h3>
-            <div class="ia-steps">
-              <div class="ia-step"><span class="step-num">1</span><p>Preencha as informações abaixo</p></div>
-              <div class="ia-step"><span class="step-num">2</span><p>A IA (Groq) gera o conteúdo completo</p></div>
-              <div class="ia-step"><span class="step-num">3</span><p>Revise e publique com bônus de XP</p></div>
-            </div>
-            <div class="form-grid">
-              <div class="form-group full">
-                <label>Título do módulo</label>
-                <input type="text" id="om-titulo" placeholder="Ex: Revolução Francesa — Causas e Consequências" />
-              </div>
-              <div class="form-group">
-                <label>Matéria</label>
-                <select id="om-materia">
-                  <option value="">Selecione...</option>
-                  <option>Matemática</option><option>Português</option><option>História</option>
-                  <option>Geografia</option><option>Ciências</option><option>Biologia</option>
-                  <option>Física</option><option>Química</option><option>Inglês</option>
-                  <option>Filosofia</option><option>Sociologia</option><option>Programação</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Dificuldade</label>
-                <select id="om-dificuldade">
-                  <option value="1">🟢 Fácil</option>
-                  <option value="2">🟡 Médio</option>
-                  <option value="3" selected>🟠 Difícil</option>
-                  <option value="4">🔴 Avançado</option>
-                  <option value="5">💀 Expert</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>XP ao concluir</label>
-                <input type="number" id="om-xp" value="50" min="10" max="500" />
-              </div>
-              <div class="form-group full">
-                <label>Descrição / foco</label>
-                <textarea id="om-desc" rows="2" placeholder="O que este módulo vai cobrir?"></textarea>
-              </div>
-            </div>
-            <button class="btn-primary-admin" id="btn-gerar-modulo" onclick="gerarModuloOficial()" style="margin-top:.5rem">
-              <span class="material-icons-round">auto_awesome</span> Gerar com IA
-            </button>
-          </div>
-        </div>
-        <div>
-          <div class="table-card" style="padding:1.25rem">
-            <h3 style="font-size:.95rem;font-weight:800;margin-bottom:1rem">📋 Prévia do módulo gerado</h3>
-            <div id="om-preview">
-              <p style="color:var(--cinza);font-size:.85rem;text-align:center;padding:2rem">O conteúdo gerado aparecerá aqui.</p>
-            </div>
-            <button class="btn-primary-admin" id="btn-publicar-modulo" onclick="publicarModuloOficial()" style="margin-top:1rem;display:none">
-              <span class="material-icons-round">publish</span> Publicar módulo oficial
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="table-card" style="margin-top:1.5rem">
-        <div class="table-header"><h3>Módulos oficiais publicados</h3></div>
-        <table>
-          <thead><tr><th>Título</th><th>Matéria</th><th>XP</th><th>Dificuldade</th><th>Ações</th></tr></thead>
-          <tbody id="oficiais-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ===== FASES ===== -->
-    <div id="page-fases" class="page">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
-        <div class="table-card" style="padding:1.25rem">
-          <h3 style="font-size:.95rem;font-weight:800;margin-bottom:1rem">➕ Adicionar fase à trilha</h3>
-          <div class="form-grid">
-            <div class="form-group">
-              <label>ID único</label>
-              <input type="text" id="fase-id" placeholder="f15, f16..." />
-            </div>
-            <div class="form-group">
-              <label>Emoji</label>
-              <input type="text" id="fase-emoji" placeholder="🎯" />
-            </div>
-            <div class="form-group full">
-              <label>Título</label>
-              <input type="text" id="fase-titulo" placeholder="Nome da fase" />
-            </div>
-            <div class="form-group">
-              <label>Matéria</label>
-              <select id="fase-materia">
-                <option>Matemática</option><option>Português</option><option>História</option>
-                <option>Geografia</option><option>Ciências</option><option>Biologia</option>
-                <option>Física</option><option>Química</option><option>Inglês</option>
-                <option>Filosofia</option><option>Sociologia</option><option>Programação</option><option>Geral</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>XP necessário para desbloquear</label>
-              <input type="number" id="fase-xpreq" value="0" min="0" />
-            </div>
-            <div class="form-group">
-              <label>XP ganho ao concluir</label>
-              <input type="number" id="fase-xpganho" value="30" min="5" />
-            </div>
-            <div class="form-group">
-              <label>Dificuldade (1-5)</label>
-              <select id="fase-dif">
-                <option value="1">1 — Fácil</option>
-                <option value="2">2 — Médio</option>
-                <option value="3" selected>3 — Difícil</option>
-                <option value="4">4 — Avançado</option>
-                <option value="5">5 — Expert</option>
-              </select>
-            </div>
-          </div>
-          <button class="btn-primary-admin" onclick="salvarFase()">
-            <span class="material-icons-round">save</span> Salvar fase
-          </button>
-        </div>
-        <div class="table-card" style="padding:1.25rem">
-          <h3 style="font-size:.95rem;font-weight:800;margin-bottom:1rem">Fases personalizadas</h3>
-          <div id="fases-list">
-            <p style="color:var(--cinza);font-size:.85rem">Nenhuma fase personalizada ainda.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== AVISOS ===== -->
-    <div id="page-avisos" class="page">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
-        <div class="table-card" style="padding:1.25rem">
-          <h3 style="font-size:.95rem;font-weight:800;margin-bottom:1rem">📣 Enviar aviso global</h3>
-          <div class="form-group" style="margin-bottom:1rem">
-            <label>Título do aviso</label>
-            <input type="text" id="aviso-titulo" placeholder="Ex: Manutenção programada" />
-          </div>
-          <div class="form-group" style="margin-bottom:1rem">
-            <label>Mensagem</label>
-            <textarea id="aviso-msg" rows="4" placeholder="Detalhes do aviso..."></textarea>
-          </div>
-          <div class="form-group" style="margin-bottom:1rem">
-            <label>Tipo</label>
-            <select id="aviso-tipo">
-              <option value="info">ℹ️ Informativo</option>
-              <option value="aviso">⚠️ Aviso importante</option>
-              <option value="ok">✅ Novidade / Atualização</option>
-              <option value="urgente">🚨 Urgente</option>
-            </select>
-          </div>
-          <button class="btn-primary-admin" onclick="enviarAviso()">
-            <span class="material-icons-round">send</span> Enviar aviso
-          </button>
-        </div>
-        <div class="table-card" style="padding:1.25rem">
-          <h3 style="font-size:.95rem;font-weight:800;margin-bottom:1rem">Avisos enviados</h3>
-          <div id="avisos-list">
-            <p style="color:var(--cinza);font-size:.85rem">Nenhum aviso ainda.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /main-area -->
-</div><!-- /app-shell -->
-
-<!-- ===== MODAL: VER USUÁRIO ===== -->
-<div id="modal-user" class="modal-bg">
-  <div class="modal-box">
-    <div class="modal-title">
-      <span>Ficha do usuário</span>
-      <button class="modal-close-btn" onclick="closeModal('modal-user')"><span class="material-icons-round">close</span></button>
-    </div>
-    <div id="modal-user-body"></div>
-  </div>
 </div>
 
-<!-- ===== MODAL: EDITAR USUÁRIO ===== -->
-<div id="modal-edit-user" class="modal-bg">
-  <div class="modal-box">
-    <div class="modal-title">
-      <span>Editar usuário</span>
-      <button class="modal-close-btn" onclick="closeModal('modal-edit-user')"><span class="material-icons-round">close</span></button>
-    </div>
-    <div id="modal-edit-user-body"></div>
-  </div>
+<!-- LOGIN -->
+<section id="login-screen">
+
+<div class="login-container">
+
+<div class="logo-area">
+
+<div class="logo-circle">
+📚
 </div>
 
-<!-- ===== MODAL: AVISO PESSOAL ===== -->
-<div id="modal-warn" class="modal-bg">
-  <div class="modal-box">
-    <div class="modal-title">
-      <span>⚠️ Enviar aviso ao usuário</span>
-      <button class="modal-close-btn" onclick="closeModal('modal-warn')"><span class="material-icons-round">close</span></button>
-    </div>
-    <div id="modal-warn-body"></div>
-  </div>
+<h1>Sexta Feira</h1>
+
+<h2>Studies</h2>
+
+<p>
+Aprender nunca foi tão incrível.
+</p>
+
 </div>
 
-<div id="admin-toast" class="admin-toast"></div>
+<div class="auth-tabs">
 
-<!-- Firebase -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {
-  getDatabase, ref, get, set, update, remove, push, query, orderByChild, limitToLast, onValue
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+<button
+id="btnTabEntrar"
+class="tab-btn active"
+onclick="mostrarLogin()">
+Entrar
+</button>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBAs3irtV6MuTPHmsxYwYSFMTkX6_6ntz8",
-  authDomain: "sexta-feira-fb01a.firebaseapp.com",
-  databaseURL: "https://sexta-feira-fb01a-default-rtdb.firebaseio.com",
-  projectId: "sexta-feira-fb01a",
-  storageBucket: "sexta-feira-fb01a.firebasestorage.app",
-  messagingSenderId: "82809140147",
-  appId: "1:82809140147:web:2a3f3ece3e81c33b0b91c6"
-};
+<button
+id="btnTabCadastro"
+class="tab-btn"
+onclick="mostrarCadastro()">
+Criar Conta
+</button>
 
-const GROQ_KEY   = "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";
-const GROQ_MODEL = "llama-3.3-70b-versatile";
-const IMGBB_KEY  = "86427cccd2a94fb42a0754ffd7f19e79";
+</div>
 
-// Lista de admins autorizados (adicione UIDs ou emails aqui)
-const ADMINS = ["antony.jefferson.2011@gmail.com"]; // Ou adicione emails dos admins
+<!-- LOGIN -->
 
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getDatabase(app);
+<div id="loginForm">
 
-let allUsers = [];
-let allPosts = [];
-let allMods  = [];
-let currentAdminUser = null;
-let moduloGeradoData  = null;
+<div class="input-group">
 
-// ---- UTILS ----
-function toast(msg, type="") {
-  const t = document.getElementById("admin-toast");
-  t.textContent = msg;
-  t.className = "admin-toast show" + (type?" "+type:"");
-  setTimeout(() => t.className="admin-toast", 3000);
-}
+<span class="material-icons-round">
+mail
+</span>
 
-function esc(s) {
-  if(!s) return "";
-  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-}
+<input
+type="email"
+id="loginEmail"
+placeholder="Seu e-mail">
 
-function fmtDate(ts) {
-  if(!ts) return "-";
-  return new Date(ts).toLocaleString("pt-BR");
-}
+</div>
 
-function levelFromXP(xp) { return Math.floor((xp||0)/100)+1; }
+<div class="input-group">
 
-function openModal(id) {
-  const m = document.getElementById(id);
-  m.classList.add("open");
-  m.style.display = "flex";
-}
-window.openModal = openModal;
-function closeModal(id) {
-  const m = document.getElementById(id);
-  m.classList.remove("open");
-  setTimeout(()=>m.style.display="none",200);
-}
-window.closeModal = closeModal;
+<span class="material-icons-round">
+lock
+</span>
 
-// ---- AUTH ----
-window.adminLogin = async function() {
-  const email = document.getElementById("adm-email").value.trim();
-  const senha  = document.getElementById("adm-senha").value;
-  const errEl  = document.getElementById("login-error");
-  errEl.style.display = "none";
-  if(!email||!senha) { errEl.textContent="Preencha e-mail e senha."; errEl.style.display="block"; return; }
-  try {
-    await signInWithEmailAndPassword(auth, email, senha);
-  } catch(e) {
-    errEl.textContent = "E-mail ou senha incorretos.";
-    errEl.style.display = "block";
-  }
-};
+<input
+type="password"
+id="loginSenha"
+placeholder="Sua senha">
 
-window.adminLogout = async function() { await signOut(auth); };
+</div>
 
-onAuthStateChanged(auth, async user => {
-  if(user) {
-    currentAdminUser = user;
-    // Verifica se é admin (checa no banco)
-    const snap = await get(ref(db, `users/${user.uid}`));
-    const ud   = snap.val();
-    if(!ud || !ud.isAdmin) {
-      // Tenta pelo email
-      if(!ADMINS.includes(user.email)) {
-        toast("Acesso negado. Você não é administrador.", "err");
-        await signOut(auth);
-        return;
-      }
-      // Define como admin no banco
-      await update(ref(db, `users/${user.uid}`), { isAdmin: true });
-    }
-    document.getElementById("login-screen").style.display = "none";
-    document.getElementById("app-shell").style.display    = "flex";
-    const ph = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName||"A")}&background=00C9B1&color=fff`;
-    document.getElementById("admin-avatar").src   = ph;
-    document.getElementById("admin-name").textContent     = user.displayName || "Admin";
-    document.getElementById("admin-email-txt").textContent = user.email;
-    loadAll();
-  } else {
-    document.getElementById("login-screen").style.display = "flex";
-    document.getElementById("app-shell").style.display    = "none";
-  }
-});
+<button
+class="btn-primary"
+onclick="loginEmail()">
 
-// ---- LOAD ALL DATA ----
-async function loadAll() {
-  await Promise.all([ loadUsers(), loadPosts(), loadMods() ]);
-  loadDashboard();
-  loadAvisos();
-  loadFasesAdmin();
-  loadOficiais();
-}
+<span class="material-icons-round">
+login
+</span>
 
-async function loadUsers() {
-  const snap = await get(ref(db,"users"));
-  allUsers = [];
-  snap.forEach(c => allUsers.push({ uid:c.key, ...c.val() }));
-  allUsers.sort((a,b)=>(b.xp||0)-(a.xp||0));
-  document.getElementById("badge-usuarios").textContent = allUsers.length;
-  renderUsers(allUsers);
-}
+Entrar
 
-async function loadPosts() {
-  const snap = await get(query(ref(db,"posts"), orderByChild("createdAt"), limitToLast(200)));
-  allPosts = [];
-  snap.forEach(c => allPosts.unshift({ id:c.key, ...c.val() }));
-  renderPosts(allPosts);
-}
+</button>
 
-async function loadMods() {
-  const snap = await get(query(ref(db,"modulos"), orderByChild("createdAt"), limitToLast(200)));
-  allMods = [];
-  snap.forEach(c => allMods.unshift({ id:c.key, ...c.val() }));
-  renderMods(allMods);
-}
+<button
+class="btn-google"
+onclick="loginGoogle()">
 
-// ---- DASHBOARD ----
-function loadDashboard() {
-  const banned = allUsers.filter(u=>u.banned).length;
-  document.getElementById("stat-total-users").textContent = allUsers.length;
-  document.getElementById("stat-total-mods").textContent  = allMods.length;
-  document.getElementById("stat-total-posts").textContent = allPosts.length;
-  document.getElementById("stat-banned").textContent      = banned;
+<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg">
 
-  const tbody = document.getElementById("dash-ranking");
-  tbody.innerHTML = allUsers.slice(0,10).map((u,i) => {
-    const ph = u.photoURL || `https://ui-avatars.com/api/?name=${esc(u.name||"?")}&background=00C9B1&color=fff&size=32`;
-    return `<tr>
-      <td><strong>${i+1}º</strong></td>
-      <td><div class="user-cell"><img src="${ph}" /><div><strong>${esc(u.name||"Anônimo")}</strong><small>${esc(u.email||"")}</small></div></div></td>
-      <td><strong style="color:var(--turq)">${u.xp||0}</strong></td>
-      <td>${levelFromXP(u.xp)}</td>
-      <td>${u.modulosCount||0}</td>
-    </tr>`;
-  }).join("");
-}
+Continuar com Google
 
-// ---- USUARIOS ----
-function renderUsers(users) {
-  const tbody = document.getElementById("users-tbody");
-  if(!tbody) return;
-  if(!users.length) { tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--cinza);padding:1.5rem">Nenhum usuário encontrado</td></tr>`; return; }
-  tbody.innerHTML = users.map(u => {
-    const ph = u.photoURL || `https://ui-avatars.com/api/?name=${esc(u.name||"?")}&background=00C9B1&color=fff&size=32`;
-    const statusBadge = u.banned
-      ? `<span class="badge badge-ban">🚫 Banido</span>`
-      : `<span class="badge badge-ok">✅ Ativo</span>`;
-    const adminBadge = u.isAdmin ? `<span class="badge badge-admin" style="margin-left:.25rem">⭐ Admin</span>` : "";
-    return `<tr>
-      <td><div class="user-cell"><img src="${ph}" /><div><strong>${esc(u.name||"Anônimo")}</strong><small>${esc(u.email||"")}</small></div></div></td>
-      <td><strong style="color:var(--turq)">${u.xp||0}</strong></td>
-      <td>${levelFromXP(u.xp)}</td>
-      <td>${statusBadge}${adminBadge}</td>
-      <td><div class="actions">
-        <button class="btn-act btn-act-view" onclick="verUsuario('${u.uid}')"><span class="material-icons-round">person</span>Ver</button>
-        <button class="btn-act btn-act-edit" onclick="editarUsuario('${u.uid}')"><span class="material-icons-round">edit</span>Editar</button>
-        <button class="btn-act btn-act-warn" onclick="avisarUsuario('${u.uid}')"><span class="material-icons-round">notification_important</span>Avisar</button>
-        ${u.banned
-          ? `<button class="btn-act btn-act-unban" onclick="toggleBan('${u.uid}',false)"><span class="material-icons-round">check_circle</span>Desbanir</button>`
-          : `<button class="btn-act btn-act-ban" onclick="toggleBan('${u.uid}',true)"><span class="material-icons-round">block</span>Banir</button>`}
-        ${u.isAdmin
-          ? `<button class="btn-act btn-act-edit" onclick="toggleAdmin('${u.uid}',false)"><span class="material-icons-round">remove_moderator</span>Remover Admin</button>`
-          : `<button class="btn-act btn-act-admin" onclick="toggleAdmin('${u.uid}',true)"><span class="material-icons-round">add_moderator</span>Admin</button>`}
-      </div></td>
-    </tr>`;
-  }).join("");
-}
+</button>
 
-window.filterUsers = function(q) {
-  const f = allUsers.filter(u =>
-    (u.name||"").toLowerCase().includes(q.toLowerCase()) ||
-    (u.email||"").toLowerCase().includes(q.toLowerCase())
-  );
-  renderUsers(f);
-};
+</div>
 
-window.verUsuario = async function(uid) {
-  const u = allUsers.find(x=>x.uid===uid);
-  if(!u) return;
-  const ph = u.photoURL || `https://ui-avatars.com/api/?name=${esc(u.name||"?")}&background=00C9B1&color=fff`;
-  const posts    = allPosts.filter(p=>p.authorId===uid);
-  const mods     = allMods.filter(m=>m.authorId===uid);
-  const progSnap = await get(ref(db,`users/${uid}/fases_concluidas`));
-  const fasesDone = progSnap.exists() ? Object.keys(progSnap.val()).length : 0;
+<!-- CADASTRO -->
 
-  document.getElementById("modal-user-body").innerHTML = `
-    <div class="upm-header">
-      <div class="upm-avatar">
-        <img id="upm-avatar-img" src="${ph}" alt="" />
-        <button class="upm-change-photo" onclick="changeUserPhoto('${uid}')"><span class="material-icons-round">photo_camera</span></button>
-        <input type="file" id="upm-photo-input" accept="image/*" style="display:none" onchange="uploadUserPhoto('${uid}',this)" />
-      </div>
-      <div class="upm-info">
-        <h3>${esc(u.name||"Anônimo")}</h3>
-        <p>${esc(u.email||"")}</p>
-        <p style="color:var(--cinza);font-size:.78rem;margin-top:.15rem">${esc(u.bio||"Sem bio")}</p>
-        <div class="upm-stats">
-          <span class="upm-stat">⚡ ${u.xp||0} XP</span>
-          <span class="upm-stat">🏅 Nível ${levelFromXP(u.xp)}</span>
-          <span class="upm-stat">🔥 ${u.streak||0} dias</span>
-          <span class="upm-stat">🗺️ ${fasesDone} fases</span>
-        </div>
-      </div>
-    </div>
+<div
+id="cadastroForm"
+style="display:none">
 
-    <div class="section-title">Posts (${posts.length})</div>
-    ${posts.length ? posts.slice(0,5).map(p=>`
-      <div class="post-item">
-        <div class="post-item-header">
-          <span style="font-size:.78rem;color:var(--cinza)">${fmtDate(p.createdAt)}</span>
-          <button class="btn-act btn-act-del" onclick="deletePost('${p.id}')"><span class="material-icons-round">delete</span>Apagar</button>
-        </div>
-        <div class="post-item-text">${esc(p.text||"[Sem texto]")}</div>
-        <div class="post-item-meta">❤️ ${p.likes?Object.keys(p.likes).length:0} curtidas · 💬 ${p.comments?Object.keys(p.comments).length:0} comentários</div>
-      </div>`).join("") : `<p style="color:var(--cinza);font-size:.83rem">Nenhum post.</p>`}
+<div class="input-group">
 
-    <div class="section-title">Módulos (${mods.length})</div>
-    ${mods.length ? mods.slice(0,5).map(m=>`
-      <div class="module-item">
-        <div class="module-item-header">
-          <strong>${esc(m.titulo)}</strong>
-          <button class="btn-act btn-act-del" onclick="deleteMod('${m.id}')"><span class="material-icons-round">delete</span>Apagar</button>
-        </div>
-        <div class="module-item-desc">${esc(m.materia)} · ${esc(m.desc||"")}</div>
-      </div>`).join("") : `<p style="color:var(--cinza);font-size:.83rem">Nenhum módulo.</p>`}
-  `;
-  openModal("modal-user");
-};
+<span class="material-icons-round">
+person
+</span>
 
-window.changeUserPhoto = function(uid) {
-  document.getElementById("upm-photo-input").click();
-};
+<input
+type="text"
+id="cadNome"
+placeholder="Seu nome">
 
-window.uploadUserPhoto = async function(uid, input) {
-  const file = input.files[0];
-  if(!file) return;
-  toast("Enviando foto...");
-  const b64 = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); });
-  const form = new FormData();
-  form.append("image", b64.split(",")[1]);
-  const resp = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`,{method:"POST",body:form});
-  const json = await resp.json();
-  if(!json.success) { toast("Erro ao enviar foto","err"); return; }
-  await update(ref(db,`users/${uid}`), { photoURL: json.data.url });
-  document.getElementById("upm-avatar-img").src = json.data.url;
-  const u = allUsers.find(x=>x.uid===uid);
-  if(u) u.photoURL = json.data.url;
-  toast("Foto atualizada!","ok");
-};
+</div>
 
-window.editarUsuario = function(uid) {
-  const u = allUsers.find(x=>x.uid===uid);
-  if(!u) return;
-  document.getElementById("modal-edit-user-body").innerHTML = `
-    <div class="form-group" style="margin-bottom:1rem">
-      <label>Nome</label>
-      <input type="text" id="eu-name" value="${esc(u.name||"")}" />
-    </div>
-    <div class="form-group" style="margin-bottom:1rem">
-      <label>Bio</label>
-      <textarea id="eu-bio" rows="2">${esc(u.bio||"")}</textarea>
-    </div>
-    <div class="form-group" style="margin-bottom:1rem">
-      <label>XP</label>
-      <input type="number" id="eu-xp" value="${u.xp||0}" />
-    </div>
-    <button class="btn-primary-admin" onclick="salvarEdicaoUser('${uid}')">
-      <span class="material-icons-round">save</span> Salvar
-    </button>`;
-  openModal("modal-edit-user");
-};
+<div class="input-group">
 
-window.salvarEdicaoUser = async function(uid) {
-  const name = document.getElementById("eu-name").value.trim();
-  const bio  = document.getElementById("eu-bio").value.trim();
-  const xp   = parseInt(document.getElementById("eu-xp").value)||0;
-  await update(ref(db,`users/${uid}`),{name,bio,xp});
-  const u = allUsers.find(x=>x.uid===uid);
-  if(u){u.name=name;u.bio=bio;u.xp=xp;}
-  renderUsers(allUsers);
-  closeModal("modal-edit-user");
-  toast("Usuário atualizado!","ok");
-};
+<span class="material-icons-round">
+mail
+</span>
 
-window.toggleBan = async function(uid, ban) {
-  await update(ref(db,`users/${uid}`),{ banned: ban });
-  if(ban) await push(ref(db,`users/${uid}/avisos`),{
-    tipo:"ban", titulo:"Conta banida", msg:"Sua conta foi banida por violar os Termos de Uso.", ts:Date.now()
-  });
-  const u = allUsers.find(x=>x.uid===uid);
-  if(u) u.banned = ban;
-  renderUsers(allUsers);
-  toast(ban?"Usuário banido!":"Usuário desbanido!","ok");
-};
+<input
+type="email"
+id="cadEmail"
+placeholder="Seu e-mail">
 
-window.toggleAdmin = async function(uid, isAdmin) {
-  await update(ref(db,`users/${uid}`),{ isAdmin });
-  const u = allUsers.find(x=>x.uid===uid);
-  if(u) u.isAdmin = isAdmin;
-  renderUsers(allUsers);
-  toast(isAdmin?"Admin concedido!":"Admin removido!","ok");
-};
+</div>
 
-window.avisarUsuario = function(uid) {
-  const u = allUsers.find(x=>x.uid===uid);
-  document.getElementById("modal-warn-body").innerHTML = `
-    <p style="margin-bottom:1rem;font-size:.88rem;color:var(--suave)">Enviar aviso para <strong>${esc(u?.name)}</strong>:</p>
-    <div class="form-group" style="margin-bottom:1rem">
-      <label>Título</label>
-      <input type="text" id="warn-titulo" placeholder="Ex: Advertência sobre conteúdo" />
-    </div>
-    <textarea class="warn-textarea" id="warn-msg" placeholder="Descreva a razão do aviso..."></textarea>
-    <button class="btn-primary-admin" style="margin-top:1rem" onclick="enviarAvisoPessoal('${uid}')">
-      <span class="material-icons-round">send</span> Enviar aviso
-    </button>`;
-  openModal("modal-warn");
-};
+<div class="input-group">
 
-window.enviarAvisoPessoal = async function(uid) {
-  const titulo = document.getElementById("warn-titulo").value.trim();
-  const msg    = document.getElementById("warn-msg").value.trim();
-  if(!titulo||!msg){ toast("Preencha título e mensagem","err"); return; }
-  await push(ref(db,`users/${uid}/avisos`),{
-    tipo:"aviso", titulo, msg, ts: Date.now()
-  });
-  closeModal("modal-warn");
-  toast("Aviso enviado!","ok");
-};
+<span class="material-icons-round">
+lock
+</span>
 
-// ---- POSTS ----
-function renderPosts(posts) {
-  const tbody = document.getElementById("posts-tbody");
-  if(!tbody) return;
-  if(!posts.length){ tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--cinza);padding:1.5rem">Nenhum post encontrado</td></tr>`; return; }
-  tbody.innerHTML = posts.map(p => {
-    const likes    = p.likes    ? Object.keys(p.likes).length    : 0;
-    const comments = p.comments ? Object.keys(p.comments).length : 0;
-    const txt = (p.text||"").substring(0,60)+(p.text&&p.text.length>60?"...":"");
-    const ph  = p.authorPhoto||`https://ui-avatars.com/api/?name=${esc(p.authorName||"?")}&background=00C9B1&color=fff&size=28`;
-    return `<tr>
-      <td><div class="user-cell"><img src="${ph}" style="width:28px;height:28px;border-radius:50%;object-fit:cover"/><span>${esc(p.authorName||"Anônimo")}</span></div></td>
-      <td style="max-width:200px">
-        ${txt ? `<span>${esc(txt)}</span>` : "<em style='color:var(--cinza)'>Sem texto</em>"}
-        ${p.imageUrl ? `<span class="badge" style="background:#EDF2F7;color:var(--suave);margin-left:.3rem">🖼️ Imagem</span>` : ""}
-      </td>
-      <td>❤️ ${likes}</td>
-      <td>💬 ${comments}</td>
-      <td style="font-size:.75rem;color:var(--cinza)">${fmtDate(p.createdAt)}</td>
-      <td><button class="btn-act btn-act-del" onclick="deletePost('${p.id}')"><span class="material-icons-round">delete</span>Apagar</button></td>
-    </tr>`;
-  }).join("");
-}
+<input
+type="password"
+id="cadSenha"
+placeholder="Crie uma senha">
 
-window.filterPosts = function(q) {
-  const f = allPosts.filter(p=>(p.text||"").toLowerCase().includes(q.toLowerCase())||(p.authorName||"").toLowerCase().includes(q.toLowerCase()));
-  renderPosts(f);
-};
+</div>
 
-window.deletePost = async function(postId) {
-  if(!confirm("Apagar este post?")) return;
-  await remove(ref(db,`posts/${postId}`));
-  allPosts = allPosts.filter(p=>p.id!==postId);
-  renderPosts(allPosts);
-  closeModal("modal-user");
-  toast("Post apagado.","ok");
-};
+<button
+class="btn-primary"
+onclick="criarConta()">
 
-// ---- MÓDULOS ----
-function renderMods(mods) {
-  const tbody = document.getElementById("mods-tbody");
-  if(!tbody) return;
-  if(!mods.length){ tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--cinza);padding:1.5rem">Nenhum módulo encontrado</td></tr>`; return; }
-  tbody.innerHTML = mods.map(m => {
-    const vids  = m.videoUrls ? Object.values(m.videoUrls).filter(Boolean).length : 0;
-    const quiz  = m.quiz      ? Object.values(m.quiz).length                      : 0;
-    const ofBadge = m.oficial ? `<span class="badge badge-admin" style="margin-left:.25rem">⭐ Oficial</span>` : "";
-    return `<tr>
-      <td><strong>${esc(m.titulo)}</strong>${ofBadge}</td>
-      <td><span class="badge badge-user">${esc(m.materia||"Geral")}</span></td>
-      <td>${esc(m.authorName||"Anônimo")}</td>
-      <td>${vids}</td>
-      <td>${quiz}</td>
-      <td><div class="actions">
-        <button class="btn-act btn-act-del" onclick="deleteMod('${m.id}')"><span class="material-icons-round">delete</span>Apagar</button>
-        ${!m.oficial?`<button class="btn-act btn-act-admin" onclick="marcarOficial('${m.id}')"><span class="material-icons-round">star</span>Oficial</button>`:""}
-      </div></td>
-    </tr>`;
-  }).join("");
-}
+<span class="material-icons-round">
+person_add
+</span>
 
-window.filterMods = function(q) {
-  const f = allMods.filter(m=>(m.titulo||"").toLowerCase().includes(q.toLowerCase())||(m.materia||"").toLowerCase().includes(q.toLowerCase()));
-  renderMods(f);
-};
+Criar Conta
 
-window.deleteMod = async function(modId) {
-  if(!confirm("Apagar este módulo?")) return;
-  await remove(ref(db,`modulos/${modId}`));
-  allMods = allMods.filter(m=>m.id!==modId);
-  renderMods(allMods);
-  closeModal("modal-user");
-  toast("Módulo apagado.","ok");
-};
+</button>
 
-window.marcarOficial = async function(modId) {
-  await update(ref(db,`modulos/${modId}`),{ oficial:true, xpBonus:30 });
-  const m = allMods.find(x=>x.id===modId);
-  if(m){m.oficial=true;}
-  renderMods(allMods);
-  toast("Módulo marcado como oficial! ⭐","ok");
-};
+</div>
 
-// ---- MÓDULOS OFICIAIS IA ----
-window.gerarModuloOficial = async function() {
-  const titulo  = document.getElementById("om-titulo").value.trim();
-  const materia = document.getElementById("om-materia").value;
-  const dif     = document.getElementById("om-dificuldade").value;
-  const xp      = parseInt(document.getElementById("om-xp").value)||50;
-  const desc    = document.getElementById("om-desc").value.trim();
-  if(!titulo||!materia){ toast("Preencha título e matéria","err"); return; }
+</div>
 
-  const btn = document.getElementById("btn-gerar-modulo");
-  btn.disabled = true;
-  btn.innerHTML = `<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:0"></div> Gerando...`;
+</section>
 
-  const prev = document.getElementById("om-preview");
-  prev.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:1rem;padding:2rem;color:var(--cinza)"><div class="spinner"></div><p>A IA está criando o conteúdo...</p></div>`;
+<!-- APP -->
 
-  const difNome = ["","Iniciante","Básico","Intermediário","Avançado","Expert"][dif];
+<section
+id="app-screen"
+style="display:none">
 
-  try {
-    const prompt = `Crie um módulo educativo oficial e completo sobre "${titulo}" para a matéria de "${materia}" com dificuldade "${difNome}".
+<header class="topbar">
 
-Responda APENAS em JSON válido, sem markdown, sem backticks, sem texto fora do JSON:
+<div class="logo-mini">
+📚 SF
+</div>
 
-{
-  "titulo": "título do módulo",
-  "descricao": "descrição clara e atraente em 2-3 frases",
-  "introducao": "texto educativo completo com 3-5 parágrafos sobre o tema",
-  "videoSugestoes": ["termo de busca 1 no youtube","termo de busca 2"],
-  "quiz": [
-    {"pergunta":"...","opcoes":["A","B","C","D"],"correta":0,"explicacao":"..."},
-    {"pergunta":"...","opcoes":["A","B","C","D"],"correta":1,"explicacao":"..."},
-    {"pergunta":"...","opcoes":["A","B","C","D"],"correta":2,"explicacao":"..."},
-    {"pergunta":"...","opcoes":["A","B","C","D"],"correta":0,"explicacao":"..."},
-    {"pergunta":"...","opcoes":["A","B","C","D"],"correta":3,"explicacao":"..."}
-  ]
-}
+<div class="top-actions">
 
-O conteúdo deve ser correto, didático e adequado para estudantes brasileiros do ensino médio.`;
+<div class="xp-box">
+⚡ <span id="xpUsuario">0</span>
+</div>
 
-    const resp = await groqFetch(prompt);
-    const clean = resp.replace(/```json|```/g,"").trim();
-    const data = JSON.parse(clean);
-    moduloGeradoData = { ...data, materia, dificuldade:parseInt(dif), xpGanho:xp, oficial:true };
+<div class="streak-box">
+🔥 <span id="streakUsuario">0</span>
+</div>
 
-    prev.innerHTML = `
-      <h4>📚 ${esc(data.titulo)}</h4>
-      <p style="font-size:.82rem;color:var(--cinza);margin:.4rem 0">${esc(materia)} · ${difNome} · ⚡ ${xp} XP</p>
-      <p style="font-size:.85rem;color:var(--suave);margin-bottom:.75rem">${esc(data.descricao)}</p>
-      <div style="background:#F0F4F8;border-radius:10px;padding:.75rem;margin-bottom:.5rem">
-        <strong style="font-size:.8rem">📝 Introdução</strong>
-        <p style="font-size:.8rem;color:var(--suave);margin-top:.3rem;line-height:1.6;max-height:120px;overflow-y:auto">${esc(data.introducao)}</p>
-      </div>
-      <div style="background:#F0F4F8;border-radius:10px;padding:.75rem">
-        <strong style="font-size:.8rem">❓ Quiz: ${data.quiz?.length||0} perguntas geradas</strong>
-        ${(data.quiz||[]).map((q,i)=>`<p style="font-size:.78rem;color:var(--suave);margin-top:.2rem">${i+1}. ${esc(q.pergunta)}</p>`).join("")}
-      </div>`;
+<img
+id="fotoPerfilTopo"
+class="top-avatar"
+src="">
 
-    document.getElementById("btn-publicar-modulo").style.display = "flex";
-    toast("Conteúdo gerado com sucesso! Revise e publique.","ok");
+</div>
 
-  } catch(e) {
-    prev.innerHTML = `<p style="color:var(--perigo);font-size:.85rem">Erro: ${esc(e.message)}</p>`;
-    toast("Erro ao gerar conteúdo: "+e.message,"err");
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = `<span class="material-icons-round">auto_awesome</span> Gerar com IA`;
-  }
-};
+</header>
 
-window.publicarModuloOficial = async function() {
-  if(!moduloGeradoData) return;
-  const btn = document.getElementById("btn-publicar-modulo");
-  btn.disabled = true;
-  btn.innerHTML = `<div class="spinner" style="width:18px;height:18px;border-width:2px;margin:0"></div> Publicando...`;
-  try {
-    const modRef = push(ref(db,"modulos"));
-    await set(modRef, {
-      titulo:     moduloGeradoData.titulo,
-      desc:       moduloGeradoData.descricao,
-      materia:    moduloGeradoData.materia,
-      intro:      moduloGeradoData.introducao,
-      quiz:       moduloGeradoData.quiz,
-      xpGanho:    moduloGeradoData.xpGanho,
-      dificuldade:moduloGeradoData.dificuldade,
-      oficial:    true,
-      coverUrl:   null,
-      videoUrls:  [],
-      authorId:   currentAdminUser.uid,
-      authorName: "SF Studies Oficial ⭐",
-      createdAt:  Date.now()
-    });
-    toast("Módulo oficial publicado! ⭐","ok");
-    document.getElementById("om-preview").innerHTML = `<p style="color:var(--ok);font-size:.88rem;text-align:center;padding:2rem">✅ Módulo publicado com sucesso!</p>`;
-    document.getElementById("btn-publicar-modulo").style.display = "none";
-    moduloGeradoData = null;
-    await loadMods();
-    loadOficiais();
-  } catch(e) {
-    toast("Erro ao publicar: "+e.message,"err");
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = `<span class="material-icons-round">publish</span> Publicar módulo oficial`;
-  }
-};
+<!-- CONTEÚDO -->
 
-async function loadOficiais() {
-  const tbody = document.getElementById("oficiais-tbody");
-  if(!tbody) return;
-  const oficiais = allMods.filter(m=>m.oficial);
-  if(!oficiais.length){ tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--cinza);padding:1.5rem">Nenhum módulo oficial ainda.</td></tr>`; return; }
-  tbody.innerHTML = oficiais.map(m=>`<tr>
-    <td><strong>${esc(m.titulo)}</strong></td>
-    <td><span class="badge badge-user">${esc(m.materia)}</span></td>
-    <td><strong style="color:var(--turq)">+${m.xpGanho||50} XP</strong></td>
-    <td>${["","🟢","🟡","🟠","🔴","💀"][m.dificuldade||1]}</td>
-    <td><button class="btn-act btn-act-del" onclick="deleteMod('${m.id}')"><span class="material-icons-round">delete</span>Apagar</button></td>
-  </tr>`).join("");
-}
+<main id="conteudo">
 
-// ---- FASES ADMIN ----
-async function loadFasesAdmin() {
-  const snap = await get(ref(db,"fases_oficiais"));
-  const list = document.getElementById("fases-list");
-  if(!list) return;
-  if(!snap.exists()){ list.innerHTML=`<p style="color:var(--cinza);font-size:.85rem">Nenhuma fase personalizada ainda.</p>`; return; }
-  const fases=[];
-  snap.forEach(c=>fases.push({id:c.key,...c.val()}));
-  list.innerHTML = fases.map(f=>`
-    <div style="background:var(--bg);border-radius:10px;padding:.75rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.75rem">
-      <span style="font-size:1.5rem">${f.emoji||"📖"}</span>
-      <div style="flex:1">
-        <strong style="font-size:.88rem">${esc(f.titulo)}</strong>
-        <p style="font-size:.75rem;color:var(--cinza)">${esc(f.materia)} · Req: ${f.xpReq} XP · +${f.xpGanho} XP</p>
-      </div>
-      <button class="btn-act btn-act-del" onclick="deleteFase('${f.id}')"><span class="material-icons-round">delete</span></button>
-    </div>`).join("");
-}
+<!-- HOME -->
 
-window.salvarFase = async function() {
-  const id      = document.getElementById("fase-id").value.trim();
-  const emoji   = document.getElementById("fase-emoji").value.trim()||"📖";
-  const titulo  = document.getElementById("fase-titulo").value.trim();
-  const materia = document.getElementById("fase-materia").value;
-  const xpReq   = parseInt(document.getElementById("fase-xpreq").value)||0;
-  const xpGanho = parseInt(document.getElementById("fase-xpganho").value)||30;
-  const dif     = parseInt(document.getElementById("fase-dif").value)||1;
-  if(!id||!titulo){ toast("Preencha ID e título.","err"); return; }
-  await set(ref(db,`fases_oficiais/${id}`),{emoji,titulo,materia,xpReq,xpGanho,dificuldade:dif,oficial:true});
-  toast("Fase salva!","ok");
-  loadFasesAdmin();
-};
+<section
+id="homeTab"
+class="tabPage active">
 
-window.deleteFase = async function(id) {
-  if(!confirm("Remover esta fase?")) return;
-  await remove(ref(db,`fases_oficiais/${id}`));
-  toast("Fase removida.","ok");
-  loadFasesAdmin();
-};
+<h2>
+Olá,
+<span id="nomeUsuario">
+Estudante
+</span>
+👋
+</h2>
 
-// ---- AVISOS ----
-window.enviarAviso = async function() {
-  const titulo = document.getElementById("aviso-titulo").value.trim();
-  const msg    = document.getElementById("aviso-msg").value.trim();
-  const tipo   = document.getElementById("aviso-tipo").value;
-  if(!titulo||!msg){ toast("Preencha título e mensagem.","err"); return; }
-  await push(ref(db,"avisos_globais"),{titulo,msg,tipo,ts:Date.now(),autorId:currentAdminUser.uid});
-  document.getElementById("aviso-titulo").value = "";
-  document.getElementById("aviso-msg").value = "";
-  toast("Aviso enviado para todos os usuários!","ok");
-  loadAvisos();
-};
+<div class="card progresso-card">
 
-async function loadAvisos() {
-  const snap = await get(ref(db,"avisos_globais"));
-  const list = document.getElementById("avisos-list");
-  if(!list) return;
-  if(!snap.exists()){ list.innerHTML=`<p style="color:var(--cinza);font-size:.85rem">Nenhum aviso enviado ainda.</p>`; return; }
-  const avisos=[];
-  snap.forEach(c=>avisos.unshift({id:c.key,...c.val()}));
-  const icons = {info:"ℹ️",aviso:"⚠️",ok:"✅",urgente:"🚨"};
-  list.innerHTML = avisos.slice(0,10).map(a=>`
-    <div class="aviso-item">
-      <span class="aviso-icon">${icons[a.tipo]||"📢"}</span>
-      <div class="aviso-body">
-        <strong>${esc(a.titulo)}</strong>
-        <small>${fmtDate(a.ts)}</small>
-        <p>${esc(a.msg)}</p>
-      </div>
-      <button class="btn-act btn-act-del" onclick="deleteAviso('${a.id}')"><span class="material-icons-round">delete</span></button>
-    </div>`).join("");
-}
+<h3>
+Seu progresso
+</h3>
 
-window.deleteAviso = async function(id) {
-  await remove(ref(db,`avisos_globais/${id}`));
-  toast("Aviso removido.","ok");
-  loadAvisos();
-};
+<div class="barra">
 
-// ---- NAVIGATION ----
-window.showPage = function(page) {
-  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-  document.querySelectorAll(".nav-link").forEach(l=>l.classList.remove("active"));
-  document.getElementById(`page-${page}`).classList.add("active");
-  event.currentTarget?.classList.add("active");
-  const titles = {
-    dashboard:"Dashboard",usuarios:"Usuários",posts:"Posts da Comunidade",
-    modulos:"Módulos de Estudo","modulos-oficiais":"Módulos Oficiais IA",
-    fases:"Fases / Trilha",avisos:"Avisos Globais"
-  };
-  document.getElementById("page-title").textContent = titles[page]||page;
-  if(document.getElementById("sidebar").classList.contains("open")) {
-    document.getElementById("sidebar").classList.remove("open");
-  }
-};
+<div
+id="barraXP"
+class="barra-fill">
+</div>
 
-// ---- GROQ ----
-async function groqFetch(prompt) {
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions",{
-    method:"POST",
-    headers:{"Content-Type":"application/json","Authorization":`Bearer ${GROQ_KEY}`},
-    body:JSON.stringify({model:"llama-3.3-70b-versatile",messages:[{role:"user",content:prompt}],max_tokens:2000,temperature:0.7})
-  });
-  const json = await res.json();
-  if(!res.ok) throw new Error(json.error?.message||"Groq error");
-  return json.choices[0].message.content;
-}
-</script>
+</div>
+
+</div>
+
+<!-- AVISO GLOBAL -->
+
+<div
+id="avisoGlobal"
+class="aviso-global"
+style="display:none">
+
+</div>
+
+<!-- CRIAR POST -->
+
+<div
+class="criar-post"
+onclick="abrirCriarPost()">
+
+O que você aprendeu hoje?
+
+</div>
+
+<!-- FEED -->
+
+<div id="feed">
+
+</div>
+
+</section>
+
+<!-- MODULOS -->
+
+<section
+id="modulosTab"
+class="tabPage">
+
+<h2>Módulos</h2>
+
+<div id="listaModulos">
+
+</div>
+
+</section>
+
+<!-- FASES -->
+
+<section
+id="fasesTab"
+class="tabPage">
+
+<h2>Fases</h2>
+
+<div id="listaFases">
+
+</div>
+
+</section>
+
+<!-- RANKING -->
+
+<section
+id="rankingTab"
+class="tabPage">
+
+<h2>Ranking</h2>
+
+<div id="rankingLista">
+
+</div>
+
+</section>
+
+<!-- PERFIL -->
+
+<section
+id="perfilTab"
+class="tabPage">
+
+<div class="perfil-card">
+
+<img
+id="perfilFoto"
+class="perfil-foto"
+src="">
+
+<h2 id="perfilNome">
+Usuário
+</h2>
+
+<p id="perfilBio">
+Estudante
+</p>
+
+<div class="perfil-stats">
+
+<div>
+<strong id="perfilXP">
+0
+</strong>
+
+<span>XP</span>
+</div>
+
+<div>
+<strong id="perfilNivel">
+1
+</strong>
+
+<span>Nível</span>
+</div>
+
+<div>
+<strong id="perfilPosts">
+0
+</strong>
+
+<span>Posts</span>
+</div>
+
+</div>
+
+<button
+class="btn-primary"
+onclick="logout()">
+
+Sair
+
+</button>
+
+</div>
+
+</section>
+
+</main>
+
+<!-- MENU INFERIOR -->
+
+<nav class="bottom-nav">
+
+<button
+class="nav-btn active"
+onclick="abrirTab('homeTab',this)">
+
+<span class="material-icons-round">
+home
+</span>
+
+</button>
+
+<button
+class="nav-btn"
+onclick="abrirTab('modulosTab',this)">
+
+<span class="material-icons-round">
+menu_book
+</span>
+
+</button>
+
+<button
+class="nav-btn central-btn"
+onclick="abrirCriarPost()">
+
+<span class="material-icons-round">
+add
+</span>
+
+</button>
+
+<button
+class="nav-btn"
+onclick="abrirTab('rankingTab',this)">
+
+<span class="material-icons-round">
+emoji_events
+</span>
+
+</button>
+
+<button
+class="nav-btn"
+onclick="abrirTab('perfilTab',this)">
+
+<span class="material-icons-round">
+person
+</span>
+
+</button>
+
+</nav>
+
+</section>
+
+<script type="module" src="js/script.js"></script>
+
 </body>
 </html>
