@@ -1,1585 +1,841 @@
 /**
- * SEXTA FEIRA STUDIES — js/script.js
+ * SEXTA FEIRA STUDIES — script.js
  * Firebase Modular | Realtime Database | ImgBB
+ * REGRAS FIREBASE NECESSÁRIAS (Realtime Database → Regras):
+ * { "rules": { ".read": "auth != null", ".write": "auth != null" } }
  */
 
-// ─────────────────────────────────────────────
-// IMPORTS FIREBASE
-// ─────────────────────────────────────────────
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getAuth,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider,
-  signOut,
-  updateProfile,
-  sendPasswordResetEmail
+  getAuth, onAuthStateChanged, signInWithEmailAndPassword,
+  createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider,
+  signOut, updateProfile, sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  getDatabase,
-  ref,
-  set,
-  get,
-  push,
-  update,
-  remove,
-  onValue,
-  off,
-  query,
-  orderByChild,
-  limitToLast,
-  serverTimestamp
+  getDatabase, ref, set, get, push, update, remove,
+  onValue, off, query, orderByChild, limitToLast
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-// ─────────────────────────────────────────────
-// CONFIGURAÇÃO
-// ─────────────────────────────────────────────
-const FIREBASE_CONFIG = {
+/* ─── CONFIG ─── */
+const FB = {
   apiKey: "AIzaSyC9Lcx3mYGYXavUi_b9c_tRbS3Otm9JQNk",
   authDomain: "sexta-feira-studies.firebaseapp.com",
   databaseURL: "https://sexta-feira-studies-default-rtdb.firebaseio.com",
   projectId: "sexta-feira-studies",
   storageBucket: "sexta-feira-studies.firebasestorage.app",
   messagingSenderId: "673251857052",
-  appId: "1:673251857052:web:0ef6929ea93123f7a91359",
-  measurementId: "G-0ZG2PM61XT"
+  appId: "1:673251857052:web:0ef6929ea93123f7a91359"
 };
+const IMGBB = "86427cccd2a94fb42a0754ffd7f19e79";
 
-const IMGBB_API_KEY = "86427cccd2a94fb42a0754ffd7f19e79";
+const fbApp = initializeApp(FB);
+const auth  = getAuth(fbApp);
+const db    = getDatabase(fbApp);
+const gp    = new GoogleAuthProvider();
 
-// ─────────────────────────────────────────────
-// INIT FIREBASE
-// ─────────────────────────────────────────────
-const app      = initializeApp(FIREBASE_CONFIG);
-const auth     = getAuth(app);
-const db       = getDatabase(app);
-const provider = new GoogleAuthProvider();
+/* ─── ESTADO GLOBAL ─── */
+let EU = null;       // usuário Firebase Auth
+let PERFIL = null;   // dados do banco
+let feedOff = null;  // unsubscribe do feed
+let postImg64 = null;
+let capaImg64 = null;
+let postIdAberto = null;
+let filtroMat = "";
+let todosModulos = [];
+let qCount = 0;
+let abaAtual = "home";
 
-// ─────────────────────────────────────────────
-// ESTADO GLOBAL
-// ─────────────────────────────────────────────
-let usuarioAtual     = null;  // dados Firebase Auth
-let perfilAtual      = null;  // dados do banco
-let postImagemBase64 = null;
-let capaModuloBase64 = null;
-let postIdAtual      = null;  // post aberto no modal comentários
-let materiaFiltro    = "";
-let feedListener     = null;
-let questaoCount     = 0;
-let abaCurrent       = "home";
-
-// Fases estáticas da trilha (admin pode adicionar mais via banco)
-const FASES_BASE = [
-  { id:"f01", emoji:"🌱", titulo:"Início da Jornada",     materia:"Geral",         xpReq:0,   xpPremio:30,  dif:1 },
-  { id:"f02", emoji:"📐", titulo:"Números e Operações",   materia:"Matemática",    xpReq:30,  xpPremio:35,  dif:1 },
-  { id:"f03", emoji:"📚", titulo:"Leitura e Escrita",     materia:"Português",     xpReq:65,  xpPremio:35,  dif:1 },
-  { id:"f04", emoji:"🌍", titulo:"Explorando o Mundo",    materia:"Geografia",     xpReq:100, xpPremio:40,  dif:2 },
-  { id:"f05", emoji:"🏛️", titulo:"Raízes da Civilização", materia:"História",      xpReq:140, xpPremio:40,  dif:2 },
-  { id:"f06", emoji:"🔬", titulo:"Ciências da Vida",      materia:"Ciências",      xpReq:180, xpPremio:45,  dif:2 },
-  { id:"f07", emoji:"🧬", titulo:"DNA e Evolução",        materia:"Biologia",      xpReq:225, xpPremio:50,  dif:3 },
-  { id:"f08", emoji:"⚛️", titulo:"Leis da Física",        materia:"Física",        xpReq:275, xpPremio:50,  dif:3 },
-  { id:"f09", emoji:"🧪", titulo:"Reações Químicas",      materia:"Química",       xpReq:325, xpPremio:55,  dif:3 },
-  { id:"f10", emoji:"🇬🇧", titulo:"English Journey",       materia:"Inglês",        xpReq:380, xpPremio:55,  dif:3 },
-  { id:"f11", emoji:"🤔", titulo:"Pensamento Crítico",    materia:"Filosofia",     xpReq:435, xpPremio:60,  dif:4 },
-  { id:"f12", emoji:"💻", titulo:"Código e Algoritmos",   materia:"Programação",   xpReq:495, xpPremio:65,  dif:4 },
-  { id:"f13", emoji:"💼", titulo:"Mundo dos Negócios",    materia:"Empreend.",     xpReq:560, xpPremio:70,  dif:4 },
-  { id:"f14", emoji:"🏆", titulo:"Mestre do Saber",       materia:"Geral",         xpReq:640, xpPremio:120, dif:5 },
+/* ─── FASES BASE ─── */
+const FASES = [
+  {id:"f01",em:"🌱",tit:"Início da Jornada",    mat:"Geral",       xpReq:0,   xpP:30, dif:1},
+  {id:"f02",em:"📐",tit:"Números e Operações",  mat:"Matemática",  xpReq:30,  xpP:35, dif:1},
+  {id:"f03",em:"📚",tit:"Leitura e Escrita",    mat:"Português",   xpReq:65,  xpP:35, dif:1},
+  {id:"f04",em:"🌍",tit:"Explorando o Mundo",   mat:"Geografia",   xpReq:100, xpP:40, dif:2},
+  {id:"f05",em:"🏛️",tit:"Raízes Históricas",    mat:"História",    xpReq:140, xpP:40, dif:2},
+  {id:"f06",em:"🔬",tit:"Ciências da Vida",     mat:"Ciências",    xpReq:180, xpP:45, dif:2},
+  {id:"f07",em:"🧬",tit:"DNA e Evolução",       mat:"Biologia",    xpReq:225, xpP:50, dif:3},
+  {id:"f08",em:"⚛️",tit:"Leis da Física",       mat:"Física",      xpReq:275, xpP:50, dif:3},
+  {id:"f09",em:"🧪",tit:"Reações Químicas",     mat:"Química",     xpReq:325, xpP:55, dif:3},
+  {id:"f10",em:"🇬🇧",tit:"English Journey",      mat:"Inglês",      xpReq:380, xpP:55, dif:3},
+  {id:"f11",em:"🤔",tit:"Pensamento Crítico",   mat:"Filosofia",   xpReq:435, xpP:60, dif:4},
+  {id:"f12",em:"💻",tit:"Código e Algoritmos",  mat:"Programação", xpReq:495, xpP:65, dif:4},
+  {id:"f13",em:"💼",tit:"Mundo dos Negócios",   mat:"Empreend.",   xpReq:560, xpP:70, dif:4},
+  {id:"f14",em:"🏆",tit:"Mestre do Saber",      mat:"Geral",       xpReq:640, xpP:120,dif:5},
 ];
+const POSICOES = ["cen","esq","cen","dir","cen","esq","cen","dir","cen","esq","cen","dir","cen","cen"];
 
-// Posições na trilha (zigue-zague)
-const POSICOES = ["centro","esquerda","centro","direita","centro","esquerda","centro","direita","centro","esquerda","centro","direita","centro","centro"];
+/* ─── UTILS ─── */
+function esc(s){ if(!s)return""; return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function ago(ts){ if(!ts)return""; const d=Math.floor((Date.now()-ts)/1000); if(d<60)return"agora"; if(d<3600)return Math.floor(d/60)+"min"; if(d<86400)return Math.floor(d/3600)+"h"; return Math.floor(d/86400)+"d"; }
+function ytId(url){ const m=url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/); return m?m[1]:null; }
+function nivel(xp){ return Math.floor((xp||0)/100)+1; }
+function progXP(xp){ return (xp||0)%100; }
+function av(nome){ return `https://ui-avatars.com/api/?name=${encodeURIComponent(nome||"U")}&background=00C9B1&color=fff&size=128`; }
+function matEmoji(m){ const map={"Matemática":"📐","Português":"📚","Literatura":"📖","Redação":"✍️","História":"🏛️","Geografia":"🌍","Ciências":"🔬","Biologia":"🧬","Física":"⚛️","Química":"🧪","Inglês":"🇬🇧","Espanhol":"🇪🇸","Filosofia":"🤔","Sociologia":"🧑‍🤝‍🧑","Artes":"🎨","Ed. Física":"🏃","Programação":"💻","Robótica":"🤖","Empreend.":"💼"}; return map[m]||"📕"; }
+function errFb(c){ const m={"auth/user-not-found":"E-mail não cadastrado.","auth/wrong-password":"Senha incorreta.","auth/invalid-credential":"E-mail ou senha inválidos.","auth/email-already-in-use":"E-mail já em uso.","auth/weak-password":"Senha muito fraca (mín. 6 chars).","auth/invalid-email":"E-mail inválido.","auth/too-many-requests":"Muitas tentativas.","auth/popup-closed-by-user":"Login cancelado.","auth/network-request-failed":"Sem conexão."}; return m[c]||"Erro: "+c; }
 
-// ─────────────────────────────────────────────
-// UTILITÁRIOS
-// ─────────────────────────────────────────────
-
-/** Escapa HTML para evitar XSS */
-function esc(str) {
-  if (!str) return "";
-  return String(str)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+function toast(msg, tipo=""){
+  const el=document.getElementById("toast");
+  if(!el)return;
+  el.textContent=msg; el.className="toast show"+(tipo?" "+tipo:"");
+  clearTimeout(el._t); el._t=setTimeout(()=>{el.className="toast"},3200);
+}
+function showXP(n){
+  const el=document.getElementById("xp-pop"),t=document.getElementById("xp-pop-txt");
+  if(!el||!t)return;
+  t.textContent="+"+n+" XP"; el.style.display="flex";
+  setTimeout(()=>el.classList.add("show"),10);
+  setTimeout(()=>{el.classList.remove("show");setTimeout(()=>{el.style.display="none"},350)},2000);
+}
+async function toB64(file){ return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);}); }
+async function imgbb(b64){
+  const f=new FormData(); f.append("image",b64.split(",")[1]);
+  const r=await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB}`,{method:"POST",body:f});
+  const j=await r.json(); if(!j.success)throw new Error("ImgBB falhou"); return j.data.url;
 }
 
-/** Formata timestamp para exibição relativa */
-function formatarTempo(ts) {
-  if (!ts) return "";
-  const diff = Math.floor((Date.now() - ts) / 1000);
-  if (diff < 60)   return "agora";
-  if (diff < 3600) return Math.floor(diff / 60) + "min";
-  if (diff < 86400)return Math.floor(diff / 3600) + "h";
-  return Math.floor(diff / 86400) + "d";
-}
-
-/** Converte URL do YouTube para ID do vídeo */
-function extrairYoutubeId(url) {
-  const r = /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-  const m = url.match(r);
-  return m ? m[1] : null;
-}
-
-/** Calcula nível a partir do XP */
-function calcularNivel(xp) {
-  return Math.floor((xp || 0) / 100) + 1;
-}
-
-/** Calcula progresso dentro do nível atual (0-100) */
-function calcularProgresso(xp) {
-  return (xp || 0) % 100;
-}
-
-/** Mostra toast de notificação */
-function toast(msg, tipo = "") {
-  const el = document.getElementById("toast");
-  if (!el) return;
-  el.textContent = msg;
-  el.className = "toast visivel" + (tipo ? " " + tipo : "");
-  clearTimeout(el._timer);
-  el._timer = setTimeout(() => { el.className = "toast"; }, 3200);
-}
-
-/** Mostra popup de XP ganho */
-function mostrarXP(quantidade) {
-  const el = document.getElementById("xp-popup");
-  const txt = document.getElementById("xp-popup-txt");
-  if (!el || !txt) return;
-  txt.textContent = "+" + quantidade + " XP";
-  el.style.display = "flex";
-  setTimeout(() => el.classList.add("visivel"), 10);
-  setTimeout(() => {
-    el.classList.remove("visivel");
-    setTimeout(() => { el.style.display = "none"; }, 350);
-  }, 2000);
-}
-
-/** Converte File para base64 */
-function arquivoParaBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload  = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-/** Faz upload de imagem no ImgBB e retorna URL */
-async function uploadImgBB(base64) {
-  const form = new FormData();
-  form.append("image", base64.split(",")[1]);
-  const resp = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-    method: "POST", body: form
-  });
-  const json = await resp.json();
-  if (!json.success) throw new Error("ImgBB: falha no upload");
-  return json.data.url;
-}
-
-/** Avatar padrão via UI Avatars */
-function avatarPadrao(nome) {
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(nome || "U")}&background=00C9B1&color=fff&size=128`;
-}
-
-/** Traduz erros do Firebase para PT-BR */
-function traduzirErrFirebase(code) {
-  const map = {
-    "auth/user-not-found":        "E-mail não cadastrado.",
-    "auth/wrong-password":        "Senha incorreta.",
-    "auth/invalid-credential":    "E-mail ou senha inválidos.",
-    "auth/email-already-in-use":  "Este e-mail já está em uso.",
-    "auth/weak-password":         "Senha muito fraca (mín. 6 caracteres).",
-    "auth/invalid-email":         "E-mail inválido.",
-    "auth/too-many-requests":     "Muitas tentativas. Aguarde.",
-    "auth/popup-closed-by-user":  "Login cancelado.",
-    "auth/network-request-failed":"Sem conexão. Verifique a internet.",
-  };
-  return map[code] || "Erro: " + code;
-}
-
-// ─────────────────────────────────────────────
-// MODAIS
-// ─────────────────────────────────────────────
-function abrirModal(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.style.display = "flex";
-  el.classList.add("ativo");
-  // Preparar dados do modal criar post
-  if (id === "modal-criar-post" && perfilAtual) {
-    document.getElementById("post-criar-avatar").src  = perfilAtual.fotoURL || avatarPadrao(perfilAtual.nome);
-    document.getElementById("post-criar-nome").textContent = perfilAtual.nome || "Você";
+/* ─── MODAIS ─── */
+function openModal(id){
+  const el=document.getElementById(id); if(!el)return;
+  el.style.display="flex";
+  if(id==="m-post"&&PERFIL){
+    const a=document.getElementById("post-av-img"); if(a)a.src=PERFIL.foto||av(PERFIL.nome);
+    const n=document.getElementById("post-av-nome"); if(n)n.textContent=PERFIL.nome||"Você";
+    const ca=document.getElementById("bar-av"); if(ca)ca.src=PERFIL.foto||av(PERFIL.nome);
   }
-  // Preparar modal editar perfil
-  if (id === "modal-editar-perfil" && perfilAtual) {
-    document.getElementById("editar-nome").value = perfilAtual.nome || "";
-    document.getElementById("editar-bio").value  = perfilAtual.bio  || "";
+  if(id==="m-edit-pf"&&PERFIL){
+    const n=document.getElementById("edit-nome"); if(n)n.value=PERFIL.nome||"";
+    const b=document.getElementById("edit-bio");  if(b)b.value=PERFIL.bio||"";
   }
 }
-window.abrirModal = abrirModal;
+window.openModal=openModal;
+function closeModal(id){ const el=document.getElementById(id); if(el)el.style.display="none"; }
+window.closeModal=closeModal;
+document.querySelectorAll(".modal-ov").forEach(m=>m.addEventListener("click",e=>{if(e.target===m)m.style.display="none";}));
 
-function fecharModal(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.classList.remove("ativo");
-  el.style.display = "none";
+/* ─── AUTH ─── */
+window.trocarAba=function(aba){
+  document.querySelectorAll(".auth-aba").forEach((b,i)=>b.classList.toggle("ativa",["entrar","cadastro"][i]===aba));
+  document.querySelectorAll(".auth-painel").forEach(p=>p.classList.toggle("ativo",p.id==="painel-"+aba));
+  ["err-entrar","err-cadastro"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
+};
+window.toggleOlho=function(id,btn){
+  const i=document.getElementById(id); if(!i)return;
+  const ic=btn.querySelector(".material-icons-round");
+  i.type=i.type==="password"?"text":"password";
+  ic.textContent=i.type==="password"?"visibility":"visibility_off";
+};
+function mostrarErroAuth(id,msg){ const e=document.getElementById(id); if(!e)return; e.textContent=msg; e.style.display="block"; }
+function setBtnLoad(id,load,label){
+  const b=document.getElementById(id); if(!b)return;
+  b.disabled=load;
+  b.innerHTML=load?'<span class="material-icons-round" style="animation:girar .7s linear infinite">refresh</span> Aguarde...':label;
 }
-window.fecharModal = fecharModal;
 
-// Fechar modal ao clicar no overlay
-document.querySelectorAll(".modal-overlay").forEach(mo => {
-  mo.addEventListener("click", e => {
-    if (e.target === mo) {
-      mo.style.display = "none";
-      mo.classList.remove("ativo");
-    }
-  });
-});
-
-// ─────────────────────────────────────────────
-// AUTH: LOGIN / CADASTRO
-// ─────────────────────────────────────────────
-
-/** Alterna entre abas de auth */
-window.trocarAbaAuth = function(aba) {
-  document.querySelectorAll(".auth-aba").forEach(b => b.classList.toggle("ativa", b.dataset.aba === aba));
-  document.querySelectorAll(".auth-painel").forEach(p => p.classList.toggle("ativo", p.id === "painel-" + aba));
-  document.getElementById("erro-entrar").style.display    = "none";
-  document.getElementById("erro-cadastro").style.display  = "none";
+window.fazerLogin=async function(){
+  const email=document.getElementById("e-email")?.value.trim();
+  const senha=document.getElementById("e-senha")?.value;
+  document.getElementById("err-entrar").style.display="none";
+  if(!email||!senha){mostrarErroAuth("err-entrar","Preencha e-mail e senha.");return;}
+  setBtnLoad("btn-entrar",true,'<span class="material-icons-round">login</span> Entrar');
+  try{ await signInWithEmailAndPassword(auth,email,senha); }
+  catch(e){ mostrarErroAuth("err-entrar",errFb(e.code)); setBtnLoad("btn-entrar",false,'<span class="material-icons-round">login</span> Entrar'); }
 };
 
-/** Mostra/oculta senha */
-window.alternarSenha = function(inputId, btn) {
-  const inp  = document.getElementById(inputId);
-  const icon = btn.querySelector(".material-icons-round");
-  if (!inp) return;
-  if (inp.type === "password") {
-    inp.type = "text";
-    icon.textContent = "visibility_off";
-  } else {
-    inp.type = "password";
-    icon.textContent = "visibility";
-  }
+window.fazerCadastro=async function(){
+  const nome=document.getElementById("c-nome")?.value.trim();
+  const email=document.getElementById("c-email")?.value.trim();
+  const senha=document.getElementById("c-senha")?.value;
+  const conf=document.getElementById("c-confirma")?.value;
+  document.getElementById("err-cadastro").style.display="none";
+  if(!nome){mostrarErroAuth("err-cadastro","Digite seu nome.");return;}
+  if(!email){mostrarErroAuth("err-cadastro","Digite seu e-mail.");return;}
+  if(senha.length<6){mostrarErroAuth("err-cadastro","Senha mínima: 6 caracteres.");return;}
+  if(senha!==conf){mostrarErroAuth("err-cadastro","As senhas não coincidem.");return;}
+  setBtnLoad("btn-cadastro",true,'<span class="material-icons-round">person_add</span> Criando...');
+  try{
+    const c=await createUserWithEmailAndPassword(auth,email,senha);
+    await updateProfile(c.user,{displayName:nome});
+  }catch(e){ mostrarErroAuth("err-cadastro",errFb(e.code)); setBtnLoad("btn-cadastro",false,'<span class="material-icons-round">person_add</span> Criar conta'); }
 };
 
-/** Mostrar erro de auth */
-function mostrarErroAuth(painelId, msg) {
-  const el = document.getElementById(painelId);
-  if (!el) return;
-  el.textContent = msg;
-  el.style.display = "block";
-}
-
-/** Login com e-mail/senha */
-window.fazerLogin = async function() {
-  const email = document.getElementById("entrar-email").value.trim();
-  const senha  = document.getElementById("entrar-senha").value;
-  document.getElementById("erro-entrar").style.display = "none";
-  if (!email || !senha) { mostrarErroAuth("erro-entrar", "Preencha e-mail e senha."); return; }
-  const btn = document.getElementById("btn-entrar");
-  btn.disabled = true; btn.innerHTML = '<span class="material-icons-round">hourglass_empty</span> Entrando...';
-  try {
-    await signInWithEmailAndPassword(auth, email, senha);
-  } catch (e) {
-    mostrarErroAuth("erro-entrar", traduzirErrFirebase(e.code));
-    btn.disabled = false; btn.innerHTML = '<span class="material-icons-round">login</span> Entrar';
-  }
+window.loginGoogle=async function(){
+  try{ await signInWithPopup(auth,gp); }
+  catch(e){ toast(errFb(e.code),"err"); }
 };
 
-/** Cadastro com e-mail/senha */
-window.fazerCadastro = async function() {
-  const nome     = document.getElementById("cad-nome").value.trim();
-  const email    = document.getElementById("cad-email").value.trim();
-  const senha    = document.getElementById("cad-senha").value;
-  const confirma = document.getElementById("cad-confirmar").value;
-  document.getElementById("erro-cadastro").style.display = "none";
-  if (!nome)               { mostrarErroAuth("erro-cadastro","Digite seu nome."); return; }
-  if (!email)              { mostrarErroAuth("erro-cadastro","Digite seu e-mail."); return; }
-  if (senha.length < 6)    { mostrarErroAuth("erro-cadastro","Senha mínima: 6 caracteres."); return; }
-  if (senha !== confirma)  { mostrarErroAuth("erro-cadastro","As senhas não coincidem."); return; }
-  const btn = document.getElementById("btn-cadastrar");
-  btn.disabled = true; btn.innerHTML = '<span class="material-icons-round">hourglass_empty</span> Criando...';
-  try {
-    const cred = await createUserWithEmailAndPassword(auth, email, senha);
-    await updateProfile(cred.user, { displayName: nome });
-    // onAuthStateChanged cuidará do restante
-  } catch (e) {
-    mostrarErroAuth("erro-cadastro", traduzirErrFirebase(e.code));
-    btn.disabled = false; btn.innerHTML = '<span class="material-icons-round">person_add</span> Criar conta';
-  }
+window.recuperarSenha=async function(){
+  const email=document.getElementById("e-email")?.value.trim();
+  if(!email){mostrarErroAuth("err-entrar","Digite seu e-mail primeiro.");return;}
+  try{ await sendPasswordResetEmail(auth,email); toast("E-mail de recuperação enviado!","ok"); }
+  catch(e){ mostrarErroAuth("err-entrar",errFb(e.code)); }
 };
 
-/** Login com Google */
-window.loginGoogle = async function() {
-  try {
-    await signInWithPopup(auth, provider);
-  } catch (e) {
-    toast(traduzirErrFirebase(e.code), "err");
-  }
-};
-
-/** Recuperar senha */
-window.recuperarSenha = async function() {
-  const email = document.getElementById("entrar-email").value.trim();
-  if (!email) { mostrarErroAuth("erro-entrar","Digite seu e-mail primeiro."); return; }
-  try {
-    await sendPasswordResetEmail(auth, email);
-    toast("E-mail de recuperação enviado!", "ok");
-  } catch (e) {
-    mostrarErroAuth("erro-entrar", traduzirErrFirebase(e.code));
-  }
-};
-
-/** Logout */
-window.fazerLogout = async function() {
-  if (feedListener) { off(ref(db, "posts")); feedListener = null; }
+window.fazerLogout=async function(){
+  if(feedOff){off(ref(db,"posts"));feedOff=null;}
   await signOut(auth);
 };
 
-// ─────────────────────────────────────────────
-// AUTH STATE: observer principal
-// ─────────────────────────────────────────────
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    usuarioAtual = user;
-    await garantirPerfil(user);
-    await carregarPerfil();
+/* ─── AUTH STATE OBSERVER ─── */
+onAuthStateChanged(auth,async user=>{
+  if(user){
+    EU=user;
+    try{
+      await garantirPerfil(user);
+      await carregarPerfil();
+    }catch(e){
+      // Se der permission denied, as regras do Firebase precisam ser configuradas
+      console.warn("Aviso Firebase:",e.message);
+      // Criar perfil local temporário
+      PERFIL={uid:user.uid,nome:user.displayName||"Estudante",email:user.email||"",foto:user.photoURL||"",bio:"",xp:0,streak:0};
+    }
     iniciarApp();
-    esconderOverlay();
+    ocultarOverlay();
     mostrarTela("tela-app");
-  } else {
-    usuarioAtual = null;
-    perfilAtual  = null;
-    if (feedListener) { off(ref(db, "posts")); feedListener = null; }
-    esconderOverlay();
+  }else{
+    EU=null; PERFIL=null;
+    if(feedOff){off(ref(db,"posts"));feedOff=null;}
+    ocultarOverlay();
     mostrarTela("tela-auth");
-    // Reset botões
-    const be = document.getElementById("btn-entrar");
-    const bc = document.getElementById("btn-cadastrar");
-    if (be) { be.disabled = false; be.innerHTML = '<span class="material-icons-round">login</span> Entrar'; }
-    if (bc) { bc.disabled = false; bc.innerHTML = '<span class="material-icons-round">person_add</span> Criar conta'; }
+    setBtnLoad("btn-entrar",false,'<span class="material-icons-round">login</span> Entrar');
+    setBtnLoad("btn-cadastro",false,'<span class="material-icons-round">person_add</span> Criar conta');
   }
 });
 
-/** Garante que o perfil do usuário existe no banco */
-async function garantirPerfil(user) {
-  const userRef = ref(db, `usuarios/${user.uid}`);
-  const snap    = await get(userRef);
-  if (!snap.exists()) {
-    await set(userRef, {
-      nome:       user.displayName || "Estudante",
-      email:      user.email || "",
-      fotoURL:    user.photoURL || "",
-      bio:        "",
-      xp:         0,
-      streak:     0,
-      ultimoLogin: Date.now(),
-      criadoEm:   Date.now(),
-      isAdmin:    false,
-      banido:     false
+async function garantirPerfil(user){
+  const r=ref(db,`usuarios/${user.uid}`);
+  const snap=await get(r);
+  if(!snap.exists()){
+    const hoje=new Date().toDateString();
+    await set(r,{
+      nome:user.displayName||"Estudante",
+      email:user.email||"",
+      foto:user.photoURL||"",
+      bio:"",xp:0,streak:1,ultimaData:hoje,
+      criadoEm:Date.now(),isAdmin:false,banido:false
     });
-  } else {
-    // Atualiza último login e checa streak
-    const dados = snap.val();
-    const hoje  = new Date().toDateString();
-    const ult   = dados.ultimoLoginData;
-    let streak  = dados.streak || 0;
-    if (ult !== hoje) {
-      const ontem = new Date(Date.now() - 86400000).toDateString();
-      streak = ult === ontem ? streak + 1 : 1;
-      await update(userRef, { ultimoLogin: Date.now(), ultimoLoginData: hoje, streak });
+  }else{
+    // Atualizar streak
+    const d=snap.val(); const hoje=new Date().toDateString();
+    if(d.ultimaData!==hoje){
+      const ontem=new Date(Date.now()-86400000).toDateString();
+      const novoStreak=d.ultimaData===ontem?(d.streak||0)+1:1;
+      await update(r,{ultimaData:hoje,streak:novoStreak});
     }
   }
 }
 
-/** Carrega dados do perfil atual */
-async function carregarPerfil() {
-  const snap = await get(ref(db, `usuarios/${usuarioAtual.uid}`));
-  if (!snap.exists()) return;
-  perfilAtual     = snap.val();
-  perfilAtual.uid = usuarioAtual.uid;
+async function carregarPerfil(){
+  const snap=await get(ref(db,`usuarios/${EU.uid}`));
+  if(!snap.exists())return;
+  PERFIL={...snap.val(),uid:EU.uid};
 }
 
-/** Mostra/esconde telas */
-function mostrarTela(id) {
-  document.querySelectorAll(".tela").forEach(t => t.classList.remove("ativa"));
-  const el = document.getElementById(id);
-  if (el) el.classList.add("ativa");
+function mostrarTela(id){
+  document.querySelectorAll(".tela").forEach(t=>t.classList.remove("ativa"));
+  const el=document.getElementById(id); if(el)el.classList.add("ativa");
+}
+function ocultarOverlay(){
+  const ol=document.getElementById("overlay"); if(!ol)return;
+  ol.classList.add("sumindo");
+  setTimeout(()=>{ ol.style.display="none"; },450);
 }
 
-function esconderOverlay() {
-  const ol = document.getElementById("overlay-carregando");
-  if (!ol) return;
-  ol.classList.add("saindo");
-  setTimeout(() => { ol.style.display = "none"; }, 450);
-}
-
-// ─────────────────────────────────────────────
-// INIT APP
-// ─────────────────────────────────────────────
-function iniciarApp() {
-  atualizarHeaderUI();
-  atualizarPerfilUI();
+/* ─── INIT ─── */
+function iniciarApp(){
+  atualizarHdr();
+  atualizarPerfil();
   carregarFeed();
   carregarModulos();
   carregarMissoes();
-  carregarAvisoGlobal();
-  verificarMissoesPendentes();
+  carregarAviso();
 }
 
-/** Atualiza header com dados do usuário */
-function atualizarHeaderUI() {
-  if (!perfilAtual) return;
-  const xp     = perfilAtual.xp || 0;
-  const streak = perfilAtual.streak || 0;
-  const foto   = perfilAtual.fotoURL || avatarPadrao(perfilAtual.nome);
-
-  const hdrXP     = document.getElementById("hdr-xp-val");
-  const hdrStreak = document.getElementById("hdr-streak-val");
-  const hdrAvatar = document.getElementById("hdr-avatar-img");
-  const criarAv   = document.getElementById("criar-post-avatar");
-  const postAv    = document.getElementById("post-criar-avatar");
-  const comAv     = document.getElementById("comentario-avatar");
-
-  if (hdrXP)     hdrXP.textContent     = xp + " XP";
-  if (hdrStreak) hdrStreak.textContent  = streak;
-  if (hdrAvatar) hdrAvatar.src          = foto;
-  if (criarAv)   criarAv.src            = foto;
-  if (postAv)    postAv.src             = foto;
-  if (comAv)     comAv.src              = foto;
+function atualizarHdr(){
+  if(!PERFIL)return;
+  const foto=PERFIL.foto||av(PERFIL.nome);
+  const xp=PERFIL.xp||0;
+  const hxp=document.getElementById("hdr-xp"); if(hxp)hxp.textContent=xp+" XP";
+  const hs=document.getElementById("hdr-streak"); if(hs)hs.textContent=PERFIL.streak||0;
+  const hai=document.getElementById("hdr-av-img"); if(hai)hai.src=foto;
+  const bav=document.getElementById("bar-av"); if(bav)bav.src=foto;
+  const pav=document.getElementById("post-av-img"); if(pav)pav.src=foto;
+  const cav=document.getElementById("coment-av"); if(cav)cav.src=foto;
 }
 
-/** Atualiza seção de perfil */
-function atualizarPerfilUI() {
-  if (!perfilAtual) return;
-  const xp    = perfilAtual.xp || 0;
-  const nivel = calcularNivel(xp);
-  const prog  = calcularProgresso(xp);
-  const foto  = perfilAtual.fotoURL || avatarPadrao(perfilAtual.nome);
-
-  const els = {
-    "perfil-avatar":        { attr: "src",        val: foto },
-    "perfil-nome":          { attr: "text",        val: perfilAtual.nome || "Estudante" },
-    "perfil-bio":           { attr: "text",        val: perfilAtual.bio || "Sem bio." },
-    "perfil-xp":            { attr: "text",        val: xp },
-    "perfil-nivel":         { attr: "text",        val: nivel },
-    "perfil-streak":        { attr: "text",        val: perfilAtual.streak || 0 },
-    "nivel-label":          { attr: "text",        val: "Nível " + nivel },
-    "nivel-xp-txt":         { attr: "text",        val: (prog) + " / 100 XP" },
-  };
-
-  for (const [id, info] of Object.entries(els)) {
-    const el = document.getElementById(id);
-    if (!el) continue;
-    if (info.attr === "src")  el.src         = info.val;
-    if (info.attr === "text") el.textContent  = info.val;
+function atualizarPerfil(){
+  if(!PERFIL)return;
+  const xp=PERFIL.xp||0; const nv=nivel(xp); const pg=progXP(xp);
+  const foto=PERFIL.foto||av(PERFIL.nome);
+  const set=(id,v,attr="text")=>{ const e=document.getElementById(id); if(!e)return; if(attr==="src")e.src=v; else e.textContent=v; };
+  set("pf-av","src"); document.getElementById("pf-av")&&(document.getElementById("pf-av").src=foto);
+  set("pf-nome",PERFIL.nome||"Estudante");
+  set("pf-bio",PERFIL.bio||"Sem bio.");
+  set("pf-xp",xp); set("pf-nivel",nv); set("pf-streak",PERFIL.streak||0);
+  set("nivel-txt","Nível "+nv); set("nivel-xp-info",pg+"/100 XP");
+  const b=document.getElementById("xp-barra"); if(b)b.style.width=pg+"%";
+  // medalhas
+  const mw=document.getElementById("pf-medalhas");
+  if(mw&&PERFIL.medalhas){
+    mw.innerHTML=Object.values(PERFIL.medalhas).map(m=>`<div class="medalha"><span class="material-icons-round">emoji_events</span>${esc(m.nome)}</div>`).join("");
   }
-
-  // Barra de progresso nível
-  const barra = document.getElementById("nivel-progresso");
-  if (barra) barra.style.width = prog + "%";
-
-  // Contagem de módulos e posts do usuário
-  contarConteudoUsuario();
-
-  // Medalhas
-  renderizarMedalhas();
-
-  // Trilha (atualiza se estiver na aba)
-  if (abaCurrent === "trilha") carregarTrilha();
+  contarPerfil();
 }
 
-/** Conta módulos e posts do usuário */
-async function contarConteudoUsuario() {
-  if (!usuarioAtual) return;
-  const [snapMods, snapPosts] = await Promise.all([
-    get(ref(db, "modulos")),
-    get(ref(db, "posts"))
-  ]);
-
-  let cMods = 0, cPosts = 0;
-  snapMods.forEach(c => { if (c.val().autorId === usuarioAtual.uid) cMods++; });
-  snapPosts.forEach(c => { if (c.val().autorId === usuarioAtual.uid) cPosts++; });
-
-  const elMods  = document.getElementById("perfil-modulos-count");
-  const elPosts = document.getElementById("perfil-posts-count");
-  if (elMods)  elMods.textContent  = cMods;
-  if (elPosts) elPosts.textContent = cPosts;
-
-  // Carregar meus módulos
-  carregarMeusModulos(snapMods);
+async function contarPerfil(){
+  if(!EU)return;
+  try{
+    const [sm,sp]=await Promise.all([get(ref(db,"modulos")),get(ref(db,"posts"))]);
+    let cm=0,cp=0;
+    sm.forEach(c=>{if(c.val().autorId===EU.uid)cm++;});
+    sp.forEach(c=>{if(c.val().autorId===EU.uid)cp++;});
+    const em=document.getElementById("pf-mods"); if(em)em.textContent=cm;
+    const ep=document.getElementById("pf-posts"); if(ep)ep.textContent=cp;
+    renderMeusModulos(sm);
+  }catch(e){}
 }
 
-/** Renderiza medalhas no perfil */
-function renderizarMedalhas() {
-  if (!perfilAtual) return;
-  const medalhas = perfilAtual.medalhas || {};
-  const wrap = document.getElementById("perfil-medalhas");
-  if (!wrap) return;
-  const lista = Object.values(medalhas);
-  if (!lista.length) { wrap.innerHTML = ""; return; }
-  wrap.innerHTML = lista.map(m => `
-    <div class="medalha">
-      <span class="material-icons-round">emoji_events</span>
-      ${esc(m.nome)}
-    </div>`).join("");
+/* ─── NAVEGAÇÃO ─── */
+window.irAba=function(aba,btn){
+  abaAtual=aba;
+  document.querySelectorAll(".aba").forEach(a=>a.classList.remove("ativa"));
+  document.querySelectorAll(".nav-btn[data-tab]").forEach(b=>b.classList.remove("ativo"));
+  const sec=document.getElementById("aba-"+aba); if(sec)sec.classList.add("ativa");
+  if(btn)btn.classList.add("ativo");
+  else{ const nb=document.querySelector(`.nav-btn[data-tab="${aba}"]`); if(nb)nb.classList.add("ativo"); }
+  const m=document.getElementById("app-main"); if(m)m.scrollTop=0;
+  if(aba==="ranking")carregarRanking();
+  if(aba==="trilha")carregarTrilha();
+  if(aba==="perfil"){atualizarPerfil();}
+  if(aba==="missoes")carregarMissoes();
+};
+
+/* ─── XP ─── */
+async function addXP(n,acao){
+  if(!EU||!PERFIL)return;
+  const novo=(PERFIL.xp||0)+n;
+  try{ await update(ref(db,`usuarios/${EU.uid}`),{xp:novo}); }catch(e){}
+  PERFIL.xp=novo; showXP(n); atualizarHdr(); atualizarPerfil();
+  if(acao)verificarMissoes(acao);
 }
 
-// ─────────────────────────────────────────────
-// NAVEGAÇÃO ENTRE ABAS
-// ─────────────────────────────────────────────
-window.irParaAba = function(aba, btn) {
-  abaCurrent = aba;
-  document.querySelectorAll(".aba").forEach(a => a.classList.remove("ativa"));
-  document.querySelectorAll(".nav-btn[data-aba]").forEach(b => b.classList.remove("ativo"));
-  const secao = document.getElementById("aba-" + aba);
-  if (secao) secao.classList.add("ativa");
-  if (btn) btn.classList.add("ativo");
-  else {
-    const navBtn = document.querySelector(`.nav-btn[data-aba="${aba}"]`);
-    if (navBtn) navBtn.classList.add("ativo");
-  }
-  // Carregar sob demanda
-  if (aba === "ranking")  carregarRanking();
-  if (aba === "trilha")   carregarTrilha();
-  if (aba === "perfil")   { atualizarPerfilUI(); contarConteudoUsuario(); }
-  if (aba === "missoes")  carregarMissoes();
-  // Scroll para o topo
-  const main = document.getElementById("app-main");
-  if (main) main.scrollTop = 0;
-};
-
-// ─────────────────────────────────────────────
-// XP SYSTEM
-// ─────────────────────────────────────────────
-async function adicionarXP(quantidade, motivo) {
-  if (!usuarioAtual || !perfilAtual) return;
-  const novoXP = (perfilAtual.xp || 0) + quantidade;
-  await update(ref(db, `usuarios/${usuarioAtual.uid}`), { xp: novoXP });
-  perfilAtual.xp = novoXP;
-  mostrarXP(quantidade);
-  atualizarHeaderUI();
-  atualizarPerfilUI();
-  if (motivo) await verificarMissoesPorAcao(motivo);
-}
-
-// ─────────────────────────────────────────────
-// AVISO GLOBAL
-// ─────────────────────────────────────────────
-async function carregarAvisoGlobal() {
-  const snap = await get(query(ref(db, "avisos"), orderByChild("criadoEm"), limitToLast(1)));
-  if (!snap.exists()) return;
-  snap.forEach(c => {
-    const a = c.val();
-    if (!a.ativo) return;
-    const box = document.getElementById("aviso-global");
-    const tit = document.getElementById("aviso-global-titulo");
-    const msg = document.getElementById("aviso-global-msg");
-    if (box && tit && msg) {
-      tit.textContent = a.titulo || "Aviso";
-      msg.textContent = a.mensagem || "";
-      box.style.display = "flex";
-    }
-  });
-}
-
-window.fecharAvisoGlobal = function() {
-  const box = document.getElementById("aviso-global");
-  if (box) box.style.display = "none";
-};
-
-// ─────────────────────────────────────────────
-// FEED / POSTS
-// ─────────────────────────────────────────────
-function carregarFeed() {
-  const lista = document.getElementById("feed-lista");
-  if (!lista) return;
-  lista.innerHTML = '<div class="carregando-box"><div class="spinner"></div><p>Carregando feed...</p></div>';
-
-  const q = query(ref(db, "posts"), orderByChild("criadoEm"), limitToLast(30));
-  if (feedListener) off(ref(db, "posts"));
-  feedListener = onValue(q, snap => {
-    const posts = [];
-    snap.forEach(c => posts.unshift({ id: c.key, ...c.val() }));
-    if (!posts.length) {
-      lista.innerHTML = '<div class="estado-vazio"><span class="material-icons-round">feed</span><p>Nenhuma publicação ainda.<br>Seja o primeiro!</p></div>';
-      return;
-    }
-    lista.innerHTML = posts.map(p => htmlPostCard(p)).join("");
-  });
-}
-
-/** Gera HTML de um card de post */
-function htmlPostCard(p) {
-  const foto     = p.autorFoto || avatarPadrao(p.autorNome);
-  const curtidoPor = p.curtidas || {};
-  const curtido  = usuarioAtual && curtidoPor[usuarioAtual.uid];
-  const numCurtidas  = Object.keys(curtidoPor).length;
-  const numComentarios = p.comentarios ? Object.keys(p.comentarios).length : 0;
-  const ehMeu    = usuarioAtual && p.autorId === usuarioAtual.uid;
-
-  return `
-    <div class="post-card" id="post-card-${esc(p.id)}">
-      <div class="post-topo">
-        <img src="${esc(foto)}" alt="" onclick="verPerfilPublico('${esc(p.autorId)}')" />
-        <div class="post-autor-info" onclick="verPerfilPublico('${esc(p.autorId)}')">
-          <strong>${esc(p.autorNome || "Anônimo")}</strong>
-          <small>${formatarTempo(p.criadoEm)}</small>
-        </div>
-        ${ehMeu ? `<button class="btn-excluir-post" onclick="excluirPost('${esc(p.id)}')" title="Excluir"><span class="material-icons-round">delete</span></button>` : ""}
-      </div>
-      <div class="post-body">
-        ${p.texto ? `<p>${esc(p.texto).replace(/\n/g,"<br>")}</p>` : ""}
-        ${p.imagemURL ? `<img src="${esc(p.imagemURL)}" alt="Imagem do post" loading="lazy" />` : ""}
-      </div>
-      <div class="post-rodape">
-        <button class="btn-curtir ${curtido ? "curtido" : ""}" onclick="curtirPost('${esc(p.id)}')">
-          <span class="material-icons-round">${curtido ? "favorite" : "favorite_border"}</span>
-          ${numCurtidas}
-        </button>
-        <button class="btn-comentar" onclick="abrirComentarios('${esc(p.id)}')">
-          <span class="material-icons-round">chat_bubble_outline</span>
-          ${numComentarios}
-        </button>
-      </div>
-    </div>`;
-}
-
-/** Curtir/descurtir post */
-window.curtirPost = async function(postId) {
-  if (!usuarioAtual) return;
-  const curtidaRef = ref(db, `posts/${postId}/curtidas/${usuarioAtual.uid}`);
-  const snap = await get(curtidaRef);
-  if (snap.exists()) {
-    await remove(curtidaRef);
-  } else {
-    await set(curtidaRef, true);
-    await adicionarXP(1, null);
-  }
-};
-
-/** Excluir post */
-window.excluirPost = async function(postId) {
-  if (!confirm("Excluir este post?")) return;
-  await remove(ref(db, `posts/${postId}`));
-  toast("Post excluído.", "ok");
-};
-
-/** Abrir modal de comentários */
-window.abrirComentarios = async function(postId) {
-  postIdAtual = postId;
-  const snap  = await get(ref(db, `posts/${postId}`));
-  if (!snap.exists()) return;
-  const p     = { id: postId, ...snap.val() };
-  const foto  = p.autorFoto || avatarPadrao(p.autorNome);
-
-  document.getElementById("ver-post-conteudo").innerHTML = `
-    <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.65rem">
-      <img src="${esc(foto)}" style="width:40px;height:40px;border-radius:50%;object-fit:cover" />
-      <div>
-        <strong style="font-size:.88rem">${esc(p.autorNome || "Anônimo")}</strong><br>
-        <small style="font-size:.72rem;color:var(--texto-mut)">${formatarTempo(p.criadoEm)}</small>
-      </div>
-    </div>
-    ${p.texto ? `<p style="font-size:.9rem;line-height:1.58;color:var(--texto-sub);margin-bottom:.5rem">${esc(p.texto).replace(/\n/g,"<br>")}</p>` : ""}
-    ${p.imagemURL ? `<img src="${esc(p.imagemURL)}" style="width:100%;border-radius:12px;max-height:240px;object-fit:cover" />` : ""}`;
-
-  // Carregar comentários
-  const snapC = await get(ref(db, `posts/${postId}/comentarios`));
-  renderizarComentarios(snapC);
-  abrirModal("modal-ver-post");
-};
-
-function renderizarComentarios(snap) {
-  const lista = document.getElementById("comentarios-lista");
-  if (!lista) return;
-  if (!snap || !snap.exists()) {
-    lista.innerHTML = '<p style="color:var(--texto-mut);font-size:.83rem;margin-bottom:.5rem">Nenhum comentário ainda. Seja o primeiro!</p>';
-    return;
-  }
-  const comentarios = [];
-  snap.forEach(c => comentarios.push({ id: c.key, ...c.val() }));
-  lista.innerHTML = comentarios.map(c => {
-    const foto = c.autorFoto || avatarPadrao(c.autorNome);
-    return `
-      <div class="comentario-item">
-        <img src="${esc(foto)}" alt="" />
-        <div class="comentario-bolha">
-          <strong>${esc(c.autorNome || "Anônimo")}</strong>
-          <span>${esc(c.texto)}</span>
-        </div>
-      </div>`;
-  }).join("");
-}
-
-/** Enviar comentário */
-window.enviarComentario = async function() {
-  const input = document.getElementById("comentario-texto");
-  const texto = input.value.trim();
-  if (!texto || !postIdAtual || !usuarioAtual || !perfilAtual) return;
-  input.value = "";
-  await push(ref(db, `posts/${postIdAtual}/comentarios`), {
-    autorId:   usuarioAtual.uid,
-    autorNome: perfilAtual.nome || "Estudante",
-    autorFoto: perfilAtual.fotoURL || "",
-    texto,
-    criadoEm:  Date.now()
-  });
-  await adicionarXP(2, "comentar");
-  // Recarregar comentários
-  const snap = await get(ref(db, `posts/${postIdAtual}/comentarios`));
-  renderizarComentarios(snap);
-  toast("Comentário enviado!", "ok");
-};
-
-// ─────────────────────────────────────────────
-// CRIAR POST
-// ─────────────────────────────────────────────
-
-/** Selecionar imagem para post */
-window.selecionarImagemPost = async function(input) {
-  if (!input.files[0]) return;
-  postImagemBase64 = await arquivoParaBase64(input.files[0]);
-  document.getElementById("post-preview-img").src = postImagemBase64;
-  document.getElementById("post-img-preview").style.display = "block";
-};
-
-window.removerImagemPost = function() {
-  postImagemBase64 = null;
-  document.getElementById("post-img-preview").style.display = "none";
-  document.getElementById("post-img-input").value = "";
-};
-
-/** Publicar post */
-window.publicarPost = async function() {
-  const texto = document.getElementById("post-texto").value.trim();
-  if (!texto && !postImagemBase64) { toast("Escreva algo ou adicione uma imagem.", "err"); return; }
-  if (!usuarioAtual || !perfilAtual) return;
-
-  const btn = document.getElementById("btn-publicar");
-  btn.disabled = true;
-  btn.innerHTML = '<span class="material-icons-round">hourglass_empty</span> Publicando...';
-
-  try {
-    let imagemURL = null;
-    if (postImagemBase64) {
-      toast("Enviando imagem...");
-      imagemURL = await uploadImgBB(postImagemBase64);
-    }
-    await push(ref(db, "posts"), {
-      autorId:   usuarioAtual.uid,
-      autorNome: perfilAtual.nome || "Estudante",
-      autorFoto: perfilAtual.fotoURL || "",
-      texto,
-      imagemURL,
-      criadoEm:  Date.now()
+/* ─── AVISO ─── */
+async function carregarAviso(){
+  try{
+    const snap=await get(query(ref(db,"avisos"),orderByChild("criadoEm"),limitToLast(1)));
+    if(!snap.exists())return;
+    snap.forEach(c=>{
+      const a=c.val(); if(!a.ativo)return;
+      const box=document.getElementById("aviso-box");
+      const t=document.getElementById("aviso-titulo");
+      const m=document.getElementById("aviso-msg");
+      if(box&&t&&m){ t.textContent=a.titulo||"Aviso"; m.textContent=a.mensagem||""; box.style.display="flex"; }
     });
-    await adicionarXP(5, "postar");
-    toast("Publicado! +5 XP 🎉", "ok");
-    document.getElementById("post-texto").value = "";
-    postImagemBase64 = null;
-    document.getElementById("post-img-preview").style.display = "none";
-    document.getElementById("post-img-input").value = "";
-    fecharModal("modal-criar-post");
-  } catch (e) {
-    toast("Erro ao publicar: " + e.message, "err");
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<span class="material-icons-round">send</span> Publicar';
-  }
-};
+  }catch(e){}
+}
 
-// ─────────────────────────────────────────────
-// MÓDULOS
-// ─────────────────────────────────────────────
-let todosModulos = [];
-
-function carregarModulos() {
-  const grade = document.getElementById("modulos-grade");
-  if (!grade) return;
-  grade.innerHTML = '<div class="carregando-box"><div class="spinner"></div><p>Carregando...</p></div>';
-  get(query(ref(db, "modulos"), orderByChild("criadoEm"), limitToLast(50))).then(snap => {
-    todosModulos = [];
-    snap.forEach(c => todosModulos.unshift({ id: c.key, ...c.val() }));
-    renderizarModulos(todosModulos, "modulos-grade");
+/* ─── FEED ─── */
+function carregarFeed(){
+  const fd=document.getElementById("feed"); if(!fd)return;
+  fd.innerHTML='<div class="load-box"><div class="spin"></div><p>Carregando...</p></div>';
+  const q=query(ref(db,"posts"),orderByChild("criadoEm"),limitToLast(30));
+  if(feedOff)off(ref(db,"posts"));
+  feedOff=onValue(q,snap=>{
+    const posts=[]; snap.forEach(c=>posts.unshift({id:c.key,...c.val()}));
+    if(!posts.length){ fd.innerHTML='<div class="vazio"><span class="material-icons-round">feed</span><p>Nenhuma publicação ainda.</p></div>'; return; }
+    fd.innerHTML=posts.map(htmlPost).join("");
   });
 }
 
-function renderizarModulos(lista, containerId) {
-  const grade = document.getElementById(containerId);
-  if (!grade) return;
-  const filtrados = lista.filter(m => {
-    const busca = (document.getElementById("busca-modulo")?.value || "").toLowerCase();
-    const textoOk = !busca || (m.titulo || "").toLowerCase().includes(busca) || (m.descricao || "").toLowerCase().includes(busca);
-    const materiaOk = !materiaFiltro || m.materia === materiaFiltro;
-    return textoOk && materiaOk;
-  });
-  if (!filtrados.length) {
-    grade.innerHTML = '<div class="estado-vazio"><span class="material-icons-round">layers_clear</span><p>Nenhum módulo encontrado.</p></div>';
-    return;
-  }
-  grade.innerHTML = filtrados.map(m => htmlModuloCard(m)).join("");
-}
-
-function htmlModuloCard(m) {
-  const curtidas = m.curtidas ? Object.keys(m.curtidas).length : 0;
-  const acessos  = m.acessos || 0;
-  const capaHtml = m.capaURL
-    ? `<div class="modulo-capa"><img src="${esc(m.capaURL)}" alt="Capa" loading="lazy" /></div>`
-    : `<div class="modulo-capa">${materiaEmoji(m.materia)}</div>`;
-
-  return `
-    <div class="modulo-card" onclick="verModulo('${esc(m.id)}')">
-      ${m.oficial ? '<div class="modulo-oficial-selo"><span class="material-icons-round">verified</span> Oficial</div>' : ""}
-      ${capaHtml}
-      <div class="modulo-corpo">
-        <span class="modulo-materia-tag">${esc(m.materia || "Geral")}</span>
-        <div class="modulo-titulo">${esc(m.titulo)}</div>
-        <div class="modulo-autor">por ${esc(m.autorNome || "Anônimo")}</div>
-        <div class="modulo-stats">
-          <span><span class="material-icons-round">favorite</span>${curtidas}</span>
-          <span><span class="material-icons-round">visibility</span>${acessos}</span>
-        </div>
+function htmlPost(p){
+  const foto=p.autorFoto||av(p.autorNome);
+  const curs=p.curtidas||{};
+  const curtido=EU&&curs[EU.uid];
+  const nc=Object.keys(curs).length;
+  const nco=p.comentarios?Object.keys(p.comentarios).length:0;
+  const ehMeu=EU&&p.autorId===EU.uid;
+  return `<div class="post-card" id="pc-${esc(p.id)}">
+    <div class="post-topo">
+      <img src="${esc(foto)}" alt="" onclick="verPerfPub('${esc(p.autorId)}')"/>
+      <div class="post-autor" onclick="verPerfPub('${esc(p.autorId)}')">
+        <strong>${esc(p.autorNome||"Anônimo")}</strong>
+        <small>${ago(p.criadoEm)}</small>
       </div>
-    </div>`;
-}
-
-function materiaEmoji(materia) {
-  const map = {
-    "Matemática":"📐","Português":"📚","Literatura":"📖","Redação":"✍️",
-    "História":"🏛️","Geografia":"🌍","Ciências":"🔬","Biologia":"🧬",
-    "Física":"⚛️","Química":"🧪","Inglês":"🇬🇧","Espanhol":"🇪🇸",
-    "Filosofia":"🤔","Sociologia":"🧑‍🤝‍🧑","Artes":"🎨","Ed. Física":"🏃",
-    "Programação":"💻","Robótica":"🤖","Empreend.":"💼"
-  };
-  return map[materia] || "📕";
-}
-
-/** Filtrar módulos */
-window.filtrarModulos = function() {
-  renderizarModulos(todosModulos, "modulos-grade");
-};
-
-// Filtro por matéria (chips)
-document.getElementById("chips-materia").addEventListener("click", e => {
-  const chip = e.target.closest(".chip");
-  if (!chip) return;
-  document.querySelectorAll("#chips-materia .chip").forEach(c => c.classList.remove("ativo"));
-  chip.classList.add("ativo");
-  materiaFiltro = chip.dataset.materia || "";
-  renderizarModulos(todosModulos, "modulos-grade");
-});
-
-/** Ver módulo completo */
-window.verModulo = async function(modId) {
-  const snap = await get(ref(db, `modulos/${modId}`));
-  if (!snap.exists()) { toast("Módulo não encontrado.", "err"); return; }
-  const m = { id: modId, ...snap.val() };
-
-  // Incrementar acessos
-  update(ref(db, `modulos/${modId}`), { acessos: (m.acessos || 0) + 1 });
-
-  // Render
-  const capaHtml = m.capaURL
-    ? `<div class="modulo-view-capa"><img src="${esc(m.capaURL)}" alt="Capa" /></div>`
-    : `<div class="modulo-view-capa">${materiaEmoji(m.materia)}</div>`;
-
-  const videosHtml = m.videos
-    ? Object.values(m.videos).filter(Boolean).map(url => {
-        const vid = extrairYoutubeId(url);
-        if (!vid) return "";
-        return `<div class="video-embed"><iframe src="https://www.youtube.com/embed/${vid}" allowfullscreen loading="lazy"></iframe></div>`;
-      }).join("")
-    : "";
-
-  const quizHtml = (m.quiz && Object.values(m.quiz).length)
-    ? renderizarQuizModulo(Object.values(m.quiz), modId)
-    : "";
-
-  document.getElementById("modulo-conteudo-view").innerHTML = `
-    ${capaHtml}
-    <div class="modulo-view-meta">
-      ${m.oficial ? '<div class="modulo-oficial-selo" style="display:inline-flex;margin-bottom:.5rem"><span class="material-icons-round">verified</span> Módulo Oficial</div>' : ""}
-      <div class="modulo-materia-tag">${esc(m.materia || "Geral")}</div>
-      <div class="modulo-view-titulo">${esc(m.titulo)}</div>
-      <div class="modulo-view-autor">
-        <img src="${esc(m.autorFoto || avatarPadrao(m.autorNome))}" alt="" />
-        <span>por ${esc(m.autorNome || "Anônimo")}</span>
-      </div>
-      ${m.descricao ? `<div class="modulo-view-desc">${esc(m.descricao)}</div>` : ""}
+      ${ehMeu?`<button class="post-del-btn" onclick="delPost('${esc(p.id)}')"><span class="material-icons-round">delete</span></button>`:""}
     </div>
-    ${m.conteudo ? `
-    <div class="modulo-view-secao">
-      <h3><span class="material-icons-round">article</span> Conteúdo</h3>
-      <div class="modulo-conteudo-txt">${esc(m.conteudo)}</div>
-    </div>` : ""}
-    ${videosHtml ? `
-    <div class="modulo-view-secao">
-      <h3><span class="material-icons-round">play_circle</span> Vídeos</h3>
-      ${videosHtml}
-    </div>` : ""}
-    ${quizHtml ? `
-    <div class="modulo-view-secao">
-      <h3><span class="material-icons-round">quiz</span> Quiz</h3>
-      ${quizHtml}
-    </div>` : ""}`;
-
-  abrirModal("modal-ver-modulo");
-};
-
-function renderizarQuizModulo(questoes, modId) {
-  return `<div class="quiz-lista" id="quiz-mod-${esc(modId)}">
-    ${questoes.map((q, qi) => `
-      <div class="quiz-questao" id="qq-${esc(modId)}-${qi}">
-        <div class="quiz-questao-enunciado">${qi+1}. ${esc(q.enunciado)}</div>
-        <div class="quiz-opcoes">
-          ${(q.opcoes || []).map((op, oi) => `
-            <button class="quiz-opcao-btn" id="qo-${esc(modId)}-${qi}-${oi}"
-              onclick="responderQuizMod('${esc(modId)}',${qi},${oi},${q.correta})">
-              ${"ABCD"[oi]}) ${esc(op)}
-            </button>`).join("")}
-        </div>
-        <div id="qf-${esc(modId)}-${qi}"></div>
-      </div>`).join("")}
-    <div id="qr-${esc(modId)}" style="display:none"></div>
+    <div class="post-body">
+      ${p.texto?`<p>${esc(p.texto).replace(/\n/g,"<br>")}</p>`:""}
+      ${p.imgURL?`<img src="${esc(p.imgURL)}" alt="" loading="lazy"/>`:""}
+    </div>
+    <div class="post-footer">
+      <button class="btn-curtir ${curtido?"curtido":""}" onclick="curtir('${esc(p.id)}')">
+        <span class="material-icons-round">${curtido?"favorite":"favorite_border"}</span>${nc}
+      </button>
+      <button class="btn-coment" onclick="abrirComent('${esc(p.id)}')">
+        <span class="material-icons-round">chat_bubble_outline</span>${nco}
+      </button>
+    </div>
   </div>`;
 }
 
-window.responderQuizMod = async function(modId, qi, selecionada, correta) {
-  // Desabilitar botões desta questão
-  const questoesBtns = document.querySelectorAll(`[id^="qo-${modId}-${qi}-"]`);
-  questoesBtns.forEach(b => { b.disabled = true; });
-
-  const btnSel   = document.getElementById(`qo-${modId}-${qi}-${selecionada}`);
-  const btnCorr  = document.getElementById(`qo-${modId}-${qi}-${correta}`);
-  const feedEl   = document.getElementById(`qf-${modId}-${qi}`);
-  const acertou  = selecionada === correta;
-
-  if (btnSel)  btnSel.classList.add(acertou ? "correta" : "errada");
-  if (btnCorr && !acertou) btnCorr.classList.add("correta");
-  if (feedEl)  feedEl.innerHTML = `<span class="quiz-feedback ${acertou ? "ok" : "fail"}">${acertou ? "✅ Correto!" : "❌ Errado"}</span>`;
-
-  if (acertou) await adicionarXP(10, "acertar_questao");
-
-  // Verificar se todas respondidas
-  const totalQuestoes = document.querySelectorAll(`[id^="qo-${modId}-"][disabled]`).length;
-  // Verificar se este era o último grupo de 4
-  // (simplificado: contar grupos únicos respondidos)
-  const gruposRespondidos = new Set(
-    [...document.querySelectorAll(`[id^="qo-${modId}-"][disabled]`)]
-      .map(b => b.id.split("-")[2])
-  );
-  const totalGrupos = document.querySelectorAll(`[id^="qo-${modId}-0-"]`).length > 0 ? 1 : 0;
-
-  // Verificar se concluiu o módulo (todas questões respondidas)
-  const todasRespondidas = document.querySelectorAll(`#quiz-mod-${modId} .quiz-opcao-btn:not([disabled])`).length === 0;
-  if (todasRespondidas) {
-    const acertos = document.querySelectorAll(`#quiz-mod-${modId} .quiz-opcao-btn.correta`).length;
-    const total   = document.querySelectorAll(`#quiz-mod-${modId} .quiz-questao`).length;
-    const resEl   = document.getElementById(`qr-${modId}`);
-    if (resEl) {
-      resEl.style.display = "block";
-      resEl.innerHTML = `
-        <div class="quiz-resultado">
-          <h3>${acertos}/${total} corretas 🎉</h3>
-          <p>Parabéns por completar o módulo!</p>
-          <span class="xp-ganho">+50 XP pelo módulo</span>
-        </div>`;
-    }
-    await adicionarXP(50, "completar_modulo");
-    // Registrar progresso
-    await set(ref(db, `progresso/${usuarioAtual.uid}/modulos/${modId}`), {
-      concluidoEm: Date.now(), acertos, total
-    });
-  }
+window.curtir=async function(pid){
+  if(!EU)return;
+  const cr=ref(db,`posts/${pid}/curtidas/${EU.uid}`);
+  const snap=await get(cr);
+  if(snap.exists())await remove(cr); else{ await set(cr,true); await addXP(1,null); }
 };
 
-/** Carrega meus módulos na aba perfil */
-function carregarMeusModulos(snapMods) {
-  const grade = document.getElementById("meus-modulos");
-  if (!grade) return;
-  const meus = [];
-  snapMods.forEach(c => { if (c.val().autorId === usuarioAtual?.uid) meus.unshift({ id: c.key, ...c.val() }); });
-  if (!meus.length) {
-    grade.innerHTML = '<div class="estado-vazio"><span class="material-icons-round">layers</span><p>Você ainda não criou módulos.</p></div>';
-    return;
-  }
-  grade.innerHTML = meus.map(m => htmlModuloCard(m)).join("");
+window.delPost=async function(pid){
+  if(!confirm("Excluir este post?"))return;
+  try{ await remove(ref(db,`posts/${pid}`)); toast("Post excluído.","ok"); }catch(e){ toast("Erro: "+e.message,"err"); }
+};
+
+window.abrirComent=async function(pid){
+  postIdAberto=pid;
+  try{
+    const snap=await get(ref(db,`posts/${pid}`));
+    if(!snap.exists())return;
+    const p={id:pid,...snap.val()};
+    const foto=p.autorFoto||av(p.autorNome);
+    document.getElementById("ver-post-corpo").innerHTML=`
+      <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.65rem">
+        <img src="${esc(foto)}" style="width:40px;height:40px;border-radius:50%;object-fit:cover"/>
+        <div><strong style="font-size:.87rem">${esc(p.autorNome||"Anônimo")}</strong><br><small style="font-size:.72rem;color:var(--mt)">${ago(p.criadoEm)}</small></div>
+      </div>
+      ${p.texto?`<p style="font-size:.9rem;line-height:1.58;color:var(--sub);margin-bottom:.5rem">${esc(p.texto).replace(/\n/g,"<br>")}</p>`:""}
+      ${p.imgURL?`<img src="${esc(p.imgURL)}" style="width:100%;border-radius:12px;max-height:240px;object-fit:cover"/>`:""}`;
+    const sc=await get(ref(db,`posts/${pid}/comentarios`));
+    renderComents(sc);
+    openModal("m-ver-post");
+  }catch(e){ toast("Erro: "+e.message,"err"); }
+};
+
+function renderComents(snap){
+  const l=document.getElementById("lista-coments"); if(!l)return;
+  if(!snap||!snap.exists()){ l.innerHTML='<p style="color:var(--mt);font-size:.83rem;margin-bottom:.5rem">Nenhum comentário ainda.</p>'; return; }
+  const cs=[]; snap.forEach(c=>cs.push({id:c.key,...c.val()}));
+  l.innerHTML=cs.map(c=>`<div class="coment-item"><img src="${esc(c.autorFoto||av(c.autorNome))}" alt=""/><div class="coment-bolha"><strong>${esc(c.autorNome||"Anônimo")}</strong><span>${esc(c.texto)}</span></div></div>`).join("");
 }
 
-// ─────────────────────────────────────────────
-// CRIAR MÓDULO
-// ─────────────────────────────────────────────
-window.previewCapa = async function(input) {
-  if (!input.files[0]) return;
-  capaModuloBase64 = await arquivoParaBase64(input.files[0]);
-  const prev = document.getElementById("capa-preview");
-  prev.src = capaModuloBase64;
-  prev.style.display = "block";
-  const area = document.getElementById("capa-upload-area");
-  area.querySelector("span.material-icons-round").style.display = "none";
-  area.querySelector("span:not(.material-icons-round)").style.display = "none";
+window.enviarComentario=async function(){
+  const inp=document.getElementById("coment-txt");
+  const txt=inp?.value.trim();
+  if(!txt||!postIdAberto||!EU||!PERFIL)return;
+  inp.value="";
+  try{
+    await push(ref(db,`posts/${postIdAberto}/comentarios`),{autorId:EU.uid,autorNome:PERFIL.nome||"Estudante",autorFoto:PERFIL.foto||"",texto:txt,criadoEm:Date.now()});
+    await addXP(2,"comentar");
+    const snap=await get(ref(db,`posts/${postIdAberto}/comentarios`));
+    renderComents(snap);
+    toast("Comentário enviado!","ok");
+  }catch(e){ toast("Erro: "+e.message,"err"); }
 };
 
-window.adicionarVideoInput = function() {
-  const wrap = document.createElement("div");
-  wrap.className = "video-row";
-  wrap.innerHTML = `
-    <input type="text" class="video-url-input" placeholder="Cole a URL do YouTube aqui..." />
-    <button class="btn-icone-sm" onclick="this.closest('.video-row').remove()">
-      <span class="material-icons-round">remove</span>
-    </button>`;
-  document.getElementById("videos-lista").appendChild(wrap);
+/* ─── CRIAR POST ─── */
+window.selecionarFotoPost=async function(inp){
+  if(!inp.files[0])return;
+  postImg64=await toB64(inp.files[0]);
+  const pi=document.getElementById("post-prev"); if(pi)pi.src=postImg64;
+  const pv=document.getElementById("post-img-prev"); if(pv)pv.style.display="block";
+};
+window.removerImgPost=function(){
+  postImg64=null;
+  const pv=document.getElementById("post-img-prev"); if(pv)pv.style.display="none";
+  const pf=document.getElementById("post-file"); if(pf)pf.value="";
+};
+window.publicarPost=async function(){
+  const txt=document.getElementById("post-txt")?.value.trim();
+  if(!txt&&!postImg64){ toast("Escreva algo ou adicione uma imagem.","err"); return; }
+  if(!EU||!PERFIL)return;
+  const btn=document.getElementById("btn-pub");
+  btn.disabled=true; btn.innerHTML='<span class="material-icons-round" style="animation:girar .7s linear infinite">refresh</span> Publicando...';
+  try{
+    let imgURL=null;
+    if(postImg64){ toast("Enviando imagem..."); imgURL=await imgbb(postImg64); }
+    await push(ref(db,"posts"),{autorId:EU.uid,autorNome:PERFIL.nome||"Estudante",autorFoto:PERFIL.foto||"",texto:txt,imgURL,criadoEm:Date.now()});
+    await addXP(5,"postar");
+    toast("Publicado! +5 XP 🎉","ok");
+    document.getElementById("post-txt").value="";
+    postImg64=null;
+    const pv=document.getElementById("post-img-prev"); if(pv)pv.style.display="none";
+    const pf=document.getElementById("post-file"); if(pf)pf.value="";
+    closeModal("m-post");
+  }catch(e){ toast("Erro: "+e.message,"err"); }
+  finally{ btn.disabled=false; btn.innerHTML='<span class="material-icons-round">send</span> Publicar'; }
 };
 
-window.adicionarQuestao = function() {
-  const idx = questaoCount++;
-  const bloco = document.createElement("div");
-  bloco.className = "questao-bloco";
-  bloco.dataset.q = idx;
-  bloco.innerHTML = `
-    <div class="questao-bloco-topo">
-      <input type="text" class="questao-texto-input" placeholder="Enunciado da pergunta..." />
-      <button class="btn-icone-sm" onclick="this.closest('.questao-bloco').remove()">
-        <span class="material-icons-round">delete</span>
-      </button>
-    </div>
-    <div class="opcoes-wrap">
-      ${[0,1,2,3].map(i => `
-        <div class="opcao-row">
-          <input type="radio" name="correta-${idx}" value="${i}" ${i===0?"checked":""} />
-          <input type="text" class="opcao-texto" placeholder="Alternativa ${"ABCD"[i]}${i===0?" (correta)":""}" />
-        </div>`).join("")}
-    </div>`;
-  document.getElementById("quiz-construtor").appendChild(bloco);
-};
-
-window.salvarModulo = async function() {
-  const titulo    = document.getElementById("mod-titulo").value.trim();
-  const descricao = document.getElementById("mod-desc").value.trim();
-  const materia   = document.getElementById("mod-materia").value;
-  const conteudo  = document.getElementById("mod-conteudo").value.trim();
-
-  if (!titulo)   { toast("Informe o título do módulo.", "err"); return; }
-  if (!materia)  { toast("Selecione a matéria.", "err"); return; }
-  if (!usuarioAtual || !perfilAtual) return;
-
-  const btn = document.getElementById("btn-salvar-modulo");
-  btn.disabled = true;
-  btn.innerHTML = '<span class="material-icons-round">hourglass_empty</span> Salvando...';
-
-  try {
-    // Upload da capa
-    let capaURL = null;
-    if (capaModuloBase64) {
-      toast("Enviando capa...");
-      capaURL = await uploadImgBB(capaModuloBase64);
-    }
-
-    // Vídeos
-    const videos = {};
-    document.querySelectorAll(".video-url-input").forEach((inp, i) => {
-      if (inp.value.trim()) videos[i] = inp.value.trim();
-    });
-
-    // Quiz
-    const quiz = {};
-    let qIdx = 0;
-    document.querySelectorAll(".questao-bloco").forEach(bloco => {
-      const enunciado = bloco.querySelector(".questao-texto-input").value.trim();
-      if (!enunciado) return;
-      const opcoes  = [...bloco.querySelectorAll(".opcao-texto")].map(i => i.value.trim());
-      const radioSel = bloco.querySelector("input[type=radio]:checked");
-      const correta  = radioSel ? parseInt(radioSel.value) : 0;
-      quiz[qIdx++] = { enunciado, opcoes, correta };
-    });
-
-    await push(ref(db, "modulos"), {
-      titulo, descricao, materia, conteudo, capaURL, videos, quiz,
-      autorId:   usuarioAtual.uid,
-      autorNome: perfilAtual.nome || "Estudante",
-      autorFoto: perfilAtual.fotoURL || "",
-      oficial:   false,
-      acessos:   0,
-      criadoEm:  Date.now()
-    });
-
-    await adicionarXP(20, "criar_modulo");
-    toast("Módulo criado! +20 XP 🎉", "ok");
-    fecharModal("modal-criar-modulo");
-    resetarFormModulo();
-    carregarModulos();
-  } catch (e) {
-    toast("Erro ao salvar: " + e.message, "err");
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<span class="material-icons-round">save</span> Salvar módulo';
-  }
-};
-
-function resetarFormModulo() {
-  ["mod-titulo","mod-desc","mod-conteudo"].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = "";
-  });
-  const sel = document.getElementById("mod-materia");
-  if (sel) sel.value = "";
-  const prev = document.getElementById("capa-preview");
-  if (prev) { prev.src = ""; prev.style.display = "none"; }
-  const area = document.getElementById("capa-upload-area");
-  if (area) {
-    area.querySelector("span.material-icons-round").style.display = "";
-    area.querySelector("span:not(.material-icons-round)").style.display = "";
-  }
-  document.getElementById("videos-lista").innerHTML = `
-    <div class="video-row">
-      <input type="text" class="video-url-input" placeholder="Cole a URL do YouTube aqui..." />
-      <button class="btn-icone-sm" onclick="adicionarVideoInput()"><span class="material-icons-round">add</span></button>
-    </div>`;
-  document.getElementById("quiz-construtor").innerHTML = "";
-  capaModuloBase64 = null;
-  questaoCount = 0;
+/* ─── MÓDULOS ─── */
+function carregarModulos(){
+  const g=document.getElementById("grade-mods"); if(!g)return;
+  g.innerHTML='<div class="load-box"><div class="spin"></div><p>Carregando...</p></div>';
+  get(query(ref(db,"modulos"),orderByChild("criadoEm"),limitToLast(60))).then(snap=>{
+    todosModulos=[]; snap.forEach(c=>todosModulos.unshift({id:c.key,...c.val()}));
+    renderMods(todosModulos,"grade-mods");
+  }).catch(e=>{ g.innerHTML=`<div class="vazio"><span class="material-icons-round">error</span><p>${esc(e.message)}</p></div>`; });
 }
 
-// ─────────────────────────────────────────────
-// TRILHA DE FASES
-// ─────────────────────────────────────────────
-async function carregarTrilha() {
-  const wrap = document.getElementById("trilha-fases");
-  if (!wrap) return;
-  wrap.innerHTML = '<div class="carregando-box"><div class="spinner"></div><p>Carregando...</p></div>';
-
-  const xp = perfilAtual?.xp || 0;
-
-  // Buscar fases extras adicionadas pelo admin
-  const snapAdmin = await get(ref(db, "fases_admin"));
-  let fases = [...FASES_BASE];
-  if (snapAdmin.exists()) {
-    snapAdmin.forEach(c => {
-      const f = { id: c.key, ...c.val() };
-      if (!fases.find(x => x.id === f.id)) fases.push(f);
-    });
-  }
-
-  // Buscar progresso do usuário
-  const snapProg = await get(ref(db, `progresso/${usuarioAtual?.uid}/fases`));
-  const concluidas = snapProg.exists() ? snapProg.val() : {};
-
-  // Atualizar UI da barra de nível
-  const nivel = calcularNivel(xp);
-  const prog  = calcularProgresso(xp);
-  const elLabel = document.getElementById("nivel-label");
-  const elXPTxt = document.getElementById("nivel-xp-txt");
-  const elBarra = document.getElementById("nivel-progresso");
-  if (elLabel) elLabel.textContent = "Nível " + nivel;
-  if (elXPTxt) elXPTxt.textContent = prog + " / 100 XP";
-  if (elBarra) elBarra.style.width = prog + "%";
-
-  // Renderizar fases em grupos de 5
-  const grupoTam = 5;
-  const grupos = [];
-  for (let i = 0; i < fases.length; i += grupoTam) {
-    grupos.push(fases.slice(i, i + grupoTam));
-  }
-
-  wrap.innerHTML = grupos.map((grupo, gi) => {
-    const html = grupo.map((f, fi) => {
-      const idx       = gi * grupoTam + fi;
-      const concluida = !!concluidas[f.id];
-      const prev      = idx > 0 ? fases[idx - 1] : null;
-      const prevConc  = !prev || !!concluidas[prev.id];
-      const disponivel = !concluida && xp >= f.xpReq && prevConc;
-      const travada    = !concluida && !disponivel;
-
-      let estado = travada ? "travado" : concluida ? "concluida" : "disponivel";
-      const estrelas = concluida ? "⭐⭐⭐" : disponivel ? "⭐☆☆" : "☆☆☆";
-      const posicao  = POSICOES[idx % POSICOES.length] || "centro";
-
-      const conector = idx > 0
-        ? `<div class="trilha-conector ${concluidas[fases[idx-1]?.id] ? "feito" : "normal"}"></div>`
-        : "";
-
-      return `
-        ${conector}
-        <div class="trilha-no-wrap ${posicao}">
-          <div class="fase-no" onclick="verFase('${f.id}')">
-            <button class="fase-btn-circulo ${estado}" ${travada ? "disabled" : ""} title="${esc(f.titulo)}">
-              ${f.emoji}
-            </button>
-            <span class="fase-rotulo">${esc(f.titulo)}</span>
-            <span class="fase-estrelas">${estrelas}</span>
-          </div>
-        </div>`;
-    }).join("");
-
-    return `
-      <div class="trilha-secao">
-        <div style="text-align:center;margin-bottom:1rem">
-          <span class="trilha-secao-titulo">Seção ${gi+1}</span>
-        </div>
-        <div class="trilha-nos">${html}</div>
-      </div>`;
+function renderMods(lista,containerId){
+  const g=document.getElementById(containerId); if(!g)return;
+  const busca=(document.getElementById("busca-mod")?.value||"").toLowerCase();
+  const fil=lista.filter(m=>(!busca||(m.titulo||"").toLowerCase().includes(busca)||(m.descricao||"").toLowerCase().includes(busca))&&(!filtroMat||m.materia===filtroMat));
+  if(!fil.length){ g.innerHTML='<div class="vazio"><span class="material-icons-round">layers_clear</span><p>Nenhum módulo encontrado.</p></div>'; return; }
+  g.innerHTML=fil.map(m=>{
+    const cs=m.curtidas?Object.keys(m.curtidas).length:0;
+    return `<div class="mod-card" onclick="verMod('${esc(m.id)}')">
+      ${m.oficial?'<div class="mod-oficial"><span class="material-icons-round">verified</span> Oficial</div>':""}
+      <div class="mod-capa">${m.capaURL?`<img src="${esc(m.capaURL)}" alt="" loading="lazy"/>`:matEmoji(m.materia)}</div>
+      <div class="mod-corpo">
+        <span class="mod-mat-tag">${esc(m.materia||"Geral")}</span>
+        <div class="mod-tit">${esc(m.titulo)}</div>
+        <div class="mod-autor">por ${esc(m.autorNome||"Anônimo")}</div>
+        <div class="mod-stats"><span><span class="material-icons-round">favorite</span>${cs}</span><span><span class="material-icons-round">visibility</span>${m.acessos||0}</span></div>
+      </div>
+    </div>`;
   }).join("");
 }
 
-/** Abrir detalhe de uma fase */
-window.verFase = async function(faseId) {
-  const f = FASES_BASE.find(x => x.id === faseId);
-  if (!f) return;
+window.filtrarMods=function(){ renderMods(todosModulos,"grade-mods"); };
 
-  const xp = perfilAtual?.xp || 0;
-  const snapProg = await get(ref(db, `progresso/${usuarioAtual?.uid}/fases/${faseId}`));
-  const concluida = snapProg.exists();
+document.getElementById("chips-mat")?.addEventListener("click",e=>{
+  const chip=e.target.closest(".chip"); if(!chip)return;
+  document.querySelectorAll("#chips-mat .chip").forEach(c=>c.classList.remove("ativo"));
+  chip.classList.add("ativo"); filtroMat=chip.dataset.m||""; renderMods(todosModulos,"grade-mods");
+});
 
-  // Verificar se a fase anterior foi concluída
-  const idx  = FASES_BASE.indexOf(f);
-  const prev = idx > 0 ? FASES_BASE[idx - 1] : null;
-  let prevConc = true;
-  if (prev) {
-    const snapPrev = await get(ref(db, `progresso/${usuarioAtual?.uid}/fases/${prev.id}`));
-    prevConc = snapPrev.exists();
-  }
-
-  const disponivel = xp >= f.xpReq && prevConc;
-  const travada    = !concluida && !disponivel;
-  const difNomes   = ["","🟢 Iniciante","🟡 Básico","🟠 Intermediário","🔴 Avançado","💀 Expert"];
-
-  document.getElementById("fase-detalhe-corpo").innerHTML = `
-    <div class="fase-detalhe-header">
-      <span class="fase-detalhe-emoji">${f.emoji}</span>
-      <div class="fase-detalhe-titulo">${esc(f.titulo)}</div>
-      <div class="fase-detalhe-sub">${esc(f.materia)} · ${difNomes[f.dif] || ""}</div>
-      <div class="fase-detalhe-xp"><span class="material-icons-round">bolt</span>+${f.xpPremio} XP ao concluir</div>
-      ${concluida ? '<div style="margin-top:.5rem;font-size:1.5rem">⭐⭐⭐</div>' : ""}
-    </div>
-    ${travada ? `
-    <div class="fase-info-travado">
-      <span class="material-icons-round">lock</span>
-      <p>Você precisa de <strong>${f.xpReq} XP</strong> para desbloquear.<br>Você tem <strong>${xp} XP</strong> agora.</p>
-    </div>` : ""}`;
-
-  const rodape = document.getElementById("fase-detalhe-rodape");
-  if (travada) {
-    rodape.innerHTML = `<button class="btn-primario" style="background:var(--borda);color:var(--texto-mut);box-shadow:none;cursor:not-allowed">🔒 Fase bloqueada</button>`;
-  } else if (concluida) {
-    rodape.innerHTML = `
-      <button class="btn-primario" onclick="fecharModal('modal-ver-fase');abrirQuizFase('${faseId}')">
-        <span class="material-icons-round">replay</span> Refazer fase
-      </button>`;
-  } else {
-    rodape.innerHTML = `
-      <button class="btn-primario" onclick="fecharModal('modal-ver-fase');abrirQuizFase('${faseId}')">
-        <span class="material-icons-round">play_arrow</span> Iniciar fase
-      </button>`;
-  }
-
-  abrirModal("modal-ver-fase");
+window.verMod=async function(mid){
+  try{
+    const snap=await get(ref(db,`modulos/${mid}`));
+    if(!snap.exists()){ toast("Módulo não encontrado.","err"); return; }
+    const m={id:mid,...snap.val()};
+    update(ref(db,`modulos/${mid}`),{acessos:(m.acessos||0)+1}).catch(()=>{});
+    const capaH=m.capaURL?`<div class="mod-view-capa"><img src="${esc(m.capaURL)}" alt=""/></div>`:`<div class="mod-view-capa">${matEmoji(m.materia)}</div>`;
+    const vids=m.videos?Object.values(m.videos).filter(Boolean).map(url=>{const vid=ytId(url);return vid?`<div class="vid-embed"><iframe src="https://www.youtube.com/embed/${vid}" allowfullscreen loading="lazy"></iframe></div>`:""}).join(""):"";
+    const qqs=m.quiz?Object.values(m.quiz):[]; const quizH=qqs.length?renderQuizMod(qqs,mid):"";
+    document.getElementById("mod-view").innerHTML=`
+      ${capaH}
+      <div class="mod-view-meta">
+        ${m.oficial?'<div class="mod-oficial" style="display:inline-flex;margin-bottom:.5rem"><span class="material-icons-round">verified</span> Oficial</div>':""}
+        <div class="mod-mat-tag">${esc(m.materia||"Geral")}</div>
+        <div class="mod-view-tit">${esc(m.titulo)}</div>
+        <div class="mod-view-autor"><img src="${esc(m.autorFoto||av(m.autorNome))}" alt=""/><span>por ${esc(m.autorNome||"Anônimo")}</span></div>
+        ${m.descricao?`<div class="mod-view-desc">${esc(m.descricao)}</div>`:""}
+      </div>
+      ${m.conteudo?`<div class="mod-sec"><h3><span class="material-icons-round">article</span> Conteúdo</h3><div class="mod-txt">${esc(m.conteudo)}</div></div>`:""}
+      ${vids?`<div class="mod-sec"><h3><span class="material-icons-round">play_circle</span> Vídeos</h3>${vids}</div>`:""}
+      ${quizH?`<div class="mod-sec"><h3><span class="material-icons-round">quiz</span> Quiz</h3>${quizH}</div>`:""}`;
+    openModal("m-ver-mod");
+  }catch(e){ toast("Erro: "+e.message,"err"); }
 };
 
-/** Abrir quiz de fase — busca questões do banco */
-window.abrirQuizFase = async function(faseId) {
-  const f = FASES_BASE.find(x => x.id === faseId);
-  if (!f) return;
+function renderQuizMod(qs,mid){
+  return `<div id="qmod-${esc(mid)}">${qs.map((q,qi)=>`
+    <div class="quiz-q" id="qm-${esc(mid)}-${qi}">
+      <div class="quiz-q-txt">${qi+1}. ${esc(q.enunciado)}</div>
+      <div class="quiz-opts">${(q.opcoes||[]).map((op,oi)=>`<button class="quiz-opt-btn" id="qmb-${esc(mid)}-${qi}-${oi}" onclick="respMod('${esc(mid)}',${qi},${oi},${q.correta})">${"ABCD"[oi]}) ${esc(op)}</button>`).join("")}</div>
+      <div id="qmf-${esc(mid)}-${qi}"></div>
+    </div>`).join("")}
+    <div id="qmr-${esc(mid)}" style="display:none"></div>
+  </div>`;
+}
 
-  document.getElementById("quiz-fase-titulo").textContent = f.emoji + " " + f.titulo;
-
-  // Buscar questões da fase no banco (criadas pelo admin)
-  const snap = await get(ref(db, `fases_questoes/${faseId}`));
-  if (!snap.exists() || !snap.val()) {
-    document.getElementById("quiz-fase-corpo").innerHTML = `
-      <div class="estado-vazio">
-        <span class="material-icons-round">quiz</span>
-        <p>Esta fase ainda não tem questões.<br>O administrador precisa adicioná-las.</p>
-      </div>`;
-    abrirModal("modal-quiz-fase");
-    return;
+window.respMod=async function(mid,qi,sel,correta){
+  document.querySelectorAll(`[id^="qmb-${mid}-${qi}-"]`).forEach(b=>b.disabled=true);
+  const bs=document.getElementById(`qmb-${mid}-${qi}-${sel}`);
+  const bc=document.getElementById(`qmb-${mid}-${qi}-${correta}`);
+  const fb=document.getElementById(`qmf-${mid}-${qi}`);
+  const ok=sel===correta;
+  if(bs)bs.classList.add(ok?"certa":"errada");
+  if(bc&&!ok)bc.classList.add("certa");
+  if(fb)fb.innerHTML=`<span class="quiz-fb ${ok?"ok":"fail"}">${ok?"✅ Correto! +10 XP":"❌ Errado"}</span>`;
+  if(ok)await addXP(10,"acertar_questao");
+  const todas=document.querySelectorAll(`#qmod-${mid} .quiz-opt-btn:not([disabled])`).length===0;
+  if(todas){
+    const acertos=document.querySelectorAll(`#qmod-${mid} .quiz-opt-btn.certa`).length;
+    const total=document.querySelectorAll(`#qmod-${mid} .quiz-q`).length;
+    const res=document.getElementById(`qmr-${mid}`); if(res){ res.style.display="block"; res.innerHTML=`<div class="quiz-res"><h3>${acertos}/${total} corretas 🎉</h3><p>Módulo concluído!</p><span class="xp-tag">+50 XP</span></div>`; }
+    await addXP(50,"completar_modulo");
+    try{ await set(ref(db,`progresso/${EU?.uid}/modulos/${mid}`),{concluidoEm:Date.now(),acertos,total}); }catch(e){}
   }
-
-  const questoes = [];
-  snap.forEach(c => questoes.push({ id: c.key, ...c.val() }));
-
-  let acertos = 0;
-  let totalRespondidas = 0;
-
-  document.getElementById("quiz-fase-corpo").innerHTML = `
-    <div id="fase-quiz-wrap">
-      <p style="font-size:.82rem;color:var(--texto-mut);margin-bottom:1rem">📝 ${questoes.length} pergunta${questoes.length !== 1 ? "s" : ""}</p>
-      ${questoes.map((q, qi) => `
-        <div class="quiz-questao" id="fq-${qi}">
-          <div class="quiz-questao-enunciado">${qi+1}. ${esc(q.enunciado)}</div>
-          <div class="quiz-opcoes" id="fqops-${qi}">
-            ${(q.opcoes || []).map((op, oi) => `
-              <button class="quiz-opcao-btn" id="fqo-${qi}-${oi}"
-                onclick="responderFaseQ(${qi},${oi},${q.correta},'${faseId}',${questoes.length},${f.xpPremio})">
-                ${"ABCD"[oi]}) ${esc(op)}
-              </button>`).join("")}
-          </div>
-          <div id="ffb-${qi}"></div>
-        </div>`).join("")}
-      <div id="fase-resultado" style="display:none"></div>
-    </div>`;
-
-  abrirModal("modal-quiz-fase");
 };
 
-window.responderFaseQ = async function(qi, sel, correta, faseId, total, xpPremio) {
-  // Desabilitar opções desta questão
-  document.querySelectorAll(`#fqops-${qi} .quiz-opcao-btn`).forEach(b => { b.disabled = true; });
+function renderMeusModulos(snapMods){
+  const g=document.getElementById("meus-mods"); if(!g||!EU)return;
+  const meus=[]; snapMods.forEach(c=>{if(c.val().autorId===EU.uid)meus.unshift({id:c.key,...c.val()});});
+  if(!meus.length){ g.innerHTML='<div class="vazio"><span class="material-icons-round">layers</span><p>Você ainda não criou módulos.</p></div>'; return; }
+  g.innerHTML=meus.map(m=>`<div class="mod-card" onclick="verMod('${esc(m.id)}')">
+    <div class="mod-capa">${m.capaURL?`<img src="${esc(m.capaURL)}" alt="" loading="lazy"/>`:matEmoji(m.materia)}</div>
+    <div class="mod-corpo"><span class="mod-mat-tag">${esc(m.materia||"Geral")}</span><div class="mod-tit">${esc(m.titulo)}</div></div>
+  </div>`).join("");
+}
 
-  const btnSel  = document.getElementById(`fqo-${qi}-${sel}`);
-  const btnCorr = document.getElementById(`fqo-${qi}-${correta}`);
-  const fbEl    = document.getElementById(`ffb-${qi}`);
-  const acertou = sel === correta;
-
-  if (btnSel)  btnSel.classList.add(acertou ? "correta" : "errada");
-  if (btnCorr && !acertou) btnCorr.classList.add("correta");
-  if (fbEl)    fbEl.innerHTML = `<span class="quiz-feedback ${acertou ? "ok" : "fail"}">${acertou ? "✅ Correto! +10 XP" : "❌ Errado"}</span>`;
-  if (acertou) await adicionarXP(10, "acertar_questao");
-
-  // Checar se todas respondidas
-  const totalBloqueados = document.querySelectorAll("#fase-quiz-wrap .quiz-opcao-btn[disabled]").length;
-  const totalBotoes     = document.querySelectorAll("#fase-quiz-wrap .quiz-opcao-btn").length;
-  if (totalBloqueados >= totalBotoes) {
-    const acertosFase = document.querySelectorAll("#fase-quiz-wrap .quiz-opcao-btn.correta").length;
-    const resEl = document.getElementById("fase-resultado");
-    resEl.style.display = "block";
-    resEl.innerHTML = `
-      <div class="quiz-resultado">
-        <h3>${acertosFase}/${total} corretas 🎉</h3>
-        <p>Fase concluída!</p>
-        <span class="xp-ganho">+${xpPremio} XP de bônus</span>
-      </div>`;
-    await adicionarXP(xpPremio, "completar_fase");
-    await set(ref(db, `progresso/${usuarioAtual?.uid}/fases/${faseId}`), {
-      concluidoEm: Date.now(), acertos: acertosFase, total
+/* ─── CRIAR MÓDULO ─── */
+window.prevCapa=async function(inp){
+  if(!inp.files[0])return;
+  capaImg64=await toB64(inp.files[0]);
+  const p=document.getElementById("capa-prev"); if(p){ p.src=capaImg64; p.style.display="block"; }
+  const s=document.getElementById("capa-span"); if(s)s.style.display="none";
+};
+window.addVideo=function(){
+  const w=document.createElement("div"); w.className="video-row";
+  w.innerHTML=`<input type="text" class="video-in" placeholder="Cole a URL do YouTube..."/><button class="btn-icon-sm" onclick="this.closest('.video-row').remove()"><span class="material-icons-round">remove</span></button>`;
+  document.getElementById("videos-wrap")?.appendChild(w);
+};
+window.addQuestao=function(){
+  const idx=qCount++;
+  const b=document.createElement("div"); b.className="q-bloco"; b.dataset.q=idx;
+  b.innerHTML=`<div class="q-topo"><input type="text" class="q-in" placeholder="Enunciado da pergunta..."/><button class="btn-icon-sm" onclick="this.closest('.q-bloco').remove()"><span class="material-icons-round">delete</span></button></div>
+  <div class="opts-wrap">${[0,1,2,3].map(i=>`<div class="opt-row"><input type="radio" name="c-${idx}" value="${i}" ${i===0?"checked":""}/><input type="text" class="opt-in" placeholder="Alternativa ${"ABCD"[i]}${i===0?" (correta)":""}"/></div>`).join("")}</div>`;
+  document.getElementById("quiz-wrap")?.appendChild(b);
+};
+window.salvarModulo=async function(){
+  const tit=document.getElementById("mod-tit")?.value.trim();
+  const mat=document.getElementById("mod-mat")?.value;
+  if(!tit){ toast("Informe o título.","err"); return; }
+  if(!mat){ toast("Selecione a matéria.","err"); return; }
+  if(!EU||!PERFIL)return;
+  const btn=document.getElementById("btn-salvar-mod");
+  btn.disabled=true; btn.innerHTML='<span class="material-icons-round" style="animation:girar .7s linear infinite">refresh</span> Salvando...';
+  try{
+    let capaURL=null;
+    if(capaImg64){ toast("Enviando capa..."); capaURL=await imgbb(capaImg64); }
+    const videos={}; document.querySelectorAll(".video-in").forEach((i,idx)=>{ if(i.value.trim())videos[idx]=i.value.trim(); });
+    const quiz={}; let qi=0;
+    document.querySelectorAll(".q-bloco").forEach(bl=>{
+      const en=bl.querySelector(".q-in")?.value.trim(); if(!en)return;
+      const opts=[...bl.querySelectorAll(".opt-in")].map(i=>i.value.trim());
+      const r=bl.querySelector("input[type=radio]:checked"); const corr=r?parseInt(r.value):0;
+      quiz[qi++]={enunciado:en,opcoes:opts,correta:corr};
     });
-    toast(`Fase concluída! +${xpPremio} XP 🎉`, "ok");
-    carregarTrilha();
+    await push(ref(db,"modulos"),{
+      titulo:tit, descricao:document.getElementById("mod-desc")?.value.trim()||"",
+      materia:mat, conteudo:document.getElementById("mod-cont")?.value.trim()||"",
+      capaURL,videos,quiz,
+      autorId:EU.uid,autorNome:PERFIL.nome||"Estudante",autorFoto:PERFIL.foto||"",
+      oficial:false,acessos:0,criadoEm:Date.now()
+    });
+    await addXP(20,"criar_modulo");
+    toast("Módulo criado! +20 XP 🎉","ok");
+    closeModal("m-mod"); resetModForm(); carregarModulos();
+  }catch(e){ toast("Erro: "+e.message,"err"); }
+  finally{ btn.disabled=false; btn.innerHTML='<span class="material-icons-round">save</span> Salvar módulo'; }
+};
+function resetModForm(){
+  ["mod-tit","mod-desc","mod-cont"].forEach(id=>{ const e=document.getElementById(id); if(e)e.value=""; });
+  const sm=document.getElementById("mod-mat"); if(sm)sm.value="";
+  const cp=document.getElementById("capa-prev"); if(cp){cp.src="";cp.style.display="none";}
+  const cs=document.getElementById("capa-span"); if(cs)cs.style.display="";
+  const vw=document.getElementById("videos-wrap"); if(vw)vw.innerHTML='<div class="video-row"><input type="text" class="video-in" placeholder="Cole a URL do YouTube..."/><button class="btn-icon-sm" onclick="addVideo()"><span class="material-icons-round">add</span></button></div>';
+  const qw=document.getElementById("quiz-wrap"); if(qw)qw.innerHTML="";
+  capaImg64=null; qCount=0;
+}
+
+/* ─── TRILHA ─── */
+async function carregarTrilha(){
+  const tr=document.getElementById("trilha"); if(!tr)return;
+  tr.innerHTML='<div class="load-box"><div class="spin"></div><p>Carregando trilha...</p></div>';
+  const xp=PERFIL?.xp||0;
+  let fases=[...FASES];
+  try{
+    const sa=await get(ref(db,"fases_admin"));
+    if(sa.exists())sa.forEach(c=>{ const f={id:c.key,...c.val()}; if(!fases.find(x=>x.id===f.id))fases.push(f); });
+  }catch(e){}
+  let conc={};
+  try{
+    const sp=await get(ref(db,`progresso/${EU?.uid}/fases`));
+    if(sp.exists())conc=sp.val();
+  }catch(e){}
+  // Nível bar
+  const nv=nivel(xp); const pg=progXP(xp);
+  const el1=document.getElementById("nivel-txt"); if(el1)el1.textContent="Nível "+nv;
+  const el2=document.getElementById("nivel-xp-info"); if(el2)el2.textContent=pg+"/100 XP";
+  const el3=document.getElementById("xp-barra"); if(el3)el3.style.width=pg+"%";
+  // Grupos de 5
+  const grupos=[]; for(let i=0;i<fases.length;i+=5)grupos.push(fases.slice(i,i+5));
+  tr.innerHTML=grupos.map((g,gi)=>`
+    <div class="trilha-sec">
+      <div style="text-align:center;margin-bottom:1rem"><span class="trilha-sec-tit">Seção ${gi+1}</span></div>
+      <div style="display:flex;justify-content:center"><div class="trilha-nos">
+        ${g.map((f,fi)=>{
+          const idx=gi*5+fi;
+          const done=!!conc[f.id];
+          const prevDone=idx===0||(conc[fases[idx-1]?.id]);
+          const disp=!done&&xp>=f.xpReq&&prevDone;
+          const trav=!done&&!disp;
+          const cls=trav?"trav":done?"conc":"disp";
+          const ests=done?"⭐⭐⭐":disp?"⭐☆☆":"☆☆☆";
+          const pos=POSICOES[idx%POSICOES.length]||"cen";
+          const con=idx>0?`<div class="conector ${conc[fases[idx-1]?.id]?"feito":"normal"}"></div>`:"";
+          return `${con}<div class="no-wrap ${pos}"><div class="fase-no" onclick="verFase('${f.id}')">
+            <button class="fase-circulo ${cls}" ${trav?"disabled":""} title="${esc(f.tit)}">${f.em}</button>
+            <span class="fase-lbl">${esc(f.tit)}</span>
+            <span class="fase-ests">${ests}</span>
+          </div></div>`;
+        }).join("")}
+      </div></div>
+    </div>`).join("");
+}
+
+window.verFase=async function(fid){
+  const f=FASES.find(x=>x.id===fid); if(!f)return;
+  const xp=PERFIL?.xp||0;
+  let conc=false, prevConc=true;
+  try{
+    const sc=await get(ref(db,`progresso/${EU?.uid}/fases/${fid}`)); conc=sc.exists();
+    const idx=FASES.indexOf(f);
+    if(idx>0){ const sp=await get(ref(db,`progresso/${EU?.uid}/fases/${FASES[idx-1].id}`)); prevConc=sp.exists(); }
+  }catch(e){}
+  const disp=xp>=f.xpReq&&prevConc;
+  const trav=!conc&&!disp;
+  const difN=["","🟢 Iniciante","🟡 Básico","🟠 Intermediário","🔴 Avançado","💀 Expert"][f.dif]||"";
+  document.getElementById("fase-corpo").innerHTML=`
+    <div class="fase-dh">
+      <span class="fase-dh-em">${f.em}</span>
+      <div class="fase-dh-tit">${esc(f.tit)}</div>
+      <div class="fase-dh-sub">${esc(f.mat)} · ${difN}</div>
+      <div class="fase-dh-xp"><span class="material-icons-round">bolt</span>+${f.xpP} XP ao concluir</div>
+      ${conc?'<div style="margin-top:.5rem;font-size:1.5rem">⭐⭐⭐</div>':""}
+    </div>
+    ${trav?`<div class="fase-trav-info"><span class="material-icons-round">lock</span><p>Você precisa de <strong>${f.xpReq} XP</strong> para desbloquear.<br>Você tem <strong>${xp} XP</strong>.</p></div>`:""}`;
+  const rod=document.getElementById("fase-footer");
+  if(trav){ rod.innerHTML=`<button class="btn-prim" style="background:var(--borda);color:var(--mt);box-shadow:none;cursor:not-allowed">🔒 Fase bloqueada</button>`; }
+  else if(conc){ rod.innerHTML=`<button class="btn-prim" onclick="closeModal('m-fase');abrirQuizFase('${fid}')"><span class="material-icons-round">replay</span> Refazer fase</button>`; }
+  else{ rod.innerHTML=`<button class="btn-prim" onclick="closeModal('m-fase');abrirQuizFase('${fid}')"><span class="material-icons-round">play_arrow</span> Iniciar fase</button>`; }
+  openModal("m-fase");
+};
+
+window.abrirQuizFase=async function(fid){
+  const f=FASES.find(x=>x.id===fid); if(!f)return;
+  const el=document.getElementById("quiz-fase-tit"); if(el)el.textContent=f.em+" "+f.tit;
+  const body=document.getElementById("quiz-fase-body");
+  body.innerHTML='<div class="load-box"><div class="spin"></div><p>Carregando questões...</p></div>';
+  openModal("m-quiz-fase");
+  let qs=[];
+  try{
+    const snap=await get(ref(db,`fases_questoes/${fid}`));
+    if(snap.exists())snap.forEach(c=>qs.push({id:c.key,...c.val()}));
+  }catch(e){}
+  if(!qs.length){
+    body.innerHTML='<div class="vazio"><span class="material-icons-round">quiz</span><p>Esta fase ainda não tem questões.<br>O administrador precisa adicioná-las no painel.</p></div>';
+    return;
+  }
+  body.innerHTML=`<p style="font-size:.82rem;color:var(--mt);margin-bottom:1rem">📝 ${qs.length} pergunta${qs.length!==1?"s":""}</p>
+    ${qs.map((q,qi)=>`<div class="quiz-q" id="fq-${qi}">
+      <div class="quiz-q-txt">${qi+1}. ${esc(q.enunciado)}</div>
+      <div class="quiz-opts" id="fqops-${qi}">${(q.opcoes||[]).map((op,oi)=>`<button class="quiz-opt-btn" id="fqb-${qi}-${oi}" onclick="respFase(${qi},${oi},${q.correta},'${fid}',${qs.length},${f.xpP})">${"ABCD"[oi]}) ${esc(op)}</button>`).join("")}</div>
+      <div id="ffb-${qi}"></div>
+    </div>`).join("")}
+    <div id="fres" style="display:none"></div>`;
+};
+
+window.respFase=async function(qi,sel,correta,fid,total,xpP){
+  document.querySelectorAll(`#fqops-${qi} .quiz-opt-btn`).forEach(b=>b.disabled=true);
+  const bs=document.getElementById(`fqb-${qi}-${sel}`);
+  const bc=document.getElementById(`fqb-${qi}-${correta}`);
+  const fb=document.getElementById(`ffb-${qi}`);
+  const ok=sel===correta;
+  if(bs)bs.classList.add(ok?"certa":"errada");
+  if(bc&&!ok)bc.classList.add("certa");
+  if(fb)fb.innerHTML=`<span class="quiz-fb ${ok?"ok":"fail"}">${ok?"✅ Correto! +10 XP":"❌ Errado"}</span>`;
+  if(ok)await addXP(10,"acertar_questao");
+  const tot=document.querySelectorAll("#quiz-fase-body .quiz-opt-btn").length;
+  const dis=document.querySelectorAll("#quiz-fase-body .quiz-opt-btn[disabled]").length;
+  if(dis>=tot){
+    const ac=document.querySelectorAll("#quiz-fase-body .quiz-opt-btn.certa").length;
+    const res=document.getElementById("fres"); if(res){ res.style.display="block"; res.innerHTML=`<div class="quiz-res"><h3>${ac}/${total} corretas 🎉</h3><p>Fase concluída!</p><span class="xp-tag">+${xpP} XP</span></div>`; }
+    await addXP(xpP,"completar_fase");
+    try{ await set(ref(db,`progresso/${EU?.uid}/fases/${fid}`),{concluidoEm:Date.now(),acertos:ac,total}); }catch(e){}
+    toast(`Fase concluída! +${xpP} XP 🎉`,"ok"); carregarTrilha();
   }
 };
 
-// ─────────────────────────────────────────────
-// MISSÕES
-// ─────────────────────────────────────────────
-async function carregarMissoes() {
-  const lista = document.getElementById("missoes-lista");
-  const strip = document.getElementById("missoes-ativas-home");
-  if (!lista) return;
-  lista.innerHTML = '<div class="carregando-box"><div class="spinner"></div><p>Carregando...</p></div>';
-
-  const [snapMissoes, snapProg] = await Promise.all([
-    get(ref(db, "missoes")),
-    get(ref(db, `progresso/${usuarioAtual?.uid}/missoes`))
-  ]);
-
-  if (!snapMissoes.exists()) {
-    lista.innerHTML = '<div class="estado-vazio"><span class="material-icons-round">emoji_events</span><p>Nenhuma missão disponível ainda.</p></div>';
-    if (strip) strip.innerHTML = "";
-    return;
-  }
-
-  const missoes = [];
-  const progresso = snapProg.exists() ? snapProg.val() : {};
-  snapMissoes.forEach(c => missoes.push({ id: c.key, ...c.val() }));
-
-  let pendentes = 0;
-  lista.innerHTML = missoes.map(m => {
-    const prog    = progresso[m.id] || { atual: 0, concluida: false };
-    const pct     = Math.min(100, Math.round((prog.atual / m.meta) * 100));
-    const conc    = prog.concluida;
-    if (!conc) pendentes++;
-
-    return `
-      <div class="missao-card">
+/* ─── MISSÕES ─── */
+async function carregarMissoes(){
+  const l=document.getElementById("lista-missoes"); if(!l)return;
+  l.innerHTML='<div class="load-box"><div class="spin"></div><p>Carregando...</p></div>';
+  const strip=document.getElementById("missoes-strip");
+  try{
+    const [sm,sp]=await Promise.all([get(ref(db,"missoes")),get(ref(db,`progresso/${EU?.uid}/missoes`))]);
+    if(!sm.exists()){ l.innerHTML='<div class="vazio"><span class="material-icons-round">emoji_events</span><p>Nenhuma missão ainda.</p></div>'; if(strip)strip.innerHTML=""; return; }
+    const prog=sp.exists()?sp.val():{};
+    const missoes=[]; sm.forEach(c=>missoes.push({id:c.key,...c.val()}));
+    let pend=0;
+    l.innerHTML=missoes.map(m=>{
+      const pr=prog[m.id]||{atual:0,concluida:false};
+      const pct=Math.min(100,Math.round(((pr.atual||0)/m.meta)*100));
+      if(!pr.concluida)pend++;
+      return `<div class="missao-card">
         <div class="missao-topo">
-          <div class="missao-icone" style="background:${m.corFundo || "var(--verde-xl)"}">${m.emoji || "🎯"}</div>
-          <div class="missao-info">
-            <h4>${esc(m.titulo)}</h4>
-            <p>${esc(m.descricao)}</p>
-          </div>
-          <div class="missao-recompensa">
-            <span class="material-icons-round">bolt</span>+${m.xpPremio} XP
-          </div>
+          <div class="missao-ico" style="background:${m.corFundo||"var(--TL)"}">${m.emoji||"🎯"}</div>
+          <div class="missao-info"><h4>${esc(m.titulo)}</h4><p>${esc(m.descricao)}</p></div>
+          <div class="missao-xp"><span class="material-icons-round">bolt</span>+${m.xpPremio||100} XP</div>
         </div>
-        ${conc
-          ? `<div class="missao-concluida-badge"><span class="material-icons-round">check_circle</span> Concluída!</div>`
-          : `
-            <div class="missao-barra-wrap"><div class="missao-barra" style="width:${pct}%"></div></div>
-            <div class="missao-progresso-txt">${prog.atual} / ${m.meta} • ${pct}%</div>`}
+        ${pr.concluida?`<div class="missao-badge"><span class="material-icons-round">check_circle</span> Concluída!</div>`:`<div class="missao-bw"><div class="missao-bf" style="width:${pct}%"></div></div><div class="missao-pct">${pr.atual||0}/${m.meta} • ${pct}%</div>`}
       </div>`;
-  }).join("");
-
-  // Badge de missões no nav
-  const badge = document.getElementById("nav-missoes-badge");
-  if (badge) {
-    badge.textContent  = pendentes;
-    badge.style.display = pendentes > 0 ? "flex" : "none";
-  }
-
-  // Strip na home (missões incompletas)
-  if (strip) {
-    const ativas = missoes.filter(m => !(progresso[m.id]?.concluida)).slice(0, 4);
-    strip.innerHTML = ativas.map(m => {
-      const prog = progresso[m.id] || { atual: 0 };
-      const pct  = Math.min(100, Math.round((prog.atual / m.meta) * 100));
-      return `
-        <div class="missao-mini" onclick="irParaAba('missoes')">
-          <div class="missao-mini-titulo">${m.emoji || "🎯"} ${esc(m.titulo)}</div>
-          <div class="missao-mini-barra-wrap"><div class="missao-mini-barra" style="width:${pct}%"></div></div>
-          <div class="missao-mini-txt">${prog.atual}/${m.meta}</div>
-        </div>`;
     }).join("");
-  }
+    const badge=document.getElementById("nav-badge"); if(badge){ badge.textContent=pend; badge.style.display=pend>0?"flex":"none"; }
+    if(strip){ const at=missoes.filter(m=>!(prog[m.id]?.concluida)).slice(0,4); strip.innerHTML=at.map(m=>{ const pr=prog[m.id]||{atual:0}; const pct=Math.min(100,Math.round(((pr.atual||0)/m.meta)*100)); return `<div class="missao-mini" onclick="irAba('missoes')"><div class="missao-mini-tit">${m.emoji||"🎯"} ${esc(m.titulo)}</div><div class="missao-mini-bw"><div class="missao-mini-bf" style="width:${pct}%"></div></div><div class="missao-mini-txt">${pr.atual||0}/${m.meta}</div></div>`; }).join(""); }
+  }catch(e){ l.innerHTML=`<div class="vazio"><span class="material-icons-round">error</span><p>Erro ao carregar missões.</p></div>`; }
 }
 
-/** Verifica e atualiza progresso de missões por ação */
-async function verificarMissoesPorAcao(acao) {
-  if (!usuarioAtual) return;
-  const [snapMissoes, snapProg] = await Promise.all([
-    get(ref(db, "missoes")),
-    get(ref(db, `progresso/${usuarioAtual.uid}/missoes`))
-  ]);
-  if (!snapMissoes.exists()) return;
-
-  const progresso = snapProg.exists() ? snapProg.val() : {};
-  const atualizacoes = {};
-
-  snapMissoes.forEach(c => {
-    const m    = { id: c.key, ...c.val() };
-    const prog = progresso[m.id] || { atual: 0, concluida: false };
-    if (prog.concluida) return;
-    if (m.acao !== acao) return;
-
-    const novoAtual = (prog.atual || 0) + 1;
-    const concluida = novoAtual >= m.meta;
-    atualizacoes[m.id] = { atual: novoAtual, concluida };
-
-    if (concluida) {
-      adicionarXP(m.xpPremio || 100, null);
-      toast(`Missão concluída: ${m.titulo}! +${m.xpPremio} XP 🎉`, "ok");
-      // Dar medalha se a missão tiver
-      if (m.medalha && usuarioAtual) {
-        set(ref(db, `usuarios/${usuarioAtual.uid}/medalhas/${m.id}`), {
-          nome: m.medalha, conquista: m.titulo, em: Date.now()
-        });
-      }
-    }
-  });
-
-  if (Object.keys(atualizacoes).length > 0) {
-    await update(ref(db, `progresso/${usuarioAtual.uid}/missoes`), atualizacoes);
-  }
+async function verificarMissoes(acao){
+  if(!EU)return;
+  try{
+    const [sm,sp]=await Promise.all([get(ref(db,"missoes")),get(ref(db,`progresso/${EU.uid}/missoes`))]);
+    if(!sm.exists())return;
+    const prog=sp.exists()?sp.val():{};
+    const upd={};
+    sm.forEach(c=>{
+      const m={id:c.key,...c.val()}; const pr=prog[m.id]||{atual:0,concluida:false};
+      if(pr.concluida||m.acao!==acao)return;
+      const novo=(pr.atual||0)+1; const conc=novo>=m.meta;
+      upd[m.id]={atual:novo,concluida:conc};
+      if(conc){ addXP(m.xpPremio||100,null); toast(`Missão: ${m.titulo}! +${m.xpPremio} XP 🎉`,"ok"); }
+    });
+    if(Object.keys(upd).length)await update(ref(db,`progresso/${EU.uid}/missoes`),upd);
+  }catch(e){}
 }
 
-async function verificarMissoesPendentes() {
-  await carregarMissoes();
+/* ─── RANKING ─── */
+async function carregarRanking(){
+  const pod=document.getElementById("podio"); const lr=document.getElementById("lista-rank"); if(!pod||!lr)return;
+  lr.innerHTML='<div class="load-box"><div class="spin"></div><p>Carregando...</p></div>';
+  try{
+    const snap=await get(query(ref(db,"usuarios"),orderByChild("xp"),limitToLast(20)));
+    const us=[]; snap.forEach(c=>us.unshift({uid:c.key,...c.val()}));
+    us.sort((a,b)=>(b.xp||0)-(a.xp||0));
+    const t3=us.slice(0,3); const resto=us.slice(3);
+    const ord=[{u:t3[1],p:"p2",c:"🥈"},{u:t3[0],p:"p1",c:"👑"},{u:t3[2],p:"p3",c:"🥉"}].filter(x=>x.u);
+    pod.innerHTML=ord.map(({u,p,c})=>`<div class="podio-item ${p}"><span class="podio-crown">${c}</span><img class="podio-av" src="${esc(u.foto||av(u.nome))}" alt=""/><span class="podio-nome">${esc((u.nome||"?").split(" ")[0])}</span><span class="podio-xp">${u.xp||0} XP</span><div class="podio-plat">${p==="p1"?"1º":p==="p2"?"2º":"3º"}</div></div>`).join("");
+    lr.innerHTML=resto.length?resto.map((u,i)=>`<div class="rank-item ${u.uid===EU?.uid?"meu":""}"><span class="rank-pos">${i+4}º</span><img src="${esc(u.foto||av(u.nome))}" alt=""/><div class="rank-info"><strong>${esc(u.nome||"Anônimo")}</strong><small>Nível ${nivel(u.xp)}</small></div><span class="rank-xp">${u.xp||0} XP</span></div>`).join(""):'<p style="text-align:center;color:var(--mt);padding:1.5rem;font-size:.85rem">Continue estudando para aparecer aqui!</p>';
+  }catch(e){ lr.innerHTML=`<div class="vazio"><span class="material-icons-round">error</span><p>Erro ao carregar ranking.</p></div>`; }
 }
 
-// ─────────────────────────────────────────────
-// RANKING
-// ─────────────────────────────────────────────
-async function carregarRanking() {
-  const podio = document.getElementById("ranking-podio");
-  const lista = document.getElementById("ranking-lista");
-  if (!podio || !lista) return;
-  lista.innerHTML = '<div class="carregando-box"><div class="spinner"></div><p>Carregando...</p></div>';
-
-  const snap = await get(query(ref(db, "usuarios"), orderByChild("xp"), limitToLast(20)));
-  const usuarios = [];
-  snap.forEach(c => usuarios.unshift({ uid: c.key, ...c.val() }));
-  usuarios.sort((a, b) => (b.xp || 0) - (a.xp || 0));
-
-  const top3 = usuarios.slice(0, 3);
-  const resto = usuarios.slice(3);
-
-  // Pódio: centro=1º, esq=2º, dir=3º
-  const ordemPodio = [
-    { u: top3[1], pos: "p2", crown: "🥈" },
-    { u: top3[0], pos: "p1", crown: "👑" },
-    { u: top3[2], pos: "p3", crown: "🥉" }
-  ].filter(x => x.u);
-
-  podio.innerHTML = ordemPodio.map(({ u, pos, crown }) => {
-    const foto = u.fotoURL || avatarPadrao(u.nome);
-    const ehEu = u.uid === usuarioAtual?.uid;
-    return `
-      <div class="podio-item podio-${pos}">
-        <span class="podio-coroa">${crown}</span>
-        <img class="podio-avatar" src="${esc(foto)}" alt="" ${ehEu ? 'style="border-color:var(--verde)"' : ""} />
-        <span class="podio-nome">${esc((u.nome || "?").split(" ")[0])}</span>
-        <span class="podio-xp">${u.xp || 0} XP</span>
-        <div class="podio-plataforma">${pos === "podio-p1" ? "1º" : pos === "podio-p2" ? "2º" : "3º"}</div>
-      </div>`;
-  }).join("");
-
-  // Corrigir texto do bloco do pódio
-  podio.querySelectorAll(".podio-plataforma").forEach((el, i) => {
-    el.textContent = ordemPodio[i].pos === "p1" ? "1º" : ordemPodio[i].pos === "p2" ? "2º" : "3º";
-  });
-
-  lista.innerHTML = (resto.length ? resto : []).map((u, i) => {
-    const foto = u.fotoURL || avatarPadrao(u.nome);
-    const ehEu = u.uid === usuarioAtual?.uid;
-    return `
-      <div class="ranking-item ${ehEu ? "meu" : ""}">
-        <span class="ranking-pos">${i + 4}º</span>
-        <img src="${esc(foto)}" alt="" />
-        <div class="ranking-item-info">
-          <strong>${esc(u.nome || "Anônimo")}</strong>
-          <small>Nível ${calcularNivel(u.xp)}</small>
-        </div>
-        <span class="ranking-xp">${u.xp || 0} XP</span>
-      </div>`;
-  }).join("") || '<p style="text-align:center;color:var(--texto-mut);padding:1.5rem;font-size:.85rem">Estude mais para aparecer aqui!</p>';
-}
-
-// ─────────────────────────────────────────────
-// PERFIL
-// ─────────────────────────────────────────────
-
-/** Salvar edição do perfil */
-window.salvarPerfil = async function() {
-  const nome = document.getElementById("editar-nome").value.trim();
-  const bio  = document.getElementById("editar-bio").value.trim();
-  if (!nome) { toast("Nome não pode ser vazio.", "err"); return; }
-  if (!usuarioAtual) return;
-  await update(ref(db, `usuarios/${usuarioAtual.uid}`), { nome, bio });
-  perfilAtual.nome = nome;
-  perfilAtual.bio  = bio;
-  atualizarHeaderUI();
-  atualizarPerfilUI();
-  fecharModal("modal-editar-perfil");
-  toast("Perfil atualizado!", "ok");
+/* ─── PERFIL ─── */
+window.salvarPerfil=async function(){
+  const nome=document.getElementById("edit-nome")?.value.trim();
+  const bio=document.getElementById("edit-bio")?.value.trim();
+  if(!nome){ toast("Nome não pode ser vazio.","err"); return; }
+  if(!EU)return;
+  try{
+    await update(ref(db,`usuarios/${EU.uid}`),{nome,bio});
+    PERFIL.nome=nome; PERFIL.bio=bio;
+    atualizarHdr(); atualizarPerfil();
+    closeModal("m-edit-pf"); toast("Perfil atualizado!","ok");
+  }catch(e){ toast("Erro: "+e.message,"err"); }
 };
 
-/** Trocar foto de perfil */
-window.trocarFotoPerfil = async function(input) {
-  if (!input.files[0] || !usuarioAtual) return;
-  const btn = document.querySelector(".perfil-editar-foto");
-  if (btn) btn.innerHTML = '<span class="material-icons-round" style="animation:girar .7s linear infinite">refresh</span>';
-  try {
-    const base64 = await arquivoParaBase64(input.files[0]);
-    toast("Enviando foto...");
-    const url = await uploadImgBB(base64);
-    await update(ref(db, `usuarios/${usuarioAtual.uid}`), { fotoURL: url });
-    perfilAtual.fotoURL = url;
-    atualizarHeaderUI();
-    atualizarPerfilUI();
-    toast("Foto atualizada! 🎉", "ok");
-  } catch (e) {
-    toast("Erro ao enviar foto: " + e.message, "err");
-  } finally {
-    if (btn) btn.innerHTML = '<span class="material-icons-round">photo_camera</span>';
-  }
+window.trocarFoto=async function(inp){
+  if(!inp.files[0]||!EU)return;
+  const btn=document.querySelector(".pf-av-edit");
+  if(btn)btn.innerHTML='<span class="material-icons-round" style="animation:girar .7s linear infinite;font-size:13px">refresh</span>';
+  try{
+    const b64=await toB64(inp.files[0]); toast("Enviando foto...");
+    const url=await imgbb(b64);
+    await update(ref(db,`usuarios/${EU.uid}`),{foto:url});
+    PERFIL.foto=url; atualizarHdr(); atualizarPerfil();
+    toast("Foto atualizada! 🎉","ok");
+  }catch(e){ toast("Erro: "+e.message,"err"); }
+  finally{ if(btn)btn.innerHTML='<span class="material-icons-round">photo_camera</span>'; }
 };
 
-/** Ver perfil público de outro usuário */
-window.verPerfilPublico = async function(uid) {
-  if (!uid || uid === usuarioAtual?.uid) { irParaAba("perfil"); return; }
-  const snap = await get(ref(db, `usuarios/${uid}`));
-  if (!snap.exists()) return;
-  const u = snap.val();
-  toast(`Perfil: ${u.nome || "Anônimo"} — ${u.xp || 0} XP`);
-};
+window.verPerfPub=function(uid){ if(!uid||uid===EU?.uid){ irAba("perfil"); } else { toast("Veja o ranking para mais detalhes."); } };
