@@ -1,551 +1,339 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="theme-color" content="#00C9B1" />
-  <meta name="description" content="Sexta Feira Studies — Rede social de estudos gamificada" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="theme-color" content="#00C9B1"/>
   <title>Sexta Feira Studies</title>
-  <link rel="icon" type="image/png" href="assets/favicon.png" />
-  <link rel="apple-touch-icon" href="assets/favicon.png" />
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="assets/favicon.png"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════════════
-     TELA DE LOGIN / CADASTRO
-═══════════════════════════════════════════════════════════ -->
-<div id="tela-auth" class="tela ativa">
-  <div class="auth-bg">
-    <div class="auth-blob blob-1"></div>
-    <div class="auth-blob blob-2"></div>
-    <div class="auth-blob blob-3"></div>
+<!-- OVERLAY CARREGANDO -->
+<div id="overlay" class="overlay">
+  <div class="overlay-inner">
+    <div class="logo-pulse"><span class="material-icons-round">auto_stories</span></div>
+    <p>Carregando...</p>
   </div>
-  <div class="auth-card" id="auth-card">
+</div>
 
-    <!-- Logo -->
+<!-- ══════════════════ TELA AUTH ══════════════════ -->
+<div id="tela-auth" class="tela">
+  <div class="auth-bg">
+    <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  </div>
+  <div class="auth-card">
     <div class="auth-logo">
-      <div class="auth-logo-icon">
-        <span class="material-icons-round">auto_stories</span>
-      </div>
+      <div class="auth-logo-icon"><span class="material-icons-round">auto_stories</span></div>
       <div>
         <h1 class="auth-titulo">Sexta Feira<span>Studies</span></h1>
         <p class="auth-sub">Aprenda. Evolua. Vença.</p>
       </div>
     </div>
-
-    <!-- Abas -->
     <div class="auth-abas">
-      <button class="auth-aba ativa" data-aba="entrar" onclick="trocarAbaAuth('entrar')">Entrar</button>
-      <button class="auth-aba" data-aba="cadastro" onclick="trocarAbaAuth('cadastro')">Criar conta</button>
+      <button class="auth-aba ativa" onclick="trocarAba('entrar')">Entrar</button>
+      <button class="auth-aba" onclick="trocarAba('cadastro')">Criar conta</button>
     </div>
 
-    <!-- Painel: Entrar -->
+    <!-- PAINEL ENTRAR -->
     <div id="painel-entrar" class="auth-painel ativo">
-      <button class="btn-google" id="btn-google-entrar" onclick="loginGoogle()">
+      <button class="btn-google" onclick="loginGoogle()">
         <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
         Continuar com Google
       </button>
-      <div class="auth-divisor"><span>ou</span></div>
-      <div class="campo-grupo">
-        <span class="material-icons-round">mail</span>
-        <input type="email" id="entrar-email" placeholder="E-mail" autocomplete="email" />
-      </div>
-      <div class="campo-grupo">
-        <span class="material-icons-round">lock</span>
-        <input type="password" id="entrar-senha" placeholder="Senha" autocomplete="current-password" />
-        <button class="btn-olho" onclick="alternarSenha('entrar-senha', this)"><span class="material-icons-round">visibility</span></button>
-      </div>
-      <div id="erro-entrar" class="auth-erro" style="display:none"></div>
-      <button class="btn-auth" id="btn-entrar" onclick="fazerLogin()">
-        <span class="material-icons-round">login</span> Entrar
-      </button>
-      <button class="btn-recuperar" onclick="recuperarSenha()">Esqueci minha senha</button>
+      <div class="divisor"><span>ou com e-mail</span></div>
+      <div class="campo-auth"><span class="material-icons-round">mail</span><input type="email" id="e-email" placeholder="E-mail"/></div>
+      <div class="campo-auth"><span class="material-icons-round">lock</span><input type="password" id="e-senha" placeholder="Senha"/><button class="olho-btn" onclick="toggleOlho('e-senha',this)"><span class="material-icons-round">visibility</span></button></div>
+      <div id="err-entrar" class="auth-err" style="display:none"></div>
+      <button class="btn-auth" id="btn-entrar" onclick="fazerLogin()"><span class="material-icons-round">login</span> Entrar</button>
+      <button class="btn-link" onclick="recuperarSenha()">Esqueci minha senha</button>
     </div>
 
-    <!-- Painel: Cadastro -->
+    <!-- PAINEL CADASTRO -->
     <div id="painel-cadastro" class="auth-painel">
       <button class="btn-google" onclick="loginGoogle()">
         <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
         Cadastrar com Google
       </button>
-      <div class="auth-divisor"><span>ou preencha</span></div>
-      <div class="campo-grupo">
-        <span class="material-icons-round">person</span>
-        <input type="text" id="cad-nome" placeholder="Seu nome completo" autocomplete="name" />
-      </div>
-      <div class="campo-grupo">
-        <span class="material-icons-round">mail</span>
-        <input type="email" id="cad-email" placeholder="E-mail" autocomplete="email" />
-      </div>
-      <div class="campo-grupo">
-        <span class="material-icons-round">lock</span>
-        <input type="password" id="cad-senha" placeholder="Senha (mín. 6 caracteres)" autocomplete="new-password" />
-        <button class="btn-olho" onclick="alternarSenha('cad-senha', this)"><span class="material-icons-round">visibility</span></button>
-      </div>
-      <div class="campo-grupo">
-        <span class="material-icons-round">lock_reset</span>
-        <input type="password" id="cad-confirmar" placeholder="Confirmar senha" autocomplete="new-password" />
-      </div>
-      <div id="erro-cadastro" class="auth-erro" style="display:none"></div>
-      <button class="btn-auth" id="btn-cadastrar" onclick="fazerCadastro()">
-        <span class="material-icons-round">person_add</span> Criar conta
-      </button>
+      <div class="divisor"><span>ou preencha</span></div>
+      <div class="campo-auth"><span class="material-icons-round">person</span><input type="text" id="c-nome" placeholder="Seu nome"/></div>
+      <div class="campo-auth"><span class="material-icons-round">mail</span><input type="email" id="c-email" placeholder="E-mail"/></div>
+      <div class="campo-auth"><span class="material-icons-round">lock</span><input type="password" id="c-senha" placeholder="Senha (mín. 6 caracteres)"/><button class="olho-btn" onclick="toggleOlho('c-senha',this)"><span class="material-icons-round">visibility</span></button></div>
+      <div class="campo-auth"><span class="material-icons-round">lock_reset</span><input type="password" id="c-confirma" placeholder="Confirmar senha"/></div>
+      <div id="err-cadastro" class="auth-err" style="display:none"></div>
+      <button class="btn-auth" id="btn-cadastro" onclick="fazerCadastro()"><span class="material-icons-round">person_add</span> Criar conta</button>
     </div>
-
-    <p class="auth-termos">Ao entrar você concorda com os <a href="#">Termos de Uso</a></p>
+    <p class="auth-termos">Ao entrar, você concorda com os <a href="#">Termos de Uso</a></p>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     APP PRINCIPAL
-═══════════════════════════════════════════════════════════ -->
+<!-- ══════════════════ APP ══════════════════ -->
 <div id="tela-app" class="tela">
 
-  <!-- ── HEADER ── -->
-  <header class="app-header">
-    <div class="hdr-logo">
-      <span class="material-icons-round">auto_stories</span>
-      <span>SF Studies</span>
-    </div>
-    <div class="hdr-direita">
-      <button class="hdr-pill hdr-xp" id="hdr-xp-btn">
-        <span class="material-icons-round">bolt</span>
-        <span id="hdr-xp-val">0 XP</span>
-      </button>
-      <button class="hdr-pill hdr-streak" id="hdr-streak-btn">
-        <span class="material-icons-round">local_fire_department</span>
-        <span id="hdr-streak-val">0</span>
-      </button>
-      <div class="hdr-avatar" id="hdr-avatar" onclick="irParaAba('perfil')">
-        <img id="hdr-avatar-img" src="https://ui-avatars.com/api/?name=U&background=00C9B1&color=fff" alt="Avatar" />
-      </div>
+  <header class="app-hdr">
+    <div class="hdr-logo"><span class="material-icons-round">auto_stories</span><span>SF Studies</span></div>
+    <div class="hdr-dir">
+      <div class="hdr-pill xp-pill"><span class="material-icons-round">bolt</span><span id="hdr-xp">0 XP</span></div>
+      <div class="hdr-pill streak-pill"><span class="material-icons-round">local_fire_department</span><span id="hdr-streak">0</span></div>
+      <div class="hdr-av" onclick="irAba('perfil')"><img id="hdr-av-img" src="https://ui-avatars.com/api/?name=U&background=00C9B1&color=fff" alt=""/></div>
     </div>
   </header>
 
-  <!-- ── CONTEÚDO DAS ABAS ── -->
   <main class="app-main" id="app-main">
 
-    <!-- ===== HOME ===== -->
+    <!-- HOME -->
     <section id="aba-home" class="aba ativa">
-
-      <!-- Aviso global -->
-      <div id="aviso-global" class="aviso-global" style="display:none">
-        <div class="aviso-global-icone"><span class="material-icons-round">campaign</span></div>
-        <div class="aviso-global-corpo">
-          <strong id="aviso-global-titulo"></strong>
-          <p id="aviso-global-msg"></p>
-        </div>
-        <button onclick="fecharAvisoGlobal()" class="aviso-global-fechar"><span class="material-icons-round">close</span></button>
+      <div id="aviso-box" class="aviso-box" style="display:none">
+        <span class="material-icons-round">campaign</span>
+        <div><strong id="aviso-titulo"></strong><p id="aviso-msg"></p></div>
+        <button onclick="document.getElementById('aviso-box').style.display='none'"><span class="material-icons-round">close</span></button>
       </div>
-
-      <!-- Missões ativas -->
-      <div id="missoes-ativas-home" class="missoes-strip"></div>
-
-      <!-- Criar post -->
-      <div class="criar-post-bar" onclick="abrirModal('modal-criar-post')">
-        <img id="criar-post-avatar" src="https://ui-avatars.com/api/?name=U&background=00C9B1&color=fff" alt="" />
-        <span>Compartilhe algo com a comunidade...</span>
-        <button class="btn-icone-sm"><span class="material-icons-round">add_photo_alternate</span></button>
+      <div id="missoes-strip" class="missoes-strip"></div>
+      <div class="criar-bar" onclick="openModal('m-post')">
+        <img id="bar-av" src="https://ui-avatars.com/api/?name=U&background=00C9B1&color=fff" alt=""/>
+        <span>Compartilhe algo...</span>
+        <span class="material-icons-round" style="color:var(--mt)">add_photo_alternate</span>
       </div>
-
-      <!-- Feed -->
-      <div id="feed-lista" class="feed-lista">
-        <div class="carregando-box"><div class="spinner"></div><p>Carregando feed...</p></div>
-      </div>
+      <div id="feed" class="feed"><div class="load-box"><div class="spin"></div><p>Carregando...</p></div></div>
     </section>
 
-    <!-- ===== MÓDULOS ===== -->
+    <!-- MÓDULOS -->
     <section id="aba-modulos" class="aba">
-      <div class="sec-cabecalho">
-        <h2>Módulos</h2>
-        <button class="btn-primario-sm" onclick="abrirModal('modal-criar-modulo')">
-          <span class="material-icons-round">add</span> Criar
-        </button>
+      <div class="sec-hdr"><h2>Módulos</h2><button class="btn-sm" onclick="openModal('m-mod')"><span class="material-icons-round">add</span> Criar</button></div>
+      <div class="busca-wrap"><span class="material-icons-round">search</span><input type="text" id="busca-mod" placeholder="Buscar módulo..." oninput="filtrarMods()"/></div>
+      <div class="chips-row" id="chips-mat">
+        <button class="chip ativo" data-m="">Todos</button>
+        <button class="chip" data-m="Matemática">📐 Mat.</button>
+        <button class="chip" data-m="Português">📚 Port.</button>
+        <button class="chip" data-m="Literatura">📖 Lit.</button>
+        <button class="chip" data-m="Redação">✍️ Red.</button>
+        <button class="chip" data-m="História">🏛️ Hist.</button>
+        <button class="chip" data-m="Geografia">🌍 Geo.</button>
+        <button class="chip" data-m="Ciências">🔬 Ciênc.</button>
+        <button class="chip" data-m="Biologia">🧬 Bio.</button>
+        <button class="chip" data-m="Física">⚛️ Fís.</button>
+        <button class="chip" data-m="Química">🧪 Quím.</button>
+        <button class="chip" data-m="Inglês">🇬🇧 Ing.</button>
+        <button class="chip" data-m="Espanhol">🇪🇸 Esp.</button>
+        <button class="chip" data-m="Filosofia">🤔 Fil.</button>
+        <button class="chip" data-m="Sociologia">🧑‍🤝‍🧑 Soc.</button>
+        <button class="chip" data-m="Artes">🎨 Art.</button>
+        <button class="chip" data-m="Ed. Física">🏃 E.Fís.</button>
+        <button class="chip" data-m="Programação">💻 Prog.</button>
+        <button class="chip" data-m="Robótica">🤖 Rob.</button>
+        <button class="chip" data-m="Empreend.">💼 Empr.</button>
       </div>
-
-      <!-- Busca -->
-      <div class="campo-busca">
-        <span class="material-icons-round">search</span>
-        <input type="text" id="busca-modulo" placeholder="Buscar módulo..." oninput="filtrarModulos()" />
-      </div>
-
-      <!-- Chips matéria -->
-      <div class="chips-scroll" id="chips-materia">
-        <button class="chip ativo" data-materia="">Todos</button>
-        <button class="chip" data-materia="Matemática">📐 Mat.</button>
-        <button class="chip" data-materia="Português">📚 Port.</button>
-        <button class="chip" data-materia="Literatura">📖 Lit.</button>
-        <button class="chip" data-materia="Redação">✍️ Red.</button>
-        <button class="chip" data-materia="História">🏛️ Hist.</button>
-        <button class="chip" data-materia="Geografia">🌍 Geo.</button>
-        <button class="chip" data-materia="Ciências">🔬 Ciênc.</button>
-        <button class="chip" data-materia="Biologia">🧬 Bio.</button>
-        <button class="chip" data-materia="Física">⚛️ Fís.</button>
-        <button class="chip" data-materia="Química">🧪 Quím.</button>
-        <button class="chip" data-materia="Inglês">🇬🇧 Ing.</button>
-        <button class="chip" data-materia="Espanhol">🇪🇸 Esp.</button>
-        <button class="chip" data-materia="Filosofia">🤔 Fil.</button>
-        <button class="chip" data-materia="Sociologia">🧑‍🤝‍🧑 Soc.</button>
-        <button class="chip" data-materia="Artes">🎨 Art.</button>
-        <button class="chip" data-materia="Ed. Física">🏃 Ed.Fís.</button>
-        <button class="chip" data-materia="Programação">💻 Prog.</button>
-        <button class="chip" data-materia="Robótica">🤖 Rob.</button>
-        <button class="chip" data-materia="Empreend.">💼 Empr.</button>
-      </div>
-
-      <div id="modulos-grade" class="modulos-grade">
-        <div class="carregando-box"><div class="spinner"></div><p>Carregando...</p></div>
-      </div>
+      <div id="grade-mods" class="grade-mods"><div class="load-box"><div class="spin"></div><p>Carregando...</p></div></div>
     </section>
 
-    <!-- ===== TRILHA ===== -->
+    <!-- TRILHA -->
     <section id="aba-trilha" class="aba">
-      <div class="sec-cabecalho"><h2>🗺️ Trilha</h2></div>
-
-      <!-- Barra de nível -->
-      <div class="nivel-barra-card">
-        <div class="nivel-info">
-          <div class="nivel-badge" id="nivel-badge"><span class="material-icons-round">military_tech</span><span id="nivel-label">Nível 1</span></div>
-          <span id="nivel-xp-txt" class="nivel-xp-txt">0 / 100 XP</span>
+      <div class="sec-hdr"><h2>🗺️ Trilha</h2></div>
+      <div class="nivel-card">
+        <div class="nivel-row">
+          <div class="nivel-badge"><span class="material-icons-round">military_tech</span><span id="nivel-txt">Nível 1</span></div>
+          <span id="nivel-xp-info" class="nivel-xp-info">0/100 XP</span>
         </div>
-        <div class="nivel-progresso-wrap">
-          <div class="nivel-progresso-fill" id="nivel-progresso"></div>
-        </div>
+        <div class="xp-barra-wrap"><div class="xp-barra-fill" id="xp-barra"></div></div>
       </div>
-
-      <!-- Trilha de fases -->
-      <div id="trilha-fases" class="trilha-fases">
-        <div class="carregando-box"><div class="spinner"></div><p>Carregando trilha...</p></div>
-      </div>
+      <div id="trilha" class="trilha"><div class="load-box"><div class="spin"></div><p>Carregando trilha...</p></div></div>
     </section>
 
-    <!-- ===== MISSÕES ===== -->
+    <!-- MISSÕES -->
     <section id="aba-missoes" class="aba">
-      <div class="sec-cabecalho"><h2>🎯 Missões</h2></div>
-      <div id="missoes-lista" class="missoes-lista">
-        <div class="carregando-box"><div class="spinner"></div><p>Carregando missões...</p></div>
-      </div>
+      <div class="sec-hdr"><h2>🎯 Missões</h2></div>
+      <div id="lista-missoes" class="lista-missoes"><div class="load-box"><div class="spin"></div><p>Carregando...</p></div></div>
     </section>
 
-    <!-- ===== RANKING ===== -->
+    <!-- RANKING -->
     <section id="aba-ranking" class="aba">
-      <div class="sec-cabecalho"><h2>🏆 Ranking</h2></div>
-      <div id="ranking-podio" class="ranking-podio"></div>
-      <div id="ranking-lista" class="ranking-lista">
-        <div class="carregando-box"><div class="spinner"></div><p>Carregando...</p></div>
-      </div>
+      <div class="sec-hdr"><h2>🏆 Ranking</h2></div>
+      <div id="podio" class="podio"></div>
+      <div id="lista-rank" class="lista-rank"><div class="load-box"><div class="spin"></div><p>Carregando...</p></div></div>
     </section>
 
-    <!-- ===== PERFIL ===== -->
+    <!-- PERFIL -->
     <section id="aba-perfil" class="aba">
-      <!-- Cabeçalho do perfil -->
       <div class="perfil-card">
-        <div class="perfil-capa" id="perfil-capa"></div>
-        <div class="perfil-corpo">
-          <div class="perfil-avatar-wrap">
-            <img id="perfil-avatar" src="https://ui-avatars.com/api/?name=U&background=00C9B1&color=fff" alt="Avatar" />
-            <button class="perfil-editar-foto" onclick="document.getElementById('input-trocar-foto').click()">
-              <span class="material-icons-round">photo_camera</span>
-            </button>
-            <input type="file" id="input-trocar-foto" accept="image/*" style="display:none" onchange="trocarFotoPerfil(this)" />
+        <div class="perfil-capa"></div>
+        <div class="perfil-topo">
+          <div class="perfil-av-wrap">
+            <img id="pf-av" src="https://ui-avatars.com/api/?name=U&background=00C9B1&color=fff" alt=""/>
+            <button class="pf-av-edit" onclick="document.getElementById('pf-file').click()"><span class="material-icons-round">photo_camera</span></button>
+            <input type="file" id="pf-file" accept="image/*" style="display:none" onchange="trocarFoto(this)"/>
           </div>
-          <div class="perfil-info">
-            <h2 id="perfil-nome">Carregando...</h2>
-            <p id="perfil-bio" class="perfil-bio">Sem bio.</p>
-            <div class="perfil-meta">
-              <span id="perfil-criacao" class="perfil-criacao"></span>
-            </div>
+          <div class="pf-info">
+            <h2 id="pf-nome">---</h2>
+            <p id="pf-bio" class="pf-bio">---</p>
           </div>
         </div>
-        <div class="perfil-stats">
-          <div class="perfil-stat">
-            <strong id="perfil-xp">0</strong>
-            <span>XP</span>
-          </div>
-          <div class="perfil-stat">
-            <strong id="perfil-nivel">1</strong>
-            <span>Nível</span>
-          </div>
-          <div class="perfil-stat">
-            <strong id="perfil-streak">0</strong>
-            <span>Dias</span>
-          </div>
-          <div class="perfil-stat">
-            <strong id="perfil-modulos-count">0</strong>
-            <span>Módulos</span>
-          </div>
-          <div class="perfil-stat">
-            <strong id="perfil-posts-count">0</strong>
-            <span>Posts</span>
-          </div>
+        <div class="pf-stats">
+          <div class="pf-stat"><strong id="pf-xp">0</strong><span>XP</span></div>
+          <div class="pf-stat"><strong id="pf-nivel">1</strong><span>Nível</span></div>
+          <div class="pf-stat"><strong id="pf-streak">0</strong><span>Streak</span></div>
+          <div class="pf-stat"><strong id="pf-mods">0</strong><span>Módulos</span></div>
+          <div class="pf-stat"><strong id="pf-posts">0</strong><span>Posts</span></div>
         </div>
-        <!-- Medalhas -->
-        <div class="perfil-medalhas" id="perfil-medalhas"></div>
-        <div class="perfil-acoes">
-          <button class="btn-primario" onclick="abrirModal('modal-editar-perfil')">
-            <span class="material-icons-round">edit</span> Editar perfil
-          </button>
-          <button class="btn-perigo" onclick="fazerLogout()">
-            <span class="material-icons-round">logout</span> Sair
-          </button>
+        <div id="pf-medalhas" class="pf-medalhas"></div>
+        <div class="pf-acoes">
+          <button class="btn-prim" onclick="openModal('m-edit-pf')"><span class="material-icons-round">edit</span> Editar perfil</button>
+          <button class="btn-danger" onclick="fazerLogout()"><span class="material-icons-round">logout</span> Sair</button>
         </div>
       </div>
-
-      <!-- Meus módulos -->
-      <div class="sec-cabecalho" style="margin-top:1rem"><h3>Meus módulos</h3></div>
-      <div id="meus-modulos" class="modulos-grade"></div>
+      <div class="sec-hdr" style="margin-top:1rem"><h3>Meus módulos</h3></div>
+      <div id="meus-mods" class="grade-mods"></div>
     </section>
 
   </main>
 
-  <!-- ── BARRA DE NAVEGAÇÃO INFERIOR ── -->
-  <nav class="nav-inferior">
-    <button class="nav-btn ativo" data-aba="home" onclick="irParaAba('home', this)">
-      <span class="material-icons-round">home</span>
-      <span>Home</span>
-    </button>
-    <button class="nav-btn" data-aba="modulos" onclick="irParaAba('modulos', this)">
-      <span class="material-icons-round">layers</span>
-      <span>Módulos</span>
-    </button>
-    <button class="nav-btn nav-btn-criar" onclick="abrirModal('modal-criar-post')">
-      <div class="nav-criar-circulo">
-        <span class="material-icons-round">add</span>
-      </div>
-    </button>
-    <button class="nav-btn" data-aba="trilha" onclick="irParaAba('trilha', this)">
-      <span class="material-icons-round">map</span>
-      <span>Trilha</span>
-    </button>
-    <button class="nav-btn" data-aba="missoes" onclick="irParaAba('missoes', this)">
-      <span class="material-icons-round">emoji_events</span>
-      <span>Missões</span>
-      <span class="nav-badge" id="nav-missoes-badge" style="display:none"></span>
-    </button>
-    <button class="nav-btn" data-aba="ranking" onclick="irParaAba('ranking', this)">
-      <span class="material-icons-round">leaderboard</span>
-      <span>Ranking</span>
-    </button>
-    <button class="nav-btn" data-aba="perfil" onclick="irParaAba('perfil', this)">
-      <span class="material-icons-round">person</span>
-      <span>Perfil</span>
-    </button>
+  <nav class="nav-bar">
+    <button class="nav-btn ativo" data-tab="home"    onclick="irAba('home',this)"><span class="material-icons-round">home</span><span>Home</span></button>
+    <button class="nav-btn"       data-tab="modulos" onclick="irAba('modulos',this)"><span class="material-icons-round">layers</span><span>Módulos</span></button>
+    <button class="nav-btn nav-add-btn" onclick="openModal('m-post')"><div class="nav-add-circulo"><span class="material-icons-round">add</span></div></button>
+    <button class="nav-btn"       data-tab="trilha"  onclick="irAba('trilha',this)"><span class="material-icons-round">map</span><span>Trilha</span></button>
+    <button class="nav-btn"       data-tab="missoes" onclick="irAba('missoes',this)"><span class="material-icons-round">emoji_events</span><span>Missões</span><span class="nav-badge" id="nav-badge" style="display:none">0</span></button>
+    <button class="nav-btn"       data-tab="ranking" onclick="irAba('ranking',this)"><span class="material-icons-round">leaderboard</span><span>Ranking</span></button>
+    <button class="nav-btn"       data-tab="perfil"  onclick="irAba('perfil',this)"><span class="material-icons-round">person</span><span>Perfil</span></button>
   </nav>
+</div>
 
-</div><!-- /tela-app -->
+<!-- ══════════════════ MODAIS ══════════════════ -->
 
-<!-- ═══════════════════════════════════════════════════════════
-     MODAIS
-═══════════════════════════════════════════════════════════ -->
-
-<!-- ── Modal: Criar Post ── -->
-<div id="modal-criar-post" class="modal-overlay" style="display:none">
-  <div class="modal-folha">
+<!-- Modal Criar Post -->
+<div id="m-post" class="modal-ov" style="display:none">
+  <div class="modal-sh">
     <div class="modal-drag"></div>
-    <div class="modal-hdr">
-      <h3>Nova publicação</h3>
-      <button class="modal-fechar-btn" onclick="fecharModal('modal-criar-post')"><span class="material-icons-round">close</span></button>
-    </div>
-    <div class="modal-corpo">
-      <div class="post-autor-row">
-        <img id="post-criar-avatar" src="" alt="" />
-        <span id="post-criar-nome"></span>
+    <div class="modal-hdr"><h3>Nova publicação</h3><button class="modal-x" onclick="closeModal('m-post')"><span class="material-icons-round">close</span></button></div>
+    <div class="modal-body">
+      <div class="post-av-row"><img id="post-av-img" src="" alt=""/><span id="post-av-nome"></span></div>
+      <textarea id="post-txt" placeholder="O que você quer compartilhar?" rows="4"></textarea>
+      <div id="post-img-prev" style="display:none;position:relative;margin-top:.5rem">
+        <img id="post-prev" src="" style="width:100%;border-radius:12px;max-height:220px;object-fit:cover"/>
+        <button onclick="removerImgPost()" style="position:absolute;top:.4rem;right:.4rem;background:rgba(0,0,0,.55);border:none;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer"><span class="material-icons-round" style="color:#fff;font-size:15px">close</span></button>
       </div>
-      <textarea id="post-texto" placeholder="O que você quer compartilhar?" rows="4"></textarea>
-      <div id="post-img-preview" style="display:none">
-        <div style="position:relative;margin-top:.5rem">
-          <img id="post-preview-img" src="" alt="" style="width:100%;border-radius:12px;max-height:220px;object-fit:cover" />
-          <button onclick="removerImagemPost()" class="btn-remover-img"><span class="material-icons-round">close</span></button>
-        </div>
-      </div>
-      <div class="post-acoes-bar">
-        <button class="btn-icone" onclick="document.getElementById('post-img-input').click()">
-          <span class="material-icons-round">add_photo_alternate</span> Foto
-        </button>
-        <input type="file" id="post-img-input" accept="image/*" style="display:none" onchange="selecionarImagemPost(this)" />
+      <div style="border-top:1px solid var(--borda);margin-top:.75rem;padding-top:.75rem">
+        <button class="btn-icon" onclick="document.getElementById('post-file').click()"><span class="material-icons-round">add_photo_alternate</span> Foto</button>
+        <input type="file" id="post-file" accept="image/*" style="display:none" onchange="selecionarFotoPost(this)"/>
       </div>
     </div>
-    <div class="modal-rodape">
-      <button class="btn-primario" id="btn-publicar" onclick="publicarPost()">
-        <span class="material-icons-round">send</span> Publicar
-      </button>
+    <div class="modal-footer">
+      <button class="btn-prim" id="btn-pub" onclick="publicarPost()"><span class="material-icons-round">send</span> Publicar</button>
     </div>
   </div>
 </div>
 
-<!-- ── Modal: Ver Post / Comentários ── -->
-<div id="modal-ver-post" class="modal-overlay" style="display:none">
-  <div class="modal-folha">
+<!-- Modal Ver Post / Comentários -->
+<div id="m-ver-post" class="modal-ov" style="display:none">
+  <div class="modal-sh">
     <div class="modal-drag"></div>
-    <div class="modal-hdr">
-      <h3>Publicação</h3>
-      <button class="modal-fechar-btn" onclick="fecharModal('modal-ver-post')"><span class="material-icons-round">close</span></button>
-    </div>
-    <div id="ver-post-conteudo" class="modal-corpo"></div>
-    <div class="modal-corpo" id="comentarios-area">
-      <h4 class="comentarios-titulo">Comentários</h4>
-      <div id="comentarios-lista"></div>
-      <div class="comentario-input-row">
-        <img id="comentario-avatar" src="" alt="" />
-        <input type="text" id="comentario-texto" placeholder="Escreva um comentário..." />
+    <div class="modal-hdr"><h3>Publicação</h3><button class="modal-x" onclick="closeModal('m-ver-post')"><span class="material-icons-round">close</span></button></div>
+    <div id="ver-post-corpo" class="modal-body"></div>
+    <div class="modal-body" style="border-top:1px solid var(--borda)">
+      <h4 style="font-size:.88rem;font-weight:800;margin-bottom:.75rem">Comentários</h4>
+      <div id="lista-coments"></div>
+      <div class="coment-row">
+        <img id="coment-av" src="" alt=""/>
+        <input type="text" id="coment-txt" placeholder="Escreva um comentário..."/>
         <button onclick="enviarComentario()"><span class="material-icons-round">send</span></button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ── Modal: Criar Módulo ── -->
-<div id="modal-criar-modulo" class="modal-overlay" style="display:none">
-  <div class="modal-folha modal-alto">
+<!-- Modal Criar Módulo -->
+<div id="m-mod" class="modal-ov" style="display:none">
+  <div class="modal-sh modal-alto">
     <div class="modal-drag"></div>
-    <div class="modal-hdr">
-      <h3>Novo Módulo</h3>
-      <button class="modal-fechar-btn" onclick="fecharModal('modal-criar-modulo')"><span class="material-icons-round">close</span></button>
-    </div>
-    <div class="modal-corpo modal-scroll">
-      <div class="campo-form">
-        <label>Título *</label>
-        <input type="text" id="mod-titulo" placeholder="Ex: Álgebra Linear para o ENEM" />
-      </div>
-      <div class="campo-form">
-        <label>Descrição</label>
-        <textarea id="mod-desc" rows="2" placeholder="Sobre o que é este módulo..."></textarea>
-      </div>
-      <div class="campo-form">
-        <label>Matéria *</label>
-        <select id="mod-materia">
+    <div class="modal-hdr"><h3>Novo Módulo</h3><button class="modal-x" onclick="closeModal('m-mod')"><span class="material-icons-round">close</span></button></div>
+    <div class="modal-body modal-scroll">
+      <div class="fgrp"><label>Título *</label><input type="text" id="mod-tit" placeholder="Ex: Álgebra Linear para o ENEM"/></div>
+      <div class="fgrp"><label>Descrição</label><textarea id="mod-desc" rows="2" placeholder="Sobre o que é este módulo..."></textarea></div>
+      <div class="fgrp"><label>Matéria *</label>
+        <select id="mod-mat">
           <option value="">Selecione...</option>
-          <option>Matemática</option><option>Português</option><option>Literatura</option>
-          <option>Redação</option><option>História</option><option>Geografia</option>
-          <option>Ciências</option><option>Biologia</option><option>Física</option>
-          <option>Química</option><option>Inglês</option><option>Espanhol</option>
-          <option>Filosofia</option><option>Sociologia</option><option>Artes</option>
-          <option>Ed. Física</option><option>Programação</option><option>Robótica</option>
-          <option>Empreend.</option>
+          <option>Matemática</option><option>Português</option><option>Literatura</option><option>Redação</option>
+          <option>História</option><option>Geografia</option><option>Ciências</option><option>Biologia</option>
+          <option>Física</option><option>Química</option><option>Inglês</option><option>Espanhol</option>
+          <option>Filosofia</option><option>Sociologia</option><option>Artes</option><option>Ed. Física</option>
+          <option>Programação</option><option>Robótica</option><option>Empreend.</option>
         </select>
       </div>
-      <div class="campo-form">
-        <label>Capa do módulo</label>
-        <div class="capa-upload" id="capa-upload-area" onclick="document.getElementById('mod-capa-input').click()">
-          <span class="material-icons-round">add_photo_alternate</span>
-          <span>Clique para adicionar capa</span>
-          <img id="capa-preview" src="" alt="" style="display:none" />
-          <input type="file" id="mod-capa-input" accept="image/*" style="display:none" onchange="previewCapa(this)" />
+      <div class="fgrp"><label>Capa</label>
+        <div class="capa-area" id="capa-area" onclick="document.getElementById('capa-file').click()">
+          <span class="material-icons-round">add_photo_alternate</span><span id="capa-span">Clique para adicionar capa</span>
+          <img id="capa-prev" src="" style="display:none"/>
+          <input type="file" id="capa-file" accept="image/*" style="display:none" onchange="prevCapa(this)"/>
         </div>
       </div>
-      <div class="campo-form">
-        <label>Conteúdo / Introdução</label>
-        <textarea id="mod-conteudo" rows="6" placeholder="Escreva o conteúdo principal do módulo..."></textarea>
-      </div>
-      <div class="campo-form">
-        <label>Vídeos do YouTube</label>
-        <div id="videos-lista">
-          <div class="video-row">
-            <input type="text" class="video-url-input" placeholder="Cole a URL do YouTube aqui..." />
-            <button class="btn-icone-sm" onclick="adicionarVideoInput()"><span class="material-icons-round">add</span></button>
-          </div>
+      <div class="fgrp"><label>Conteúdo</label><textarea id="mod-cont" rows="6" placeholder="Escreva o conteúdo do módulo..."></textarea></div>
+      <div class="fgrp"><label>Vídeos YouTube</label>
+        <div id="videos-wrap">
+          <div class="video-row"><input type="text" class="video-in" placeholder="Cole a URL do YouTube..."/><button class="btn-icon-sm" onclick="addVideo()"><span class="material-icons-round">add</span></button></div>
         </div>
       </div>
-      <div class="campo-form">
-        <label>Quiz</label>
-        <div id="quiz-construtor"></div>
-        <button class="btn-secundario" onclick="adicionarQuestao()" style="margin-top:.5rem">
-          <span class="material-icons-round">add</span> Adicionar pergunta
-        </button>
+      <div class="fgrp"><label>Quiz</label>
+        <div id="quiz-wrap"></div>
+        <button class="btn-sec" onclick="addQuestao()" style="margin-top:.5rem"><span class="material-icons-round">add</span> Adicionar pergunta</button>
       </div>
     </div>
-    <div class="modal-rodape">
-      <button class="btn-primario" id="btn-salvar-modulo" onclick="salvarModulo()">
-        <span class="material-icons-round">save</span> Salvar módulo
-      </button>
+    <div class="modal-footer">
+      <button class="btn-prim" id="btn-salvar-mod" onclick="salvarModulo()"><span class="material-icons-round">save</span> Salvar módulo</button>
     </div>
   </div>
 </div>
 
-<!-- ── Modal: Ver Módulo ── -->
-<div id="modal-ver-modulo" class="modal-overlay" style="display:none">
-  <div class="modal-folha modal-tela-cheia">
+<!-- Modal Ver Módulo -->
+<div id="m-ver-mod" class="modal-ov" style="display:none">
+  <div class="modal-sh modal-full">
     <div class="modal-drag"></div>
-    <button class="modal-fechar-flutuante" onclick="fecharModal('modal-ver-modulo')">
-      <span class="material-icons-round">close</span>
-    </button>
-    <div id="modulo-conteudo-view" class="modal-corpo modal-scroll"></div>
+    <button class="modal-x-float" onclick="closeModal('m-ver-mod')"><span class="material-icons-round">close</span></button>
+    <div id="mod-view" class="modal-body modal-scroll" style="padding:0"></div>
   </div>
 </div>
 
-<!-- ── Modal: Editar Perfil ── -->
-<div id="modal-editar-perfil" class="modal-overlay" style="display:none">
-  <div class="modal-folha">
+<!-- Modal Editar Perfil -->
+<div id="m-edit-pf" class="modal-ov" style="display:none">
+  <div class="modal-sh">
     <div class="modal-drag"></div>
-    <div class="modal-hdr">
-      <h3>Editar Perfil</h3>
-      <button class="modal-fechar-btn" onclick="fecharModal('modal-editar-perfil')"><span class="material-icons-round">close</span></button>
+    <div class="modal-hdr"><h3>Editar Perfil</h3><button class="modal-x" onclick="closeModal('m-edit-pf')"><span class="material-icons-round">close</span></button></div>
+    <div class="modal-body">
+      <div class="fgrp"><label>Nome</label><input type="text" id="edit-nome"/></div>
+      <div class="fgrp"><label>Bio</label><textarea id="edit-bio" rows="3"></textarea></div>
     </div>
-    <div class="modal-corpo">
-      <div class="campo-form">
-        <label>Nome de exibição</label>
-        <input type="text" id="editar-nome" placeholder="Seu nome" />
-      </div>
-      <div class="campo-form">
-        <label>Bio</label>
-        <textarea id="editar-bio" rows="3" placeholder="Fale um pouco sobre você..."></textarea>
-      </div>
-    </div>
-    <div class="modal-rodape">
-      <button class="btn-primario" onclick="salvarPerfil()">
-        <span class="material-icons-round">save</span> Salvar
-      </button>
+    <div class="modal-footer">
+      <button class="btn-prim" onclick="salvarPerfil()"><span class="material-icons-round">save</span> Salvar</button>
     </div>
   </div>
 </div>
 
-<!-- ── Modal: Ver Fase ── -->
-<div id="modal-ver-fase" class="modal-overlay" style="display:none">
-  <div class="modal-folha">
+<!-- Modal Ver Fase -->
+<div id="m-fase" class="modal-ov" style="display:none">
+  <div class="modal-sh">
     <div class="modal-drag"></div>
-    <div id="fase-detalhe-corpo" class="modal-corpo" style="padding-top:0"></div>
-    <div class="modal-rodape" id="fase-detalhe-rodape"></div>
+    <div id="fase-corpo" class="modal-body" style="padding-top:0"></div>
+    <div class="modal-footer" id="fase-footer"></div>
   </div>
 </div>
 
-<!-- ── Modal: Quiz de Fase ── -->
-<div id="modal-quiz-fase" class="modal-overlay" style="display:none">
-  <div class="modal-folha modal-alto">
+<!-- Modal Quiz Fase -->
+<div id="m-quiz-fase" class="modal-ov" style="display:none">
+  <div class="modal-sh modal-alto">
     <div class="modal-drag"></div>
-    <div class="modal-hdr">
-      <h3 id="quiz-fase-titulo">Quiz</h3>
-      <button class="modal-fechar-btn" onclick="fecharModal('modal-quiz-fase')"><span class="material-icons-round">close</span></button>
-    </div>
-    <div id="quiz-fase-corpo" class="modal-corpo modal-scroll"></div>
+    <div class="modal-hdr"><h3 id="quiz-fase-tit">Quiz</h3><button class="modal-x" onclick="closeModal('m-quiz-fase')"><span class="material-icons-round">close</span></button></div>
+    <div id="quiz-fase-body" class="modal-body modal-scroll"></div>
   </div>
 </div>
 
-<!-- ── Notificação de XP ── -->
-<div id="xp-popup" class="xp-popup" style="display:none">
-  <span class="material-icons-round">bolt</span>
-  <span id="xp-popup-txt">+10 XP</span>
-</div>
+<!-- XP Popup -->
+<div id="xp-pop" class="xp-pop" style="display:none"><span class="material-icons-round">bolt</span><span id="xp-pop-txt">+10 XP</span></div>
 
-<!-- ── Toast ── -->
+<!-- Toast -->
 <div id="toast" class="toast"></div>
-
-<!-- ── Overlay de carregamento ── -->
-<div id="overlay-carregando" class="overlay-carregando">
-  <div class="overlay-inner">
-    <div class="logo-loader">
-      <span class="material-icons-round">auto_stories</span>
-    </div>
-    <p>Carregando...</p>
-  </div>
-</div>
 
 <script type="module" src="js/script.js"></script>
 </body>
