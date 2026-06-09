@@ -18,13 +18,13 @@ import {
 
 /* ─── CONFIG ─── */
 const FB = {
-  apiKey: "AIzaSyC9Lcx3mYGYXavUi_b9c_tRbS3Otm9JQNk",
-  authDomain: "sexta-feira-studies.firebaseapp.com",
-  databaseURL: "https://sexta-feira-studies-default-rtdb.firebaseio.com",
-  projectId: "sexta-feira-studies",
-  storageBucket: "sexta-feira-studies.firebasestorage.app",
-  messagingSenderId: "673251857052",
-  appId: "1:673251857052:web:0ef6929ea93123f7a91359"
+  apiKey: "AIzaSyDGYiJorNt7x80mP6DxPrFj97Qmm1YFgMI",
+  authDomain: "sf-studios-a58b1.firebaseapp.com",
+  databaseURL: "https://sf-studios-a58b1-default-rtdb.firebaseio.com",
+  projectId: "sf-studios-a58b1",
+  storageBucket: "sf-studios-a58b1.firebasestorage.app",
+  messagingSenderId: "876592442561",
+  appId: "1:876592442561:web:87b6150b97d8b0a92ef840",
 };
 const IMGBB = "86427cccd2a94fb42a0754ffd7f19e79";
 
