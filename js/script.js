@@ -428,6 +428,20 @@ async function contarConteudo() {
 
 window.irAba = function(aba, btn) {
   abaAtual = aba;
+  
+  // Atualizar URL
+  const urlMap = {
+    home: "/home",
+    modulos: "/modulos",
+    trilha: "/trilha",
+    missoes: "/missoes",
+    ranking: "/ranking",
+    notificacoes: "/notificacoes",
+    perfil: "/perfil/" + (EU?.uid || "")
+  };
+  const novaUrl = urlMap[aba] || "/" + aba;
+  history.pushState({}, "", novaUrl);
+  
   document.querySelectorAll(".aba").forEach(a => a.classList.remove("ativa"));
   document.querySelectorAll(".nav-btn[data-tab]").forEach(b => b.classList.remove("ativo"));
   const sec = document.getElementById("aba-" + aba);
@@ -445,6 +459,20 @@ window.irAba = function(aba, btn) {
   if (aba === "missoes") carregarMissoes();
   if (aba === "notificacoes") carregarNotificacoes();
 };
+
+// Para quando o usuário voltar/avançar no navegador
+window.addEventListener("popstate", () => {
+  const path = window.location.pathname;
+  let aba = "home";
+  if (path.includes("/modulos")) aba = "modulos";
+  else if (path.includes("/trilha")) aba = "trilha";
+  else if (path.includes("/missoes")) aba = "missoes";
+  else if (path.includes("/ranking")) aba = "ranking";
+  else if (path.includes("/notificacoes")) aba = "notificacoes";
+  else if (path.includes("/perfil")) aba = "perfil";
+  else if (path.includes("/home")) aba = "home";
+  irAba(aba);
+});
 
 async function addXP(quantidade, acao) {
   if (!EU || !PERFIL) return;
