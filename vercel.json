@@ -1,5 +1,13 @@
 {
+  "cleanUrls": true,
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/home", "destination": "/" },
+    { "source": "/modulos", "destination": "/" },
+    { "source": "/trilha", "destination": "/" },
+    { "source": "/missoes", "destination": "/" },
+    { "source": "/ranking", "destination": "/" },
+    { "source": "/notificacoes", "destination": "/" },
+    { "source": "/pesquisa", "destination": "/" },
+    { "source": "/perfil/:id", "destination": "/" }
   ]
 }
