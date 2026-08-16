@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="theme-color" content="#00A896"/>
   <title>Sexta Feira Studies</title>
-  <link rel="icon" type="image/png" href="assets/favicon.png"/>
+  <link rel="icon" type="image/png" href="https://i.ibb.co/G3MwH684/logo.png"/>
   <link rel="stylesheet" href="css/style.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
@@ -17,7 +17,7 @@
 <!-- OVERLAY CARREGANDO -->
 <div id="overlay" class="overlay">
   <div class="overlay-inner">
-    <div class="logo-pulse"><span class="material-icons-round">auto_stories</span></div>
+    <div class="logo-pulse"><img src="https://i.ibb.co/G3MwH684/logo.png" alt="SF Studies" style="width:48px;height:48px;border-radius:8px"/></div>
     <p>Carregando...</p>
   </div>
 </div>
@@ -26,7 +26,7 @@
 <div id="tela-auth" class="tela">
   <div class="auth-card">
     <div class="auth-logo">
-      <div class="auth-logo-icon"><span class="material-icons-round">auto_stories</span></div>
+      <div class="auth-logo-icon"><img src="https://i.ibb.co/G3MwH684/logo.png" alt="SF Studies" style="width:48px;height:48px;border-radius:8px"/></div>
       <div>
         <h1 class="auth-titulo">Sexta Feira Studies</h1>
         <p class="auth-sub">Acesse sua conta</p>
@@ -72,10 +72,14 @@
 <div id="tela-app" class="tela">
 
   <header class="app-hdr">
-    <div class="hdr-logo"><span class="material-icons-round">auto_stories</span><span>SF Studies</span></div>
+    <div class="hdr-logo"><img src="https://i.ibb.co/G3MwH684/logo.png" alt="SF Studies" style="width:32px;height:32px;border-radius:6px"/></div>
     <div class="hdr-dir">
       <div class="hdr-pill xp-pill"><span class="material-icons-round">bolt</span><span id="hdr-xp">0 XP</span></div>
       <div class="hdr-pill streak-pill"><span class="material-icons-round">local_fire_department</span><span id="hdr-streak">0</span></div>
+      <button class="hdr-notif-btn" onclick="irAba('notificacoes')" style="position:relative;background:none;border:none;cursor:pointer;display:flex;align-items:center">
+        <span class="material-icons-round" style="font-size:24px;color:var(--sub)">notifications</span>
+        <span id="notif-badge" style="display:none;position:absolute;top:-2px;right:-2px;background:var(--red);color:#fff;font-size:.6rem;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid var(--card)">0</span>
+      </button>
       <div class="hdr-av" onclick="irAba('perfil')"><img id="hdr-av-img" src="https://ui-avatars.com/api/?name=U&background=00A896&color=fff" alt=""/></div>
     </div>
   </header>
@@ -151,6 +155,12 @@
       <div class="sec-hdr"><h2>Ranking</h2></div>
       <div id="podio" class="podio"></div>
       <div id="lista-rank" class="lista-rank"><div class="load-box"><div class="spin"></div><p>Carregando...</p></div></div>
+    </section>
+
+    <!-- NOTIFICAÇÕES -->
+    <section id="aba-notificacoes" class="aba">
+      <div class="sec-hdr"><h2>Notificações</h2></div>
+      <div id="lista-notifs" class="lista-missoes"><div class="load-box"><div class="spin"></div><p>Carregando...</p></div></div>
     </section>
 
     <!-- PERFIL -->
