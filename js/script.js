@@ -461,20 +461,21 @@ async function addXP(quantidade, acao) {
 
 async function carregarAviso() {
   try {
-    const snap = await get(query(ref(db, "avisos"), orderByChild("criadoEm"), limitToLast(1)));
+    const snap = await get(ref(db, "avisos"));
     if (!snap.exists()) return;
-    snap.forEach(c => {
-      const a = c.val();
-      if (!a.ativo) return;
-      const box = document.getElementById("aviso-box");
-      const t = document.getElementById("aviso-titulo");
-      const m = document.getElementById("aviso-msg");
-      if (box && t && m) {
-        t.textContent = a.titulo || "Aviso";
-        m.textContent = a.mensagem || "";
-        box.style.display = "flex";
-      }
-    });
+    const avisos = [];
+    snap.forEach(c => avisos.push({ id: c.key, ...c.val() }));
+    avisos.sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+    const a = avisos[0];
+    if (!a || !a.ativo) return;
+    const box = document.getElementById("aviso-box");
+    const t = document.getElementById("aviso-titulo");
+    const m = document.getElementById("aviso-msg");
+    if (box && t && m) {
+      t.textContent = a.titulo || "Aviso";
+      m.textContent = a.mensagem || "";
+      box.style.display = "flex";
+    }
   } catch(e) {}
 }
 
@@ -489,7 +490,8 @@ function carregarNotificacoes() {
     if (!lista) return;
     
     const notifs = [];
-    snap.forEach(c => notifs.unshift({ id: c.key, ...c.val() }));
+    snap.forEach(c => notifs.push({ id: c.key, ...c.val() }));
+    notifs.sort((a, b) => (b.criadoEm || b.ts || 0) - (a.criadoEm || a.ts || 0));
     
     const naoLidas = notifs.filter(n => !n.lida).length;
     if (badge) {
@@ -508,7 +510,7 @@ function carregarNotificacoes() {
         <div class="notif-body">
           <strong>${esc(n.titulo || "Notificação")}</strong>
           <p>${esc(n.msg || n.mensagem || "")}</p>
-          <small>${ago(n.ts || n.criadoEm)}</small>
+          <small>${ago(n.criadoEm || n.ts)}</small>
         </div>
       </div>
     `).join("");
@@ -528,16 +530,25 @@ function carregarFeed() {
   fd.innerHTML = '<div class="load-box"><div class="spin"></div><p>Carregando feed...</p></div>';
   if (feedUnSub) feedUnSub();
   
-  const q = query(ref(db, "posts"), orderByChild("criadoEm"), limitToLast(50));
-  feedUnSub = onValue(q, snap => {
+  const postsRef = ref(db, "posts");
+  feedUnSub = onValue(postsRef, snap => {
     const posts = [];
-    snap.forEach(c => posts.unshift({ id: c.key, ...c.val() }));
+    snap.forEach(c => {
+      const post = c.val();
+      post.id = c.key;
+      posts.push(post);
+    });
+    posts.sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+    
+    console.log("Posts carregados:", posts.length);
+    
     if (!posts.length) {
       fd.innerHTML = '<div class="vazio"><span class="material-icons-round">feed</span><p>Nenhuma publicação ainda.<br>Seja o primeiro!</p></div>';
       return;
     }
     fd.innerHTML = posts.map(htmlPost).join("");
   }, err => {
+    console.error("Erro ao carregar feed:", err);
     fd.innerHTML = `<div class="vazio"><span class="material-icons-round">error</span><p>Erro ao carregar feed.<br><small>${esc(err.message)}</small></p></div>`;
   });
 }
@@ -683,14 +694,17 @@ window.publicarPost = async function() {
       toast("Enviando imagem...");
       imgURL = await uploadImgBB(postImg64);
     }
-    await push(ref(db, "posts"), {
+    const postRef = await push(ref(db, "posts"), {
       autorId: EU.uid,
       autorNome: PERFIL.nome || "Estudante",
       autorFoto: PERFIL.foto || "",
       texto: txt,
-      imgURL,
-      criadoEm: Date.now()
+      imgURL: imgURL,
+      criadoEm: Date.now(),
+      curtidas: {},
+      comentarios: {}
     });
+    console.log("Post criado com ID:", postRef.key);
     await addXP(5, "postar");
     toast("Publicado! +5 XP", "ok");
     document.getElementById("post-txt").value = "";
@@ -701,6 +715,7 @@ window.publicarPost = async function() {
     if (pf) pf.value = "";
     closeModal("m-post");
   } catch(e) {
+    console.error("Erro ao publicar:", e);
     toast("Erro ao publicar: " + e.message, "err");
   } finally {
     btn.disabled = false;
@@ -712,11 +727,19 @@ function carregarModulos() {
   const g = document.getElementById("grade-mods");
   if (!g) return;
   g.innerHTML = '<div class="load-box"><div class="spin"></div><p>Carregando módulos...</p></div>';
-  onValue(ref(db, "modulos"), snap => {
+  
+  const modsRef = ref(db, "modulos");
+  onValue(modsRef, snap => {
     todosModulos = [];
-    snap.forEach(c => todosModulos.unshift({ id: c.key, ...c.val() }));
+    snap.forEach(c => {
+      const mod = c.val();
+      mod.id = c.key;
+      todosModulos.push(mod);
+    });
+    console.log("Módulos carregados:", todosModulos.length);
     renderMods(todosModulos, "grade-mods");
   }, err => {
+    console.error("Erro ao carregar módulos:", err);
     g.innerHTML = `<div class="vazio"><span class="material-icons-round">error</span><p>Erro ao carregar módulos.<br><small>${esc(err.message)}</small></p></div>`;
   });
 }
@@ -835,13 +858,11 @@ window.respMod = async function(mid, qi, sel, correta) {
   const bc = document.getElementById(`${prefix}${correta}`);
   const fb = document.getElementById(`qmf-${mid}-${qi}`);
   const ok = sel === correta;
-  
   if (bs) bs.classList.add(ok ? "certa" : "errada");
   if (bc && !ok) bc.classList.add("certa");
   if (fb) fb.innerHTML = `<span class="quiz-fb ${ok?"ok":"fail"}">${ok?"Correto!":"Errado"}</span>`;
   
   respostasQuiz[qi] = ok;
-  
   if (ok) await addXP(10, "acertar_questao");
   
   const totalQt = document.querySelectorAll(`#qmod-${mid} .quiz-q`).length;
@@ -865,7 +886,7 @@ function renderMeusModulos(snapMods) {
   const g = document.getElementById("meus-mods");
   if (!g || !EU) return;
   const meus = [];
-  snapMods.forEach(c => { if (c.val().autorId === EU.uid) meus.unshift({ id: c.key, ...c.val() }); });
+  snapMods.forEach(c => { if (c.val().autorId === EU.uid) meus.push({ id: c.key, ...c.val() }); });
   if (!meus.length) {
     g.innerHTML = '<div class="vazio"><span class="material-icons-round">layers</span><p>Você ainda não criou módulos.</p></div>';
     return;
@@ -950,7 +971,7 @@ window.salvarModulo = async function() {
       const corr = rSel ? parseInt(rSel.value) : 0;
       quiz[qi++] = { enunciado: en, opcoes: opts, correta: corr };
     });
-    await push(ref(db, "modulos"), {
+    const modRef = await push(ref(db, "modulos"), {
       titulo: tit,
       descricao: document.getElementById("mod-desc")?.value.trim() || "",
       materia: mat,
@@ -963,11 +984,13 @@ window.salvarModulo = async function() {
       acessos: 0,
       criadoEm: Date.now()
     });
+    console.log("Módulo criado com ID:", modRef.key);
     await addXP(20, "criar_modulo");
     toast("Módulo criado! +20 XP", "ok");
     closeModal("m-mod");
     resetFormModulo();
   } catch(e) {
+    console.error("Erro ao salvar módulo:", e);
     toast("Erro ao salvar: " + e.message, "err");
   } finally {
     btn.disabled = false;
@@ -1141,11 +1164,9 @@ window.respFase = async function(qi, sel, correta, fid, total, xpP) {
   if (fb) fb.innerHTML = `<span class="quiz-fb ${ok?"ok":"fail"}">${ok?"Correto!":"Errado"}</span>`;
   
   respostasQuiz[qi] = ok;
-  
   if (ok) await addXP(10, "acertar_questao");
   
   const respondidas = Object.keys(respostasQuiz).length;
-  
   if (respondidas >= total) {
     const acertos = Object.values(respostasQuiz).filter(v => v).length;
     const res = document.getElementById("fres");
