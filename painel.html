@@ -4,8 +4,8 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Painel Admin — Sexta Feira Studies</title>
-  <link rel="icon" type="image/png" href="assets/favicon.png"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="icon" type="image/png" href="https://i.ibb.co/G3MwH684/logo.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -15,7 +15,7 @@
       --bg:#F5F6F8;--card:#fff;--borda:#E0E4E8;--borda2:#C5CCD4;
       --txt:#1A2332;--sub:#4A5568;--mt:#8A94A0;
       --red:#E53935;--ok:#43A047;--warn:#F9A825;--info:#5C6BC0;
-      --s1:0 1px 3px rgba(0,0,0,.08);--s2:0 2px 8px rgba(0,0,0,.1);
+      --s1:0 1px 3px rgba(0,0,0,.08);
       --r:6px;--rsm:4px;--rpill:999px;
       --font:'Inter',-apple-system,sans-serif;
       --side:230px;
@@ -26,18 +26,17 @@
     input,textarea,select{font-family:var(--font)}
     a{color:var(--T);text-decoration:none}
 
-    /* TELA LOGIN */
-    #tela-login{position:fixed;inset:0;z-index:1000;background:#EDEFF2;display:flex;align-items:center;justify-content:center}
-    .login-card{background:#fff;border:1px solid var(--borda);border-radius:10px;padding:2rem 1.75rem;width:min(380px,94vw);display:flex;flex-direction:column;gap:.9rem}
+    #tela-login{position:fixed;inset:0;z-index:1000;background:var(--bg);display:flex;align-items:center;justify-content:center}
+    .login-card{background:var(--card);border:1px solid var(--borda);border-radius:8px;padding:2rem 1.75rem;width:min(380px,94vw);display:flex;flex-direction:column;gap:.9rem}
     .login-logo{display:flex;align-items:center;gap:.75rem}
-    .login-logo-ico{width:44px;height:44px;background:var(--T);border-radius:6px;display:flex;align-items:center;justify-content:center}
-    .login-logo-ico .material-icons-round{font-size:22px;color:#fff}
-    .login-titulo{font-size:1.1rem;font-weight:700;color:var(--txt);line-height:1.2}
+    .login-logo-ico{width:44px;height:44px;border-radius:6px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .login-logo-ico img{width:44px;height:44px;object-fit:cover}
+    .login-titulo{font-size:1.1rem;font-weight:700;color:var(--txt)}
     .login-titulo span{color:var(--T)}
     .login-sub{font-size:.78rem;color:var(--mt)}
     .campo-login{display:flex;align-items:center;gap:.55rem;background:var(--bg);border:1px solid var(--borda);border-radius:4px;padding:.6rem .8rem}
     .campo-login .material-icons-round{color:var(--mt);font-size:18px;flex-shrink:0}
-    .campo-login input{flex:1;background:none;border:none;outline:none;color:var(--txt);font-size:.88rem}
+    .campo-login input{flex:1;background:none;border:none;outline:none;color:var(--txt);font-size:.88rem;min-width:0}
     .campo-login input::placeholder{color:var(--mt)}
     #login-err{background:#FDECEA;border:1px solid #F5C6C3;color:#C62828;border-radius:4px;padding:.45rem .75rem;font-size:.78rem;font-weight:500;display:none}
     .btn-login{display:flex;align-items:center;justify-content:center;gap:.45rem;background:var(--T);color:#fff;border:none;border-radius:4px;padding:.8rem;font-size:.88rem;font-weight:600;cursor:pointer;transition:background .15s}
@@ -45,13 +44,10 @@
     .btn-login:disabled{opacity:.5;cursor:not-allowed}
     .btn-login .material-icons-round{font-size:17px}
 
-    /* APP SHELL */
     #app{display:none;height:100vh}
-
-    /* SIDEBAR */
     .sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--side);background:var(--VD);display:flex;flex-direction:column;z-index:100}
     .sb-logo{padding:1.1rem 1rem .9rem;display:flex;align-items:center;gap:.65rem;border-bottom:1px solid rgba(255,255,255,.08)}
-    .sb-logo .material-icons-round{color:var(--T);font-size:22px}
+    .sb-logo img{width:28px;height:28px;border-radius:4px}
     .sb-logo-txt span{font-size:.85rem;font-weight:700;color:#fff;display:block}
     .sb-logo-txt small{font-size:.65rem;color:rgba(255,255,255,.45)}
     .sb-nav{flex:1;padding:.4rem 0;overflow-y:auto}
@@ -72,17 +68,13 @@
     .btn-menu-mob{display:none;background:none;border:none;cursor:pointer}
     .btn-menu-mob .material-icons-round{font-size:22px}
 
-    /* MAIN */
     .main{margin-left:var(--side);height:100vh;overflow-y:auto;display:flex;flex-direction:column}
     .topbar{background:var(--card);border-bottom:1px solid var(--borda);padding:.65rem 1.2rem;display:flex;align-items:center;gap:.85rem;position:sticky;top:0;z-index:50}
     .topbar h2{font-size:1rem;font-weight:700;flex:1}
     .topbar-acoes{display:flex;gap:.4rem}
 
-    /* PÁGINAS */
     .pagina{display:none;padding:1.2rem}
     .pagina.ativa{display:block}
-
-    /* STATS CARDS */
     .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.75rem;margin-bottom:1.2rem}
     .stat-card{background:var(--card);border-radius:6px;padding:1rem;display:flex;align-items:center;gap:.75rem;border:1px solid var(--borda)}
     .stat-ico{width:40px;height:40px;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -90,13 +82,11 @@
     .stat-card h3{font-size:1.3rem;font-weight:700}
     .stat-card p{font-size:.7rem;color:var(--mt);font-weight:500;margin-top:.05rem}
 
-    /* CARDS */
     .card{background:var(--card);border-radius:6px;overflow:hidden;margin-bottom:1.2rem;border:1px solid var(--borda)}
     .card-hdr{padding:.75rem 1rem;border-bottom:1px solid var(--borda);display:flex;align-items:center;gap:.65rem}
     .card-hdr h3{font-size:.88rem;font-weight:700;flex:1}
     .card-body{padding:.85rem 1rem}
 
-    /* TABELA */
     .tbl-wrap{overflow-x:auto}
     table{width:100%;border-collapse:collapse}
     thead tr{background:var(--bg)}
@@ -108,7 +98,6 @@
     .user-cell div strong{font-size:.78rem;display:block}
     .user-cell div small{font-size:.67rem;color:var(--mt)}
 
-    /* BADGES */
     .badge{padding:.15rem .48rem;border-radius:3px;font-size:.67rem;font-weight:600;display:inline-flex;align-items:center;gap:.18rem}
     .badge .material-icons-round{font-size:11px}
     .badge-ok{background:#E8F5E9;color:#2E7D32}
@@ -118,7 +107,6 @@
     .badge-gray{background:#F0F2F5;color:var(--sub)}
     .badge-gold{background:#FFF8E1;color:#E65100;border:1px solid #F9A825}
 
-    /* BOTÕES DE AÇÃO */
     .acoes{display:flex;gap:.25rem;flex-wrap:wrap}
     .btn-act{display:flex;align-items:center;gap:.2rem;padding:.25rem .55rem;border-radius:3px;border:none;font-size:.68rem;font-weight:600;cursor:pointer;transition:background .15s;white-space:nowrap}
     .btn-act .material-icons-round{font-size:12px}
@@ -131,24 +119,22 @@
     .a-admin{background:var(--TL);color:var(--TD)}
     .a-oficial{background:#FFF8E1;color:#E65100;border:1px solid #F9A825}
 
-    /* FORM */
     .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
     .form-grid .full{grid-column:1/-1}
-    .fgrp{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.75rem}
+    .fgrp{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.75rem;width:100%;box-sizing:border-box}
     .fgrp label{font-size:.72rem;font-weight:600;color:var(--sub)}
-    .fgrp input,.fgrp textarea,.fgrp select{border:1px solid var(--borda);border-radius:4px;padding:.6rem .75rem;font-size:.85rem;color:var(--txt);background:var(--bg);outline:none;transition:border-color .15s;resize:vertical;width:100%}
+    .fgrp input,.fgrp textarea,.fgrp select{border:1px solid var(--borda);border-radius:4px;padding:.6rem .75rem;font-size:.85rem;color:var(--txt);background:var(--bg);outline:none;transition:border-color .15s;resize:vertical;width:100%;box-sizing:border-box}
     .fgrp input:focus,.fgrp textarea:focus,.fgrp select:focus{border-color:var(--T);background:var(--card)}
-    .btn-prim{display:flex;align-items:center;justify-content:center;gap:.4rem;background:var(--T);color:#fff;border:none;border-radius:4px;padding:.7rem 1.3rem;font-size:.85rem;font-weight:600;cursor:pointer;transition:background .15s}
+    .btn-prim{display:flex;align-items:center;justify-content:center;gap:.4rem;background:var(--T);color:#fff;border:none;border-radius:4px;padding:.7rem 1.3rem;font-size:.85rem;font-weight:600;cursor:pointer;transition:background .15s;width:100%;box-sizing:border-box}
     .btn-prim:hover{background:var(--TD)}
     .btn-prim:disabled{opacity:.5;cursor:not-allowed}
     .btn-prim .material-icons-round{font-size:16px}
-    .btn-sec{display:flex;align-items:center;gap:.28rem;background:none;color:var(--T);border:1px solid var(--T);border-radius:4px;padding:.45rem .9rem;font-size:.78rem;font-weight:600;cursor:pointer;transition:background .15s}
+    .btn-sec{display:flex;align-items:center;gap:.28rem;background:none;color:var(--T);border:1px solid var(--T);border-radius:4px;padding:.45rem .9rem;font-size:.78rem;font-weight:600;cursor:pointer;transition:background .15s;width:100%;box-sizing:border-box;justify-content:center}
     .btn-sec:hover{background:var(--TL)}
     .busca-wrap{display:flex;align-items:center;gap:.45rem;background:var(--bg);border:1px solid var(--borda);border-radius:4px;padding:.32rem .7rem}
     .busca-wrap .material-icons-round{font-size:16px;color:var(--mt)}
-    .busca-wrap input{border:none;outline:none;background:none;font-size:.82rem;color:var(--txt);width:140px}
+    .busca-wrap input{border:none;outline:none;background:none;font-size:.82rem;color:var(--txt);width:140px;min-width:0}
 
-    /* MODAL */
     .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center}
     .modal-bg.aberto{display:flex}
     .modal-box{background:var(--card);border-radius:8px;padding:1.25rem;width:min(540px,94vw);max-height:88vh;overflow-y:auto}
@@ -157,7 +143,6 @@
     .modal-x:hover{background:var(--borda)}
     .modal-x .material-icons-round{font-size:15px}
 
-    /* FICHA DO USUÁRIO */
     .ficha-topo{display:flex;align-items:center;gap:.85rem;margin-bottom:1rem;padding-bottom:.85rem;border-bottom:1px solid var(--borda)}
     .ficha-av{position:relative}
     .ficha-av img{width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--T)}
@@ -172,38 +157,32 @@
     .item-mini-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.25rem}
     .item-mini-txt{font-size:.78rem;color:var(--sub);line-height:1.45}
     .item-mini-meta{font-size:.68rem;color:var(--mt);margin-top:.22rem}
-
-    /* AVISO / ITEM LIST */
     .aviso-item{background:var(--bg);border-radius:4px;padding:.6rem;display:flex;align-items:flex-start;gap:.6rem;margin-bottom:.35rem}
     .aviso-ico{font-size:1.2rem;flex-shrink:0}
     .aviso-body{flex:1}
     .aviso-body strong{font-size:.82rem;display:block;margin-bottom:.08rem}
     .aviso-body small{font-size:.67rem;color:var(--mt)}
     .aviso-body p{font-size:.78rem;color:var(--sub);margin-top:.15rem;line-height:1.4}
-
-    /* QUESTÕES FASES */
-    .q-fase-bloco{background:var(--bg);border-radius:4px;padding:.65rem;margin-bottom:.55rem;border:1px solid var(--borda)}
-    .q-fase-topo{display:flex;gap:.35rem;align-items:center;margin-bottom:.4rem}
-    .q-fase-in{flex:1;border:1px solid var(--borda);border-radius:4px;padding:.42rem .6rem;font-size:.82rem;outline:none;background:var(--card);width:100%}
+    .q-fase-bloco{background:var(--bg);border-radius:4px;padding:.65rem;margin-bottom:.55rem;border:1px solid var(--borda);width:100%;box-sizing:border-box}
+    .q-fase-topo{display:flex;gap:.35rem;align-items:center;margin-bottom:.4rem;width:100%}
+    .q-fase-in{flex:1;border:1px solid var(--borda);border-radius:4px;padding:.42rem .6rem;font-size:.82rem;outline:none;background:var(--card);min-width:0;box-sizing:border-box}
     .q-fase-in:focus{border-color:var(--T)}
-    .opt-f-row{display:flex;align-items:center;gap:.35rem;margin-bottom:.3rem}
-    .opt-f-row input[type=radio]{accent-color:var(--T)}
-    .opt-f-in{flex:1;border:1px solid var(--borda);border-radius:3px;padding:.36rem .55rem;font-size:.78rem;outline:none;background:var(--card)}
+    .opt-f-row{display:flex;align-items:center;gap:.35rem;margin-bottom:.3rem;width:100%}
+    .opt-f-row input[type=radio]{accent-color:var(--T);flex-shrink:0}
+    .opt-f-in{flex:1;border:1px solid var(--borda);border-radius:3px;padding:.36rem .55rem;font-size:.78rem;outline:none;background:var(--card);min-width:0;box-sizing:border-box}
     .opt-f-in:focus{border-color:var(--T)}
+    .opts-fase{display:flex;flex-direction:column;gap:.3rem;width:100%}
 
-    /* SPINNER */
     .spin{width:26px;height:26px;border:3px solid var(--borda);border-top-color:var(--T);border-radius:50%;animation:girar .7s linear infinite}
     @keyframes girar{to{transform:rotate(360deg)}}
     .load-row{display:flex;align-items:center;gap:.65rem;padding:1.2rem;color:var(--mt);font-size:.82rem}
     .vazio-tbl{text-align:center;padding:2rem;color:var(--mt);font-size:.82rem}
 
-    /* TOAST */
     .admin-toast{position:fixed;bottom:1.2rem;right:1.2rem;z-index:9999;background:var(--txt);color:#fff;padding:.5rem 1rem;border-radius:4px;font-size:.78rem;font-weight:500;opacity:0;transform:translateY(6px);transition:all .25s;pointer-events:none}
     .admin-toast.show{opacity:1;transform:none}
     .admin-toast.ok{background:var(--ok)}
     .admin-toast.err{background:var(--red)}
 
-    /* RESPONSIVO */
     @media(max-width:768px){
       :root{--side:0px}
       .sidebar{transform:translateX(-100%);transition:transform .25s;width:230px}
@@ -217,11 +196,10 @@
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="tela-login">
   <div class="login-card">
     <div class="login-logo">
-      <div class="login-logo-ico"><span class="material-icons-round">admin_panel_settings</span></div>
+      <div class="login-logo-ico"><img src="https://i.ibb.co/G3MwH684/logo.png" alt="SF Studies"/></div>
       <div>
         <div class="login-titulo">SF Studies<span> Admin</span></div>
         <div class="login-sub">Área restrita para administradores</div>
@@ -234,28 +212,23 @@
   </div>
 </div>
 
-<!-- APP -->
 <div id="app">
   <aside class="sidebar" id="sidebar">
     <div class="sb-logo">
-      <span class="material-icons-round">auto_stories</span>
+      <img src="https://i.ibb.co/G3MwH684/logo.png" alt="SF Studies"/>
       <div class="sb-logo-txt"><span>SF Studies</span><small>Painel Administrativo</small></div>
     </div>
     <nav class="sb-nav">
       <div class="sb-sec">Visão Geral</div>
       <button class="sb-link ativo" onclick="irPagina('dashboard',this)"><span class="material-icons-round">dashboard</span>Dashboard</button>
-
       <div class="sb-sec">Usuários</div>
       <button class="sb-link" onclick="irPagina('usuarios',this)"><span class="material-icons-round">group</span>Usuários<span class="sb-badge" id="sb-badge-users">0</span></button>
-
       <div class="sb-sec">Conteúdo</div>
       <button class="sb-link" onclick="irPagina('posts',this)"><span class="material-icons-round">feed</span>Posts</button>
       <button class="sb-link" onclick="irPagina('modulos',this)"><span class="material-icons-round">layers</span>Módulos<span class="sb-badge" id="sb-badge-mods">0</span></button>
-
       <div class="sb-sec">Gamificação</div>
       <button class="sb-link" onclick="irPagina('missoes',this)"><span class="material-icons-round">emoji_events</span>Missões</button>
       <button class="sb-link" onclick="irPagina('fases',this)"><span class="material-icons-round">map</span>Fases / Trilha</button>
-
       <div class="sb-sec">Comunicação</div>
       <button class="sb-link" onclick="irPagina('avisos',this)"><span class="material-icons-round">campaign</span>Avisos Globais</button>
     </nav>
@@ -275,7 +248,6 @@
       <div class="topbar-acoes" id="topbar-acoes"></div>
     </div>
 
-    <!-- DASHBOARD -->
     <div id="pagina-dashboard" class="pagina ativa">
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-ico" style="background:#00A896"><span class="material-icons-round">group</span></div><div><h3 id="dash-users">0</h3><p>Usuários</p></div></div>
@@ -293,7 +265,6 @@
       </div>
     </div>
 
-    <!-- USUÁRIOS -->
     <div id="pagina-usuarios" class="pagina">
       <div class="card">
         <div class="card-hdr">
@@ -307,7 +278,6 @@
       </div>
     </div>
 
-    <!-- POSTS -->
     <div id="pagina-posts" class="pagina">
       <div class="card">
         <div class="card-hdr">
@@ -321,7 +291,6 @@
       </div>
     </div>
 
-    <!-- MÓDULOS -->
     <div id="pagina-modulos" class="pagina">
       <div class="card">
         <div class="card-hdr">
@@ -335,7 +304,6 @@
       </div>
     </div>
 
-    <!-- MISSÕES -->
     <div id="pagina-missoes" class="pagina">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
         <div class="card" style="margin-bottom:0">
@@ -373,7 +341,6 @@
       </div>
     </div>
 
-    <!-- FASES -->
     <div id="pagina-fases" class="pagina">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
         <div class="card" style="margin-bottom:0">
@@ -398,17 +365,7 @@
                 <option value="f14">f14 — Mestre do Saber</option>
               </select>
             </div>
-            <div id="questoes-fase-wrap">
-              <div class="q-fase-bloco" data-q="0">
-                <div class="q-fase-topo"><input type="text" class="q-fase-in" placeholder="Enunciado da questão..."/><button class="btn-act a-del" onclick="remQ(this)"><span class="material-icons-round">delete</span></button></div>
-                <div class="opts-fase">
-                  <div class="opt-f-row"><input type="radio" name="qc-0" value="0" checked/><input type="text" class="opt-f-in" placeholder="Alternativa A (correta)"/></div>
-                  <div class="opt-f-row"><input type="radio" name="qc-0" value="1"/><input type="text" class="opt-f-in" placeholder="Alternativa B"/></div>
-                  <div class="opt-f-row"><input type="radio" name="qc-0" value="2"/><input type="text" class="opt-f-in" placeholder="Alternativa C"/></div>
-                  <div class="opt-f-row"><input type="radio" name="qc-0" value="3"/><input type="text" class="opt-f-in" placeholder="Alternativa D"/></div>
-                </div>
-              </div>
-            </div>
+            <div id="questoes-fase-wrap"></div>
             <div style="display:flex;gap:.4rem;margin-top:.4rem">
               <button class="btn-sec" onclick="addQFase()" style="flex:1"><span class="material-icons-round">add</span> Adicionar questão</button>
               <button class="btn-prim" onclick="salvarQuestoesFase()" style="flex:1"><span class="material-icons-round">save</span> Salvar</button>
@@ -448,7 +405,6 @@
       </div>
     </div>
 
-    <!-- AVISOS -->
     <div id="pagina-avisos" class="pagina">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
         <div class="card" style="margin-bottom:0">
@@ -484,7 +440,6 @@
   </div>
 </div>
 
-<!-- MODAIS -->
 <div id="modal-user" class="modal-bg">
   <div class="modal-box">
     <div class="modal-tit"><span>Ficha do usuário</span><button class="modal-x" onclick="fecharModal('modal-user')"><span class="material-icons-round">close</span></button></div>
@@ -514,13 +469,13 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from
 import { getDatabase, ref, get, set, push, update, remove, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const FB = {
-  apiKey: "AIzaSyDGYiJorNt7x80mP6DxPrFj97Qmm1YFgMI",  
-  authDomain: "sf-studios-a58b1.firebaseapp.com",       
-  databaseURL: "https://sf-studios-a58b1-default-rtdb.firebaseio.com", 
-  projectId: "sf-studios-a58b1",                      
-  storageBucket: "sf-studios-a58b1.firebasestorage.app",  
-  messagingSenderId: "876592442561",                   
-  appId: "1:876592442561:web:87b6150b97d8b0a92ef840"  
+  apiKey: "AIzaSyDGYiJorNt7x80mP6DxPrFj97Qmm1YFgMI",
+  authDomain: "sf-studios-a58b1.firebaseapp.com",
+  databaseURL: "https://sf-studios-a58b1-default-rtdb.firebaseio.com",
+  projectId: "sf-studios-a58b1",
+  storageBucket: "sf-studios-a58b1.firebasestorage.app",
+  messagingSenderId: "876592442561",
+  appId: "1:876592442561:web:87b6150b97d8b0a92ef840"
 };
 const IMGBB = "86427cccd2a94fb42a0754ffd7f19e79";
 const fbApp = initializeApp(FB);
@@ -616,15 +571,19 @@ async function carregarUsers(){
 }
 async function carregarPosts(){
   try{
-    const snap=await get(query(ref(db,"posts"),orderByChild("criadoEm"),limitToLast(200)));
-    todosPosts=[];snap.forEach(c=>todosPosts.unshift({id:c.key,...c.val()}));
+    const snap=await get(ref(db,"posts"));
+    todosPosts=[];
+    snap.forEach(c=>todosPosts.push({id:c.key,...c.val()}));
+    todosPosts.sort((a,b)=>(b.criadoEm||0)-(a.criadoEm||0));
     renderPosts(todosPosts);
   }catch(e){console.error(e);}
 }
 async function carregarMods(){
   try{
-    const snap=await get(query(ref(db,"modulos"),orderByChild("criadoEm"),limitToLast(200)));
-    todosMods=[];snap.forEach(c=>todosMods.unshift({id:c.key,...c.val()}));
+    const snap=await get(ref(db,"modulos"));
+    todosMods=[];
+    snap.forEach(c=>todosMods.push({id:c.key,...c.val()}));
+    todosMods.sort((a,b)=>(b.criadoEm||0)-(a.criadoEm||0));
     const badge=document.getElementById("sb-badge-mods");if(badge)badge.textContent=todosMods.length;
     renderMods(todosMods);
   }catch(e){console.error(e);}
@@ -739,7 +698,7 @@ window.salvarEdicaoUser=async function(uid){
 window.toggleBan=async function(uid,ban){
   try{
     await update(ref(db,`usuarios/${uid}`),{banido:ban});
-    if(ban)await push(ref(db,`usuarios/${uid}/avisos`),{tipo:"ban",titulo:"Conta banida",msg:"Sua conta foi banida por violar os Termos de Uso.",ts:Date.now()});
+    if(ban)await push(ref(db,`usuarios/${uid}/notificacoes`),{tipo:"ban",titulo:"Conta banida",msg:"Sua conta foi banida por violar os Termos de Uso.",lida:false,criadoEm:Date.now()});
     const u=todosUsers.find(x=>x.uid===uid);if(u)u.banido=ban;
     renderUsers(todosUsers);toast(ban?"Usuário banido!":"Usuário desbanido!","ok");
   }catch(e){toast("Erro: "+e.message,"err");}
@@ -766,7 +725,7 @@ window.enviarAvisoUser=async function(uid){
   const msg=document.getElementById("warn-msg").value.trim();
   if(!tit||!msg){toast("Preencha título e mensagem.","err");return;}
   try{
-    await push(ref(db,`usuarios/${uid}/avisos`),{tipo:"aviso",titulo:tit,msg,ts:Date.now()});
+    await push(ref(db,`usuarios/${uid}/notificacoes`),{tipo:"aviso",titulo:tit,msg:msg,lida:false,criadoEm:Date.now()});
     window.fecharModal("modal-warn-user");toast("Aviso enviado!","ok");
   }catch(e){toast("Erro: "+e.message,"err");}
 };
@@ -884,7 +843,7 @@ async function carregarMissoes(){
       </div>
       <button class="btn-act a-del" onclick="delMissao('${m.id}')"><span class="material-icons-round">delete</span></button>
     </div>`).join("");
-  }catch(e){l.innerHTML=`<p style="color:var(--mt)">Erro ao carregar.</p>`;}
+  }catch(e){l.innerHTML='<p style="color:var(--mt)">Erro ao carregar.</p>';}
 }
 window.delMissao=async function(id){
   if(!confirm("Excluir esta missão?"))return;
@@ -893,10 +852,15 @@ window.delMissao=async function(id){
 };
 
 window.addQFase=function(){
-  const idx=qFaseCount++;
+  const idx=Date.now()+Math.floor(Math.random()*1000);
   const b=document.createElement("div");b.className="q-fase-bloco";b.dataset.q=idx;
-  b.innerHTML=`<div class="q-fase-topo"><input type="text" class="q-fase-in" placeholder="Enunciado da questão..." style="width:100%"/><button class="btn-act a-del" onclick="remQ(this)"><span class="material-icons-round">delete</span></button></div>
-  <div class="opts-fase">${[0,1,2,3].map(i=>`<div class="opt-f-row"><input type="radio" name="qc-${idx}" value="${i}" ${i===0?"checked":""}/><input type="text" class="opt-f-in" placeholder="Alternativa ${"ABCD"[i]}${i===0?" (correta)":""}"/></div>`).join("")}</div>`;
+  b.innerHTML=`<div class="q-fase-topo"><input type="text" class="q-fase-in" placeholder="Enunciado da questão..."/><button class="btn-act a-del" onclick="this.closest('.q-fase-bloco').remove()"><span class="material-icons-round">delete</span></button></div>
+  <div class="opts-fase">
+    <div class="opt-f-row"><input type="radio" name="qc-${idx}" value="0" checked/><input type="text" class="opt-f-in" placeholder="Alternativa A (correta)"/></div>
+    <div class="opt-f-row"><input type="radio" name="qc-${idx}" value="1"/><input type="text" class="opt-f-in" placeholder="Alternativa B"/></div>
+    <div class="opt-f-row"><input type="radio" name="qc-${idx}" value="2"/><input type="text" class="opt-f-in" placeholder="Alternativa C"/></div>
+    <div class="opt-f-row"><input type="radio" name="qc-${idx}" value="3"/><input type="text" class="opt-f-in" placeholder="Alternativa D"/></div>
+  </div>`;
   document.getElementById("questoes-fase-wrap")?.appendChild(b);
 };
 window.remQ=function(btn){btn.closest(".q-fase-bloco")?.remove();};
@@ -909,7 +873,7 @@ window.salvarQuestoesFase=async function(){
   const qs={};let qi=0;
   blocos.forEach(b=>{
     const en=b.querySelector(".q-fase-in")?.value.trim();if(!en)return;
-    const opts=[...b.querySelectorAll(".opt-f-in")].map(i=>i.value.trim());
+    const opts=[];b.querySelectorAll(".opt-f-in").forEach(i=>opts.push(i.value.trim()));
     const r=b.querySelector("input[type=radio]:checked");const corr=r?parseInt(r.value):0;
     qs[qi++]={enunciado:en,opcoes:opts,correta:corr};
   });
@@ -974,9 +938,10 @@ window.salvarAviso=async function(){
 async function carregarAvisos(){
   const l=document.getElementById("lista-avisos-adm");if(!l)return;
   try{
-    const snap=await get(query(ref(db,"avisos"),orderByChild("criadoEm"),limitToLast(20)));
+    const snap=await get(ref(db,"avisos"));
     if(!snap.exists()){l.innerHTML='<p style="color:var(--mt);font-size:.8rem">Nenhum aviso enviado.</p>';return;}
-    const avs=[];snap.forEach(c=>avs.unshift({id:c.key,...c.val()}));
+    const avs=[];snap.forEach(c=>avs.push({id:c.key,...c.val()}));
+    avs.sort((a,b)=>(b.criadoEm||0)-(a.criadoEm||0));
     const icos={info:"ℹ️",aviso:"⚠️",ok:"✅",urgente:"🚨"};
     l.innerHTML=avs.map(a=>`<div class="aviso-item">
       <span class="aviso-ico">${icos[a.tipo]||"📢"}</span>
