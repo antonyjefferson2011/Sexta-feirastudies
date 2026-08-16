@@ -950,7 +950,7 @@ window.addVideo = function() {
 };
 
 window.addQuestao = function() {
-  const idx = qIdx++;
+  const idx = Date.now() + Math.floor(Math.random() * 1000);
   const b = document.createElement("div");
   b.className = "q-bloco";
   b.dataset.q = idx;
@@ -962,11 +962,22 @@ window.addQuestao = function() {
       </button>
     </div>
     <div class="opts-wrap">
-      ${[0,1,2,3].map(i => `
-        <div class="opt-row">
-          <input type="radio" name="c-${idx}" value="${i}" ${i===0?"checked":""}/>
-          <input type="text" class="opt-in" placeholder="Alternativa ${"ABCD"[i]}${i===0?" (correta)":""}"/>
-        </div>`).join("")}
+      <div class="opt-row">
+        <input type="radio" name="qc-${idx}" value="0" checked/>
+        <input type="text" class="opt-in" placeholder="Alternativa A (correta)"/>
+      </div>
+      <div class="opt-row">
+        <input type="radio" name="qc-${idx}" value="1"/>
+        <input type="text" class="opt-in" placeholder="Alternativa B"/>
+      </div>
+      <div class="opt-row">
+        <input type="radio" name="qc-${idx}" value="2"/>
+        <input type="text" class="opt-in" placeholder="Alternativa C"/>
+      </div>
+      <div class="opt-row">
+        <input type="radio" name="qc-${idx}" value="3"/>
+        <input type="text" class="opt-in" placeholder="Alternativa D"/>
+      </div>
     </div>`;
   document.getElementById("quiz-wrap")?.appendChild(b);
 };
