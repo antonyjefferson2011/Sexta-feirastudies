@@ -1387,3 +1387,142 @@ window.trocarFoto = async function(inp) {
     if (btn) btn.innerHTML = '<span class="material-icons-round">photo_camera</span>';
   }
 };
+let tipoPesquisaAtual = "geral";
+
+window.trocarTipoPesquisa = function(tipo, btn) {
+  tipoPesquisaAtual = tipo;
+  document.querySelectorAll("#chips-pesquisa .chip").forEach(c => c.classList.remove("ativo"));
+  if (btn) btn.classList.add("ativo");
+  const busca = document.getElementById("busca-geral")?.value || "";
+  pesquisarGeral(busca);
+};
+
+window.pesquisarGeral = function(termo) {
+  const container = document.getElementById("resultados-pesquisa");
+  if (!container) return;
+  
+  termo = termo.trim().toLowerCase();
+  
+  if (!termo) {
+    container.innerHTML = '<div class="vazio"><span class="material-icons-round">search</span><p>Digite algo para pesquisar...</p></div>';
+    return;
+  }
+  
+  container.innerHTML = '<div class="load-row"><div class="spin"></div><span>Pesquisando...</span></div>';
+  
+  // Buscar usuários
+  const buscarUsuarios = async () => {
+    const snap = await get(ref(db, "usuarios"));
+    const us = [];
+    snap.forEach(c => {
+      const u = c.val();
+      if (!u.banido) us.push({ uid: c.key, ...u });
+    });
+    return us.filter(u => 
+      (u.nome || "").toLowerCase().includes(termo) ||
+      (u.email || "").toLowerCase().includes(termo) ||
+      (u.bio || "").toLowerCase().includes(termo)
+    );
+  };
+  
+  // Buscar posts
+  const buscarPosts = async () => {
+    const snap = await get(ref(db, "posts"));
+    const ps = [];
+    snap.forEach(c => ps.push({ id: c.key, ...c.val() }));
+    return ps.filter(p => 
+      (p.texto || "").toLowerCase().includes(termo) ||
+      (p.autorNome || "").toLowerCase().includes(termo)
+    );
+  };
+  
+  // Buscar módulos
+  const buscarModulos = async () => {
+    const snap = await get(ref(db, "modulos"));
+    const ms = [];
+    snap.forEach(c => ms.push({ id: c.key, ...c.val() }));
+    return ms.filter(m => 
+      (m.titulo || "").toLowerCase().includes(termo) ||
+      (m.descricao || "").toLowerCase().includes(termo) ||
+      (m.materia || "").toLowerCase().includes(termo) ||
+      (m.autorNome || "").toLowerCase().includes(termo)
+    );
+  };
+  
+  Promise.all([buscarUsuarios(), buscarPosts(), buscarModulos()]).then(([usuarios, posts, modulos]) => {
+    let html = "";
+    
+    if (tipoPesquisaAtual === "geral" || tipoPesquisaAtual === "usuarios") {
+      if (usuarios.length) {
+        html += usuarios.map(u => `
+          <div class="resultado-item" onclick="irPerfilUsuario('${u.uid}')">
+            <div class="resultado-tipo"><span class="material-icons-round">person</span> Usuário</div>
+            <div class="resultado-user">
+              <img src="${esc(u.foto || avDefault(u.nome))}" alt=""/>
+              <div>
+                <strong>${esc(u.nome || "Anônimo")}</strong>
+                <small>Nível ${nivel(u.xp)} · ${u.xp||0} XP</small>
+              </div>
+            </div>
+          </div>`).join("");
+      }
+    }
+    
+    if (tipoPesquisaAtual === "geral" || tipoPesquisaAtual === "posts") {
+      if (posts.length) {
+        html += posts.map(p => {
+          const nCurt = p.curtidas ? Object.keys(p.curtidas).length : 0;
+          const nComt = p.comentarios ? Object.keys(p.comentarios).length : 0;
+          return `
+          <div class="resultado-item" onclick="abrirComents('${p.id}')">
+            <div class="resultado-tipo"><span class="material-icons-round">feed</span> Post</div>
+            <div class="resultado-titulo">${esc(p.autorNome || "Anônimo")}</div>
+            <div class="resultado-sub">${esc((p.texto || "").substring(0, 100))}${p.texto && p.texto.length > 100 ? "..." : ""}</div>
+            <div class="resultado-meta">
+              <span><span class="material-icons-round">favorite</span>${nCurt}</span>
+              <span><span class="material-icons-round">chat_bubble_outline</span>${nComt}</span>
+              <span><span class="material-icons-round">schedule</span>${ago(p.criadoEm)}</span>
+            </div>
+          </div>`;
+        }).join("");
+      }
+    }
+    
+    if (tipoPesquisaAtual === "geral" || tipoPesquisaAtual === "modulos") {
+      if (modulos.length) {
+        html += modulos.map(m => {
+          const nCurt = m.curtidas ? Object.keys(m.curtidas).length : 0;
+          return `
+          <div class="resultado-item" onclick="verMod('${m.id}')">
+            <div class="resultado-tipo"><span class="material-icons-round">layers</span> Módulo</div>
+            <div class="resultado-titulo">${esc(m.titulo)}</div>
+            <div class="resultado-sub">${esc(m.materia || "Geral")} · por ${esc(m.autorNome || "Anônimo")}</div>
+            <div class="resultado-meta">
+              <span><span class="material-icons-round">favorite</span>${nCurt}</span>
+              <span><span class="material-icons-round">visibility</span>${m.acessos || 0}</span>
+              ${m.oficial ? '<span style="color:var(--gold)"><span class="material-icons-round">verified</span>Oficial</span>' : ""}
+            </div>
+          </div>`;
+        }).join("");
+      }
+    }
+    
+    if (!html) {
+      container.innerHTML = '<div class="vazio"><span class="material-icons-round">search_off</span><p>Nenhum resultado encontrado.</p></div>';
+      return;
+    }
+    
+    container.innerHTML = html;
+  }).catch(err => {
+    container.innerHTML = '<div class="vazio"><span class="material-icons-round">error</span><p>Erro ao pesquisar.</p></div>';
+  });
+};
+
+// Função para ver perfil de outro usuário
+window.irPerfilUsuario = function(uid) {
+  if (uid === EU?.uid) {
+    irAba("perfil");
+    return;
+  }
+  toast("Perfil de outro usuário em breve!", "ok");
+};
