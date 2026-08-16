@@ -337,6 +337,7 @@ a{color:var(--T);text-decoration:none}
 .q-topo{display:flex;gap:.35rem;align-items:center;margin-bottom:.4rem}
 .q-in{flex:1;border:1px solid var(--borda);border-radius:4px;padding:.45rem .6rem;font-size:.83rem;outline:none;background:var(--card)}
 .q-in:focus{border-color:var(--T)}
+.opts-wrap{display:flex;flex-direction:column;gap:.35rem}
 .opt-row{display:flex;align-items:center;gap:.35rem;margin-bottom:.3rem}
 .opt-row input[type=radio]{accent-color:var(--T)}
 .opt-in{flex:1;border:1px solid var(--borda);border-radius:4px;padding:.4rem .55rem;font-size:.8rem;outline:none;background:var(--card)}
