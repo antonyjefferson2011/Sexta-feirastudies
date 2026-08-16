@@ -201,6 +201,24 @@
       <div id="meus-mods" class="grade-mods"></div>
     </section>
 
+    <!-- PESQUISA -->
+<section id="aba-pesquisa" class="aba">
+  <div class="sec-hdr"><h2>Pesquisa</h2></div>
+  <div class="busca-wrap" style="margin-bottom:.5rem">
+    <span class="material-icons-round">search</span>
+    <input type="text" id="busca-geral" placeholder="Buscar usuários, posts e módulos..." oninput="pesquisarGeral(this.value)"/>
+  </div>
+  <div class="chips-row" id="chips-pesquisa">
+    <button class="chip ativo" data-tipo="geral" onclick="trocarTipoPesquisa('geral',this)">Geral</button>
+    <button class="chip" data-tipo="usuarios" onclick="trocarTipoPesquisa('usuarios',this)">Usuários</button>
+    <button class="chip" data-tipo="posts" onclick="trocarTipoPesquisa('posts',this)">Posts</button>
+    <button class="chip" data-tipo="modulos" onclick="trocarTipoPesquisa('modulos',this)">Módulos</button>
+  </div>
+  <div id="resultados-pesquisa" class="resultados-pesquisa">
+    <div class="vazio"><span class="material-icons-round">search</span><p>Digite algo para pesquisar...</p></div>
+  </div>
+</section>
+    
   </main>
 
   <nav class="nav-bar">
