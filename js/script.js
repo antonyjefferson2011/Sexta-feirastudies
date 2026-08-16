@@ -988,35 +988,50 @@ window.salvarModulo = async function() {
   if (!tit) { toast("Informe o título do módulo.", "err"); return; }
   if (!mat) { toast("Selecione a matéria.", "err"); return; }
   if (!EU || !PERFIL) return;
+  
   const btn = document.getElementById("btn-salvar-mod");
   btn.disabled = true;
   btn.innerHTML = '<span class="material-icons-round" style="animation:girar .7s linear infinite">refresh</span> Salvando...';
+  
   try {
     let capaURL = null;
     if (capaImg64) {
       toast("Enviando capa...");
       capaURL = await uploadImgBB(capaImg64);
     }
+    
     const videos = {};
     document.querySelectorAll(".video-in").forEach((inp, i) => {
       if (inp.value.trim()) videos[i] = inp.value.trim();
     });
+    
     const quiz = {};
     let qi = 0;
-    document.querySelectorAll(".q-bloco").forEach(bloco => {
+    document.querySelectorAll("#quiz-wrap .q-bloco").forEach(bloco => {
       const en = bloco.querySelector(".q-in")?.value.trim();
       if (!en) return;
-      const opts = [...bloco.querySelectorAll(".opt-in")].map(i => i.value.trim());
+      
+      const opts = [];
+      const opInputs = bloco.querySelectorAll(".opt-in");
+      opInputs.forEach(inp => opts.push(inp.value.trim()));
+      
       const rSel = bloco.querySelector("input[type=radio]:checked");
       const corr = rSel ? parseInt(rSel.value) : 0;
-      quiz[qi++] = { enunciado: en, opcoes: opts, correta: corr };
+      
+      quiz[qi] = { enunciado: en, opcoes: opts, correta: corr };
+      qi++;
     });
+    
+    console.log("Quiz salvo:", quiz);
+    
     const modRef = await push(ref(db, "modulos"), {
       titulo: tit,
       descricao: document.getElementById("mod-desc")?.value.trim() || "",
       materia: mat,
       conteudo: document.getElementById("mod-cont")?.value.trim() || "",
-      capaURL, videos, quiz,
+      capaURL: capaURL,
+      videos: videos,
+      quiz: quiz,
       autorId: EU.uid,
       autorNome: PERFIL.nome || "Estudante",
       autorFoto: PERFIL.foto || "",
@@ -1024,6 +1039,7 @@ window.salvarModulo = async function() {
       acessos: 0,
       criadoEm: Date.now()
     });
+    
     console.log("Módulo criado com ID:", modRef.key);
     await addXP(20, "criar_modulo");
     toast("Módulo criado! +20 XP", "ok");
@@ -1037,25 +1053,30 @@ window.salvarModulo = async function() {
     btn.innerHTML = '<span class="material-icons-round">save</span> Salvar módulo';
   }
 };
-
 function resetFormModulo() {
   ["mod-tit","mod-desc","mod-cont"].forEach(id => {
     const e = document.getElementById(id);
     if (e) e.value = "";
   });
+  
   const sel = document.getElementById("mod-mat");
   if (sel) sel.value = "";
+  
   const cp = document.getElementById("capa-prev");
   if (cp) { cp.src = ""; cp.style.display = "none"; }
+  
   const cs = document.getElementById("capa-span");
   if (cs) cs.style.display = "";
+  
   const vw = document.getElementById("videos-wrap");
   if (vw) vw.innerHTML = `<div class="video-row">
     <input type="text" class="video-in" placeholder="Cole a URL do YouTube..."/>
     <button class="btn-icon-sm" onclick="addVideo()"><span class="material-icons-round">add</span></button>
   </div>`;
+  
   const qw = document.getElementById("quiz-wrap");
   if (qw) qw.innerHTML = "";
+  
   capaImg64 = null;
   qIdx = 0;
 }
