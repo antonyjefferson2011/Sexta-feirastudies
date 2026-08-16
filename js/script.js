@@ -437,6 +437,7 @@ window.irAba = function(aba, btn) {
     missoes: "/missoes",
     ranking: "/ranking",
     notificacoes: "/notificacoes",
+    pesquisa: "/pesquisa",
     perfil: "/perfil/" + (EU?.uid || "")
   };
   const novaUrl = urlMap[aba] || "/" + aba;
