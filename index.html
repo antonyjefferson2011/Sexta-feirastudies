@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="theme-color" content="#00C9B1"/>
+  <meta name="theme-color" content="#00A896"/>
   <title>Sexta Feira Studies</title>
   <link rel="icon" type="image/png" href="assets/favicon.png"/>
   <link rel="stylesheet" href="css/style.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
 </head>
 <body>
@@ -22,17 +22,14 @@
   </div>
 </div>
 
-<!-- ══════════════════ TELA AUTH ══════════════════ -->
+<!-- TELA AUTH -->
 <div id="tela-auth" class="tela">
-  <div class="auth-bg">
-    <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
-  </div>
   <div class="auth-card">
     <div class="auth-logo">
       <div class="auth-logo-icon"><span class="material-icons-round">auto_stories</span></div>
       <div>
-        <h1 class="auth-titulo">Sexta Feira<span>Studies</span></h1>
-        <p class="auth-sub">Aprenda. Evolua. Vença.</p>
+        <h1 class="auth-titulo">Sexta Feira Studies</h1>
+        <p class="auth-sub">Acesse sua conta</p>
       </div>
     </div>
     <div class="auth-abas">
@@ -68,11 +65,10 @@
       <div id="err-cadastro" class="auth-err" style="display:none"></div>
       <button class="btn-auth" id="btn-cadastro" onclick="fazerCadastro()"><span class="material-icons-round">person_add</span> Criar conta</button>
     </div>
-    <p class="auth-termos">Ao entrar, você concorda com os <a href="#">Termos de Uso</a></p>
   </div>
 </div>
 
-<!-- ══════════════════ APP ══════════════════ -->
+<!-- APP -->
 <div id="tela-app" class="tela">
 
   <header class="app-hdr">
@@ -80,7 +76,7 @@
     <div class="hdr-dir">
       <div class="hdr-pill xp-pill"><span class="material-icons-round">bolt</span><span id="hdr-xp">0 XP</span></div>
       <div class="hdr-pill streak-pill"><span class="material-icons-round">local_fire_department</span><span id="hdr-streak">0</span></div>
-      <div class="hdr-av" onclick="irAba('perfil')"><img id="hdr-av-img" src="https://ui-avatars.com/api/?name=U&background=00C9B1&color=fff" alt=""/></div>
+      <div class="hdr-av" onclick="irAba('perfil')"><img id="hdr-av-img" src="https://ui-avatars.com/api/?name=U&background=00A896&color=fff" alt=""/></div>
     </div>
   </header>
 
@@ -95,7 +91,7 @@
       </div>
       <div id="missoes-strip" class="missoes-strip"></div>
       <div class="criar-bar" onclick="openModal('m-post')">
-        <img id="bar-av" src="https://ui-avatars.com/api/?name=U&background=00C9B1&color=fff" alt=""/>
+        <img id="bar-av" src="https://ui-avatars.com/api/?name=U&background=00A896&color=fff" alt=""/>
         <span>Compartilhe algo...</span>
         <span class="material-icons-round" style="color:var(--mt)">add_photo_alternate</span>
       </div>
@@ -108,32 +104,32 @@
       <div class="busca-wrap"><span class="material-icons-round">search</span><input type="text" id="busca-mod" placeholder="Buscar módulo..." oninput="filtrarMods()"/></div>
       <div class="chips-row" id="chips-mat">
         <button class="chip ativo" data-m="">Todos</button>
-        <button class="chip" data-m="Matemática">📐 Mat.</button>
-        <button class="chip" data-m="Português">📚 Port.</button>
-        <button class="chip" data-m="Literatura">📖 Lit.</button>
-        <button class="chip" data-m="Redação">✍️ Red.</button>
-        <button class="chip" data-m="História">🏛️ Hist.</button>
-        <button class="chip" data-m="Geografia">🌍 Geo.</button>
-        <button class="chip" data-m="Ciências">🔬 Ciênc.</button>
-        <button class="chip" data-m="Biologia">🧬 Bio.</button>
-        <button class="chip" data-m="Física">⚛️ Fís.</button>
-        <button class="chip" data-m="Química">🧪 Quím.</button>
-        <button class="chip" data-m="Inglês">🇬🇧 Ing.</button>
-        <button class="chip" data-m="Espanhol">🇪🇸 Esp.</button>
-        <button class="chip" data-m="Filosofia">🤔 Fil.</button>
-        <button class="chip" data-m="Sociologia">🧑‍🤝‍🧑 Soc.</button>
-        <button class="chip" data-m="Artes">🎨 Art.</button>
-        <button class="chip" data-m="Ed. Física">🏃 E.Fís.</button>
-        <button class="chip" data-m="Programação">💻 Prog.</button>
-        <button class="chip" data-m="Robótica">🤖 Rob.</button>
-        <button class="chip" data-m="Empreend.">💼 Empr.</button>
+        <button class="chip" data-m="Matemática">Matemática</button>
+        <button class="chip" data-m="Português">Português</button>
+        <button class="chip" data-m="Literatura">Literatura</button>
+        <button class="chip" data-m="Redação">Redação</button>
+        <button class="chip" data-m="História">História</button>
+        <button class="chip" data-m="Geografia">Geografia</button>
+        <button class="chip" data-m="Ciências">Ciências</button>
+        <button class="chip" data-m="Biologia">Biologia</button>
+        <button class="chip" data-m="Física">Física</button>
+        <button class="chip" data-m="Química">Química</button>
+        <button class="chip" data-m="Inglês">Inglês</button>
+        <button class="chip" data-m="Espanhol">Espanhol</button>
+        <button class="chip" data-m="Filosofia">Filosofia</button>
+        <button class="chip" data-m="Sociologia">Sociologia</button>
+        <button class="chip" data-m="Artes">Artes</button>
+        <button class="chip" data-m="Ed. Física">Ed. Física</button>
+        <button class="chip" data-m="Programação">Programação</button>
+        <button class="chip" data-m="Robótica">Robótica</button>
+        <button class="chip" data-m="Empreend.">Empreend.</button>
       </div>
       <div id="grade-mods" class="grade-mods"><div class="load-box"><div class="spin"></div><p>Carregando...</p></div></div>
     </section>
 
     <!-- TRILHA -->
     <section id="aba-trilha" class="aba">
-      <div class="sec-hdr"><h2>🗺️ Trilha</h2></div>
+      <div class="sec-hdr"><h2>Trilha</h2></div>
       <div class="nivel-card">
         <div class="nivel-row">
           <div class="nivel-badge"><span class="material-icons-round">military_tech</span><span id="nivel-txt">Nível 1</span></div>
@@ -146,13 +142,13 @@
 
     <!-- MISSÕES -->
     <section id="aba-missoes" class="aba">
-      <div class="sec-hdr"><h2>🎯 Missões</h2></div>
+      <div class="sec-hdr"><h2>Missões</h2></div>
       <div id="lista-missoes" class="lista-missoes"><div class="load-box"><div class="spin"></div><p>Carregando...</p></div></div>
     </section>
 
     <!-- RANKING -->
     <section id="aba-ranking" class="aba">
-      <div class="sec-hdr"><h2>🏆 Ranking</h2></div>
+      <div class="sec-hdr"><h2>Ranking</h2></div>
       <div id="podio" class="podio"></div>
       <div id="lista-rank" class="lista-rank"><div class="load-box"><div class="spin"></div><p>Carregando...</p></div></div>
     </section>
@@ -163,7 +159,7 @@
         <div class="perfil-capa"></div>
         <div class="perfil-topo">
           <div class="perfil-av-wrap">
-            <img id="pf-av" src="https://ui-avatars.com/api/?name=U&background=00C9B1&color=fff" alt=""/>
+            <img id="pf-av" src="https://ui-avatars.com/api/?name=U&background=00A896&color=fff" alt=""/>
             <button class="pf-av-edit" onclick="document.getElementById('pf-file').click()"><span class="material-icons-round">photo_camera</span></button>
             <input type="file" id="pf-file" accept="image/*" style="display:none" onchange="trocarFoto(this)"/>
           </div>
@@ -202,18 +198,17 @@
   </nav>
 </div>
 
-<!-- ══════════════════ MODAIS ══════════════════ -->
+<!-- MODAIS -->
 
 <!-- Modal Criar Post -->
 <div id="m-post" class="modal-ov" style="display:none">
   <div class="modal-sh">
-    <div class="modal-drag"></div>
     <div class="modal-hdr"><h3>Nova publicação</h3><button class="modal-x" onclick="closeModal('m-post')"><span class="material-icons-round">close</span></button></div>
     <div class="modal-body">
       <div class="post-av-row"><img id="post-av-img" src="" alt=""/><span id="post-av-nome"></span></div>
       <textarea id="post-txt" placeholder="O que você quer compartilhar?" rows="4"></textarea>
       <div id="post-img-prev" style="display:none;position:relative;margin-top:.5rem">
-        <img id="post-prev" src="" style="width:100%;border-radius:12px;max-height:220px;object-fit:cover"/>
+        <img id="post-prev" src="" style="width:100%;border-radius:8px;max-height:220px;object-fit:cover"/>
         <button onclick="removerImgPost()" style="position:absolute;top:.4rem;right:.4rem;background:rgba(0,0,0,.55);border:none;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer"><span class="material-icons-round" style="color:#fff;font-size:15px">close</span></button>
       </div>
       <div style="border-top:1px solid var(--borda);margin-top:.75rem;padding-top:.75rem">
@@ -230,11 +225,10 @@
 <!-- Modal Ver Post / Comentários -->
 <div id="m-ver-post" class="modal-ov" style="display:none">
   <div class="modal-sh">
-    <div class="modal-drag"></div>
     <div class="modal-hdr"><h3>Publicação</h3><button class="modal-x" onclick="closeModal('m-ver-post')"><span class="material-icons-round">close</span></button></div>
     <div id="ver-post-corpo" class="modal-body"></div>
     <div class="modal-body" style="border-top:1px solid var(--borda)">
-      <h4 style="font-size:.88rem;font-weight:800;margin-bottom:.75rem">Comentários</h4>
+      <h4 style="font-size:.88rem;font-weight:700;margin-bottom:.75rem">Comentários</h4>
       <div id="lista-coments"></div>
       <div class="coment-row">
         <img id="coment-av" src="" alt=""/>
@@ -248,7 +242,6 @@
 <!-- Modal Criar Módulo -->
 <div id="m-mod" class="modal-ov" style="display:none">
   <div class="modal-sh modal-alto">
-    <div class="modal-drag"></div>
     <div class="modal-hdr"><h3>Novo Módulo</h3><button class="modal-x" onclick="closeModal('m-mod')"><span class="material-icons-round">close</span></button></div>
     <div class="modal-body modal-scroll">
       <div class="fgrp"><label>Título *</label><input type="text" id="mod-tit" placeholder="Ex: Álgebra Linear para o ENEM"/></div>
@@ -290,7 +283,6 @@
 <!-- Modal Ver Módulo -->
 <div id="m-ver-mod" class="modal-ov" style="display:none">
   <div class="modal-sh modal-full">
-    <div class="modal-drag"></div>
     <button class="modal-x-float" onclick="closeModal('m-ver-mod')"><span class="material-icons-round">close</span></button>
     <div id="mod-view" class="modal-body modal-scroll" style="padding:0"></div>
   </div>
@@ -299,7 +291,6 @@
 <!-- Modal Editar Perfil -->
 <div id="m-edit-pf" class="modal-ov" style="display:none">
   <div class="modal-sh">
-    <div class="modal-drag"></div>
     <div class="modal-hdr"><h3>Editar Perfil</h3><button class="modal-x" onclick="closeModal('m-edit-pf')"><span class="material-icons-round">close</span></button></div>
     <div class="modal-body">
       <div class="fgrp"><label>Nome</label><input type="text" id="edit-nome"/></div>
@@ -314,7 +305,6 @@
 <!-- Modal Ver Fase -->
 <div id="m-fase" class="modal-ov" style="display:none">
   <div class="modal-sh">
-    <div class="modal-drag"></div>
     <div id="fase-corpo" class="modal-body" style="padding-top:0"></div>
     <div class="modal-footer" id="fase-footer"></div>
   </div>
@@ -323,7 +313,6 @@
 <!-- Modal Quiz Fase -->
 <div id="m-quiz-fase" class="modal-ov" style="display:none">
   <div class="modal-sh modal-alto">
-    <div class="modal-drag"></div>
     <div class="modal-hdr"><h3 id="quiz-fase-tit">Quiz</h3><button class="modal-x" onclick="closeModal('m-quiz-fase')"><span class="material-icons-round">close</span></button></div>
     <div id="quiz-fase-body" class="modal-body modal-scroll"></div>
   </div>
