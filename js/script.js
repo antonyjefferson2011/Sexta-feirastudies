@@ -1,11 +1,4 @@
-/**
- * SEXTA FEIRA STUDIES — script.js
- * Firebase novo: sf-studios-a58b1
- * REGRAS FIREBASE (cole no console → Realtime Database → Regras):
- * { "rules": { ".read": "auth != null", ".write": "auth != null" } }
- */
-
-import { initializeApp }            from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth, onAuthStateChanged,
   signInWithEmailAndPassword, createUserWithEmailAndPassword,
@@ -17,64 +10,52 @@ import {
   onValue, off, query, orderByChild, limitToLast
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-/* ══════════════════════════════════════
-   CONFIGURAÇÃO FIREBASE
-══════════════════════════════════════ */
 const FB_CONFIG = {
-  apiKey:            "AIzaSyDGYiJorNt7x80mP6DxPrFj97Qmm1YFgMI",
-  authDomain:        "sf-studios-a58b1.firebaseapp.com",
-  databaseURL:       "https://sf-studios-a58b1-default-rtdb.firebaseio.com",
-  projectId:         "sf-studios-a58b1",
-  storageBucket:     "sf-studios-a58b1.firebasestorage.app",
+  apiKey: "AIzaSyDGYiJorNt7x80mP6DxPrFj97Qmm1YFgMI",
+  authDomain: "sf-studios-a58b1.firebaseapp.com",
+  databaseURL: "https://sf-studios-a58b1-default-rtdb.firebaseio.com",
+  projectId: "sf-studios-a58b1",
+  storageBucket: "sf-studios-a58b1.firebasestorage.app",
   messagingSenderId: "876592442561",
-  appId:             "1:876592442561:web:87b6150b97d8b0a92ef840",
-  measurementId:     "G-8ZM0GNDW1E"
+  appId: "1:876592442561:web:87b6150b97d8b0a92ef840",
+  measurementId: "G-8ZM0GNDW1E"
 };
 const IMGBB_KEY = "86427cccd2a94fb42a0754ffd7f19e79";
 
 const fbApp = initializeApp(FB_CONFIG);
-const auth  = getAuth(fbApp);
-const db    = getDatabase(fbApp);
+const auth = getAuth(fbApp);
+const db = getDatabase(fbApp);
 const gAuth = new GoogleAuthProvider();
 
-/* ══════════════════════════════════════
-   ESTADO GLOBAL
-══════════════════════════════════════ */
-let EU          = null;   // objeto Firebase Auth
-let PERFIL      = null;   // dados do banco
-let feedUnSub   = null;   // função para cancelar listener do feed
-let postImg64   = null;   // base64 da imagem do post
-let capaImg64   = null;   // base64 da capa do módulo
-let postAberto  = null;   // id do post aberto nos comentários
-let filtroMat   = "";     // filtro de matéria nos módulos
-let todosModulos = [];    // cache de módulos
-let qIdx        = 0;      // contador de questões do quiz
-let abaAtual    = "home";
+let EU = null;
+let PERFIL = null;
+let feedUnSub = null;
+let postImg64 = null;
+let capaImg64 = null;
+let postAberto = null;
+let filtroMat = "";
+let todosModulos = [];
+let qIdx = 0;
+let abaAtual = "home";
 
-/* ══════════════════════════════════════
-   FASES DA TRILHA
-══════════════════════════════════════ */
 const FASES = [
-  {id:"f01",em:"🌱",tit:"Início da Jornada",   mat:"Geral",       xpReq:0,   xpP:30,  dif:1},
-  {id:"f02",em:"📐",tit:"Números e Operações", mat:"Matemática",  xpReq:30,  xpP:35,  dif:1},
-  {id:"f03",em:"📚",tit:"Leitura e Escrita",   mat:"Português",   xpReq:65,  xpP:35,  dif:1},
-  {id:"f04",em:"🌍",tit:"Explorando o Mundo",  mat:"Geografia",   xpReq:100, xpP:40,  dif:2},
-  {id:"f05",em:"🏛️",tit:"Raízes Históricas",   mat:"História",    xpReq:140, xpP:40,  dif:2},
-  {id:"f06",em:"🔬",tit:"Ciências da Vida",    mat:"Ciências",    xpReq:180, xpP:45,  dif:2},
-  {id:"f07",em:"🧬",tit:"DNA e Evolução",      mat:"Biologia",    xpReq:225, xpP:50,  dif:3},
-  {id:"f08",em:"⚛️",tit:"Leis da Física",      mat:"Física",      xpReq:275, xpP:50,  dif:3},
-  {id:"f09",em:"🧪",tit:"Reações Químicas",    mat:"Química",     xpReq:325, xpP:55,  dif:3},
-  {id:"f10",em:"🇬🇧",tit:"English Journey",     mat:"Inglês",      xpReq:380, xpP:55,  dif:3},
-  {id:"f11",em:"🤔",tit:"Pensamento Crítico",  mat:"Filosofia",   xpReq:435, xpP:60,  dif:4},
-  {id:"f12",em:"💻",tit:"Código e Algoritmos", mat:"Programação", xpReq:495, xpP:65,  dif:4},
-  {id:"f13",em:"💼",tit:"Mundo dos Negócios",  mat:"Empreend.",   xpReq:560, xpP:70,  dif:4},
-  {id:"f14",em:"🏆",tit:"Mestre do Saber",     mat:"Geral",       xpReq:640, xpP:120, dif:5},
+  {id:"f01",em:"🌱",tit:"Início da Jornada",mat:"Geral",xpReq:0,xpP:30,dif:1},
+  {id:"f02",em:"📐",tit:"Números e Operações",mat:"Matemática",xpReq:30,xpP:35,dif:1},
+  {id:"f03",em:"📚",tit:"Leitura e Escrita",mat:"Português",xpReq:65,xpP:35,dif:1},
+  {id:"f04",em:"🌍",tit:"Explorando o Mundo",mat:"Geografia",xpReq:100,xpP:40,dif:2},
+  {id:"f05",em:"🏛️",tit:"Raízes Históricas",mat:"História",xpReq:140,xpP:40,dif:2},
+  {id:"f06",em:"🔬",tit:"Ciências da Vida",mat:"Ciências",xpReq:180,xpP:45,dif:2},
+  {id:"f07",em:"🧬",tit:"DNA e Evolução",mat:"Biologia",xpReq:225,xpP:50,dif:3},
+  {id:"f08",em:"⚛️",tit:"Leis da Física",mat:"Física",xpReq:275,xpP:50,dif:3},
+  {id:"f09",em:"🧪",tit:"Reações Químicas",mat:"Química",xpReq:325,xpP:55,dif:3},
+  {id:"f10",em:"🇬🇧",tit:"English Journey",mat:"Inglês",xpReq:380,xpP:55,dif:3},
+  {id:"f11",em:"🤔",tit:"Pensamento Crítico",mat:"Filosofia",xpReq:435,xpP:60,dif:4},
+  {id:"f12",em:"💻",tit:"Código e Algoritmos",mat:"Programação",xpReq:495,xpP:65,dif:4},
+  {id:"f13",em:"💼",tit:"Mundo dos Negócios",mat:"Empreend.",xpReq:560,xpP:70,dif:4},
+  {id:"f14",em:"🏆",tit:"Mestre do Saber",mat:"Geral",xpReq:640,xpP:120,dif:5},
 ];
 const POSICOES = ["cen","esq","cen","dir","cen","esq","cen","dir","cen","esq","cen","dir","cen","cen"];
 
-/* ══════════════════════════════════════
-   UTILITÁRIOS
-══════════════════════════════════════ */
 function esc(s) {
   if (!s) return "";
   return String(s)
@@ -84,8 +65,8 @@ function esc(s) {
 function ago(ts) {
   if (!ts) return "";
   const d = Math.floor((Date.now() - ts) / 1000);
-  if (d < 60)    return "agora";
-  if (d < 3600)  return Math.floor(d/60)+"min";
+  if (d < 60) return "agora";
+  if (d < 3600) return Math.floor(d/60)+"min";
   if (d < 86400) return Math.floor(d/3600)+"h";
   return Math.floor(d/86400)+"d";
 }
@@ -93,10 +74,10 @@ function ytId(url) {
   const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
   return m ? m[1] : null;
 }
-function nivel(xp)   { return Math.floor((xp||0)/100)+1; }
-function progXP(xp)  { return (xp||0)%100; }
+function nivel(xp) { return Math.floor((xp||0)/100)+1; }
+function progXP(xp) { return (xp||0)%100; }
 function avDefault(nome) {
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(nome||"U")}&background=00C9B1&color=fff&size=128`;
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(nome||"U")}&background=00A896&color=fff&size=128`;
 }
 function matEmoji(m) {
   const mp = {"Matemática":"📐","Português":"📚","Literatura":"📖","Redação":"✍️","História":"🏛️",
@@ -107,21 +88,20 @@ function matEmoji(m) {
 }
 function errFirebase(code) {
   const m = {
-    "auth/user-not-found":       "E-mail não cadastrado.",
-    "auth/wrong-password":       "Senha incorreta.",
-    "auth/invalid-credential":   "E-mail ou senha inválidos.",
+    "auth/user-not-found": "E-mail não cadastrado.",
+    "auth/wrong-password": "Senha incorreta.",
+    "auth/invalid-credential": "E-mail ou senha inválidos.",
     "auth/email-already-in-use": "E-mail já está em uso.",
-    "auth/weak-password":        "Senha muito fraca (mín. 6 caracteres).",
-    "auth/invalid-email":        "E-mail inválido.",
-    "auth/too-many-requests":    "Muitas tentativas. Aguarde.",
+    "auth/weak-password": "Senha muito fraca (mín. 6 caracteres).",
+    "auth/invalid-email": "E-mail inválido.",
+    "auth/too-many-requests": "Muitas tentativas. Aguarde.",
     "auth/popup-closed-by-user": "Login cancelado.",
-    "auth/network-request-failed":"Sem conexão com a internet.",
-    "PERMISSION_DENIED":         "Permissão negada. Configure as regras do Firebase.",
+    "auth/network-request-failed": "Sem conexão com a internet.",
+    "PERMISSION_DENIED": "Permissão negada. Configure as regras do Firebase.",
   };
   return m[code] || "Erro (" + code + ")";
 }
 
-/* ── Toast ── */
 function toast(msg, tipo="") {
   const el = document.getElementById("toast");
   if (!el) return;
@@ -131,7 +111,6 @@ function toast(msg, tipo="") {
   el._t = setTimeout(() => { el.className = "toast"; }, 3200);
 }
 
-/* ── Popup de XP ── */
 function showXP(n) {
   const el = document.getElementById("xp-pop");
   const tx = document.getElementById("xp-pop-txt");
@@ -141,21 +120,19 @@ function showXP(n) {
   requestAnimationFrame(() => el.classList.add("show"));
   setTimeout(() => {
     el.classList.remove("show");
-    setTimeout(() => { el.style.display = "none"; }, 400);
-  }, 2000);
+    setTimeout(() => { el.style.display = "none"; }, 300);
+  }, 1800);
 }
 
-/* ── Base64 ── */
 async function toBase64(file) {
   return new Promise((res, rej) => {
     const r = new FileReader();
-    r.onload  = () => res(r.result);
+    r.onload = () => res(r.result);
     r.onerror = rej;
     r.readAsDataURL(file);
   });
 }
 
-/* ── Upload ImgBB ── */
 async function uploadImgBB(base64) {
   const form = new FormData();
   form.append("image", base64.split(",")[1]);
@@ -167,25 +144,21 @@ async function uploadImgBB(base64) {
   return json.data.url;
 }
 
-/* ══════════════════════════════════════
-   MODAIS
-══════════════════════════════════════ */
 function openModal(id) {
   const el = document.getElementById(id);
   if (!el) return;
   el.style.display = "flex";
-  // Preencher dados ao abrir
   if (id === "m-post" && PERFIL) {
     const ai = document.getElementById("post-av-img");
     const an = document.getElementById("post-av-nome");
-    if (ai) ai.src  = PERFIL.foto || avDefault(PERFIL.nome);
+    if (ai) ai.src = PERFIL.foto || avDefault(PERFIL.nome);
     if (an) an.textContent = PERFIL.nome || "Você";
   }
   if (id === "m-edit-pf" && PERFIL) {
     const en = document.getElementById("edit-nome");
     const eb = document.getElementById("edit-bio");
     if (en) en.value = PERFIL.nome || "";
-    if (eb) eb.value = PERFIL.bio  || "";
+    if (eb) eb.value = PERFIL.bio || "";
   }
 }
 window.openModal = openModal;
@@ -196,19 +169,15 @@ function closeModal(id) {
 }
 window.closeModal = closeModal;
 
-// Fechar ao clicar no overlay
 document.querySelectorAll(".modal-ov").forEach(m => {
   m.addEventListener("click", e => { if (e.target === m) m.style.display = "none"; });
 });
 
-/* ══════════════════════════════════════
-   AUTENTICAÇÃO
-══════════════════════════════════════ */
 window.trocarAba = function(aba) {
   document.querySelectorAll(".auth-aba").forEach(b => {
     b.classList.toggle("ativa", b.getAttribute("onclick") && b.getAttribute("onclick").includes(`'${aba}'`));
   });
-  document.getElementById("painel-entrar").style.display  = aba === "entrar"  ? "flex" : "none";
+  document.getElementById("painel-entrar").style.display = aba === "entrar" ? "flex" : "none";
   document.getElementById("painel-cadastro").style.display = aba === "cadastro" ? "flex" : "none";
   ["err-entrar","err-cadastro"].forEach(id => {
     const e = document.getElementById(id);
@@ -242,7 +211,7 @@ function setBtnEstado(id, carregando, htmlNormal) {
 
 window.fazerLogin = async function() {
   const email = document.getElementById("e-email")?.value.trim();
-  const senha  = document.getElementById("e-senha")?.value;
+  const senha = document.getElementById("e-senha")?.value;
   document.getElementById("err-entrar").style.display = "none";
   if (!email || !senha) { mostrarErro("err-entrar","Preencha e-mail e senha."); return; }
   setBtnEstado("btn-entrar", true, '<span class="material-icons-round">login</span> Entrar');
@@ -255,20 +224,19 @@ window.fazerLogin = async function() {
 };
 
 window.fazerCadastro = async function() {
-  const nome    = document.getElementById("c-nome")?.value.trim();
-  const email   = document.getElementById("c-email")?.value.trim();
-  const senha   = document.getElementById("c-senha")?.value;
-  const conf    = document.getElementById("c-confirma")?.value;
+  const nome = document.getElementById("c-nome")?.value.trim();
+  const email = document.getElementById("c-email")?.value.trim();
+  const senha = document.getElementById("c-senha")?.value;
+  const conf = document.getElementById("c-confirma")?.value;
   document.getElementById("err-cadastro").style.display = "none";
-  if (!nome)             { mostrarErro("err-cadastro","Digite seu nome."); return; }
-  if (!email)            { mostrarErro("err-cadastro","Digite seu e-mail."); return; }
-  if (senha.length < 6)  { mostrarErro("err-cadastro","Senha mínima: 6 caracteres."); return; }
-  if (senha !== conf)    { mostrarErro("err-cadastro","As senhas não coincidem."); return; }
+  if (!nome) { mostrarErro("err-cadastro","Digite seu nome."); return; }
+  if (!email) { mostrarErro("err-cadastro","Digite seu e-mail."); return; }
+  if (senha.length < 6) { mostrarErro("err-cadastro","Senha mínima: 6 caracteres."); return; }
+  if (senha !== conf) { mostrarErro("err-cadastro","As senhas não coincidem."); return; }
   setBtnEstado("btn-cadastro", true, '<span class="material-icons-round">person_add</span> Criar conta');
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, senha);
     await updateProfile(cred.user, { displayName: nome });
-    // onAuthStateChanged cuida do restante
   } catch(e) {
     mostrarErro("err-cadastro", errFirebase(e.code));
     setBtnEstado("btn-cadastro", false, '<span class="material-icons-round">person_add</span> Criar conta');
@@ -299,9 +267,6 @@ window.fazerLogout = async function() {
   await signOut(auth);
 };
 
-/* ══════════════════════════════════════
-   OBSERVER DE AUTENTICAÇÃO
-══════════════════════════════════════ */
 onAuthStateChanged(auth, async user => {
   if (user) {
     EU = user;
@@ -310,14 +275,13 @@ onAuthStateChanged(auth, async user => {
       await carregarPerfil();
     } catch(e) {
       console.error("Erro ao carregar perfil:", e.message);
-      // Perfil mínimo local para não travar
       PERFIL = {
-        uid:    user.uid,
-        nome:   user.displayName || "Estudante",
-        email:  user.email || "",
-        foto:   user.photoURL || "",
-        bio:    "",
-        xp:     0,
+        uid: user.uid,
+        nome: user.displayName || "Estudante",
+        email: user.email || "",
+        foto: user.photoURL || "",
+        bio: "",
+        xp: 0,
         streak: 0
       };
     }
@@ -330,27 +294,27 @@ onAuthStateChanged(auth, async user => {
     if (feedUnSub) { feedUnSub(); feedUnSub = null; }
     ocultarOverlay();
     mostrarTela("tela-auth");
-    setBtnEstado("btn-entrar",  false, '<span class="material-icons-round">login</span> Entrar');
-    setBtnEstado("btn-cadastro",false, '<span class="material-icons-round">person_add</span> Criar conta');
+    setBtnEstado("btn-entrar", false, '<span class="material-icons-round">login</span> Entrar');
+    setBtnEstado("btn-cadastro", false, '<span class="material-icons-round">person_add</span> Criar conta');
   }
 });
 
 async function garantirPerfil(user) {
-  const r    = ref(db, `usuarios/${user.uid}`);
+  const r = ref(db, `usuarios/${user.uid}`);
   const snap = await get(r);
   const hoje = new Date().toDateString();
   if (!snap.exists()) {
     await set(r, {
-      nome:       user.displayName || "Estudante",
-      email:      user.email || "",
-      foto:       user.photoURL || "",
-      bio:        "",
-      xp:         0,
-      streak:     1,
+      nome: user.displayName || "Estudante",
+      email: user.email || "",
+      foto: user.photoURL || "",
+      bio: "",
+      xp: 0,
+      streak: 1,
       ultimaData: hoje,
-      criadoEm:   Date.now(),
-      isAdmin:    false,
-      banido:     false
+      criadoEm: Date.now(),
+      isAdmin: false,
+      banido: false
     });
   } else {
     const d = snap.val();
@@ -359,7 +323,7 @@ async function garantirPerfil(user) {
       throw new Error("Conta banida.");
     }
     if (d.ultimaData !== hoje) {
-      const ontem     = new Date(Date.now() - 86400000).toDateString();
+      const ontem = new Date(Date.now() - 86400000).toDateString();
       const novoStreak = d.ultimaData === ontem ? (d.streak || 0) + 1 : 1;
       await update(r, { ultimaData: hoje, streak: novoStreak });
     }
@@ -382,12 +346,9 @@ function ocultarOverlay() {
   const ol = document.getElementById("overlay");
   if (!ol) return;
   ol.classList.add("sumindo");
-  setTimeout(() => { ol.style.display = "none"; }, 450);
+  setTimeout(() => { ol.style.display = "none"; }, 350);
 }
 
-/* ══════════════════════════════════════
-   INICIAR APP
-══════════════════════════════════════ */
 function iniciarApp() {
   atualizarHeader();
   atualizarPerfilUI();
@@ -397,62 +358,51 @@ function iniciarApp() {
   carregarAviso();
 }
 
-/* ── Header ── */
 function atualizarHeader() {
   if (!PERFIL) return;
   const foto = PERFIL.foto || avDefault(PERFIL.nome);
-
   const setEl = (id, val, attr = "text") => {
     const el = document.getElementById(id);
     if (!el) return;
     if (attr === "src") el.src = val;
     else el.textContent = val;
   };
-
-  setEl("hdr-xp",     (PERFIL.xp || 0) + " XP");
+  setEl("hdr-xp", (PERFIL.xp || 0) + " XP");
   setEl("hdr-streak", PERFIL.streak || 0);
   setEl("hdr-av-img", foto, "src");
-  setEl("bar-av",     foto, "src");
-  setEl("post-av-img",foto, "src");
-  setEl("coment-av",  foto, "src");
+  setEl("bar-av", foto, "src");
+  setEl("post-av-img", foto, "src");
+  setEl("coment-av", foto, "src");
 }
 
-/* ── Perfil ── */
 function atualizarPerfilUI() {
   if (!PERFIL) return;
-  const xp   = PERFIL.xp || 0;
-  const nv   = nivel(xp);
-  const pg   = progXP(xp);
+  const xp = PERFIL.xp || 0;
+  const nv = nivel(xp);
+  const pg = progXP(xp);
   const foto = PERFIL.foto || avDefault(PERFIL.nome);
-
   const setEl = (id, val, attr = "text") => {
     const el = document.getElementById(id);
     if (!el) return;
     if (attr === "src") el.src = val;
     else el.textContent = val;
   };
-
-  setEl("pf-av",       foto, "src");
-  setEl("pf-nome",     PERFIL.nome || "Estudante");
-  setEl("pf-bio",      PERFIL.bio  || "Sem bio.");
-  setEl("pf-xp",       xp);
-  setEl("pf-nivel",    nv);
-  setEl("pf-streak",   PERFIL.streak || 0);
-  setEl("nivel-txt",   "Nível " + nv);
+  setEl("pf-av", foto, "src");
+  setEl("pf-nome", PERFIL.nome || "Estudante");
+  setEl("pf-bio", PERFIL.bio || "Sem bio.");
+  setEl("pf-xp", xp);
+  setEl("pf-nivel", nv);
+  setEl("pf-streak", PERFIL.streak || 0);
+  setEl("nivel-txt", "Nível " + nv);
   setEl("nivel-xp-info", pg + "/100 XP");
-
   const barra = document.getElementById("xp-barra");
   if (barra) barra.style.width = pg + "%";
-
-  // Medalhas
   const mw = document.getElementById("pf-medalhas");
   if (mw && PERFIL.medalhas) {
     mw.innerHTML = Object.values(PERFIL.medalhas)
       .map(m => `<div class="medalha"><span class="material-icons-round">emoji_events</span>${esc(m.nome)}</div>`)
       .join("");
   }
-
-  // Contagens
   contarConteudo();
 }
 
@@ -466,15 +416,12 @@ async function contarConteudo() {
     let cMods = 0, cPosts = 0;
     sm.forEach(c => { if (c.val().autorId === EU.uid) cMods++; });
     sp.forEach(c => { if (c.val().autorId === EU.uid) cPosts++; });
-    const em = document.getElementById("pf-mods");  if (em)  em.textContent  = cMods;
-    const ep = document.getElementById("pf-posts"); if (ep)  ep.textContent  = cPosts;
+    const em = document.getElementById("pf-mods"); if (em) em.textContent = cMods;
+    const ep = document.getElementById("pf-posts"); if (ep) ep.textContent = cPosts;
     renderMeusModulos(sm);
   } catch(e) { console.error(e); }
 }
 
-/* ══════════════════════════════════════
-   NAVEGAÇÃO ENTRE ABAS
-══════════════════════════════════════ */
 window.irAba = function(aba, btn) {
   abaAtual = aba;
   document.querySelectorAll(".aba").forEach(a => a.classList.remove("ativa"));
@@ -489,14 +436,11 @@ window.irAba = function(aba, btn) {
   const m = document.getElementById("app-main");
   if (m) m.scrollTop = 0;
   if (aba === "ranking") carregarRanking();
-  if (aba === "trilha")  carregarTrilha();
-  if (aba === "perfil")  { atualizarPerfilUI(); }
+  if (aba === "trilha") carregarTrilha();
+  if (aba === "perfil") { atualizarPerfilUI(); }
   if (aba === "missoes") carregarMissoes();
 };
 
-/* ══════════════════════════════════════
-   SISTEMA DE XP
-══════════════════════════════════════ */
 async function addXP(quantidade, acao) {
   if (!EU || !PERFIL) return;
   const novoXP = (PERFIL.xp || 0) + quantidade;
@@ -510,9 +454,6 @@ async function addXP(quantidade, acao) {
   if (acao) verificarMissoes(acao);
 }
 
-/* ══════════════════════════════════════
-   AVISO GLOBAL
-══════════════════════════════════════ */
 async function carregarAviso() {
   try {
     const snap = await get(query(ref(db, "avisos"), orderByChild("criadoEm"), limitToLast(1)));
@@ -521,27 +462,22 @@ async function carregarAviso() {
       const a = c.val();
       if (!a.ativo) return;
       const box = document.getElementById("aviso-box");
-      const t   = document.getElementById("aviso-titulo");
-      const m   = document.getElementById("aviso-msg");
+      const t = document.getElementById("aviso-titulo");
+      const m = document.getElementById("aviso-msg");
       if (box && t && m) {
-        t.textContent = a.titulo   || "Aviso";
+        t.textContent = a.titulo || "Aviso";
         m.textContent = a.mensagem || "";
         box.style.display = "flex";
       }
     });
-  } catch(e) { /* silencioso */ }
+  } catch(e) {}
 }
 
-/* ══════════════════════════════════════
-   FEED DE POSTS
-══════════════════════════════════════ */
 function carregarFeed() {
   const fd = document.getElementById("feed");
   if (!fd) return;
   fd.innerHTML = '<div class="load-box"><div class="spin"></div><p>Carregando feed...</p></div>';
-
   if (feedUnSub) feedUnSub();
-
   const q = query(ref(db, "posts"), orderByChild("criadoEm"), limitToLast(30));
   feedUnSub = onValue(q, snap => {
     const posts = [];
@@ -557,13 +493,12 @@ function carregarFeed() {
 }
 
 function htmlPost(p) {
-  const foto     = p.autorFoto || avDefault(p.autorNome);
-  const curtidas = p.curtidas  || {};
-  const curtido  = EU && curtidas[EU.uid];
-  const nCurt    = Object.keys(curtidas).length;
-  const nComt    = p.comentarios ? Object.keys(p.comentarios).length : 0;
-  const ehMeu    = EU && p.autorId === EU.uid;
-
+  const foto = p.autorFoto || avDefault(p.autorNome);
+  const curtidas = p.curtidas || {};
+  const curtido = EU && curtidas[EU.uid];
+  const nCurt = Object.keys(curtidas).length;
+  const nComt = p.comentarios ? Object.keys(p.comentarios).length : 0;
+  const ehMeu = EU && p.autorId === EU.uid;
   return `<div class="post-card" id="pc-${esc(p.id)}">
     <div class="post-topo">
       <img src="${esc(foto)}" alt="" />
@@ -592,7 +527,7 @@ function htmlPost(p) {
 
 window.curtirPost = async function(pid) {
   if (!EU) return;
-  const cr   = ref(db, `posts/${pid}/curtidas/${EU.uid}`);
+  const cr = ref(db, `posts/${pid}/curtidas/${EU.uid}`);
   const snap = await get(cr);
   if (snap.exists()) await remove(cr);
   else { await set(cr, true); await addXP(1, null); }
@@ -611,20 +546,18 @@ window.abrirComents = async function(pid) {
   try {
     const snap = await get(ref(db, `posts/${pid}`));
     if (!snap.exists()) return;
-    const p    = { id: pid, ...snap.val() };
+    const p = { id: pid, ...snap.val() };
     const foto = p.autorFoto || avDefault(p.autorNome);
-
     document.getElementById("ver-post-corpo").innerHTML = `
       <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.65rem">
-        <img src="${esc(foto)}" style="width:40px;height:40px;border-radius:50%;object-fit:cover"/>
+        <img src="${esc(foto)}" style="width:38px;height:38px;border-radius:50%;object-fit:cover"/>
         <div>
-          <strong style="font-size:.87rem">${esc(p.autorNome || "Anônimo")}</strong><br>
-          <small style="font-size:.72rem;color:var(--mt)">${ago(p.criadoEm)}</small>
+          <strong style="font-size:.85rem">${esc(p.autorNome || "Anônimo")}</strong><br>
+          <small style="font-size:.7rem;color:var(--mt)">${ago(p.criadoEm)}</small>
         </div>
       </div>
-      ${p.texto ? `<p style="font-size:.9rem;line-height:1.58;color:var(--sub);margin-bottom:.5rem">${esc(p.texto).replace(/\n/g,"<br>")}</p>` : ""}
-      ${p.imgURL ? `<img src="${esc(p.imgURL)}" style="width:100%;border-radius:12px;max-height:240px;object-fit:cover"/>` : ""}`;
-
+      ${p.texto ? `<p style="font-size:.88rem;line-height:1.55;color:var(--sub);margin-bottom:.5rem">${esc(p.texto).replace(/\n/g,"<br>")}</p>` : ""}
+      ${p.imgURL ? `<img src="${esc(p.imgURL)}" style="width:100%;border-radius:4px;max-height:220px;object-fit:cover"/>` : ""}`;
     const sc = await get(ref(db, `posts/${pid}/comentarios`));
     renderComents(sc);
     openModal("m-ver-post");
@@ -635,7 +568,7 @@ function renderComents(snap) {
   const l = document.getElementById("lista-coments");
   if (!l) return;
   if (!snap || !snap.exists()) {
-    l.innerHTML = '<p style="color:var(--mt);font-size:.83rem;margin-bottom:.5rem">Nenhum comentário ainda.</p>';
+    l.innerHTML = '<p style="color:var(--mt);font-size:.8rem;margin-bottom:.5rem">Nenhum comentário ainda.</p>';
     return;
   }
   const cs = [];
@@ -651,17 +584,17 @@ function renderComents(snap) {
 }
 
 window.enviarComentario = async function() {
-  const inp  = document.getElementById("coment-txt");
-  const txt  = inp?.value.trim();
+  const inp = document.getElementById("coment-txt");
+  const txt = inp?.value.trim();
   if (!txt || !postAberto || !EU || !PERFIL) return;
   inp.value = "";
   try {
     await push(ref(db, `posts/${postAberto}/comentarios`), {
-      autorId:   EU.uid,
+      autorId: EU.uid,
       autorNome: PERFIL.nome || "Estudante",
       autorFoto: PERFIL.foto || "",
-      texto:     txt,
-      criadoEm:  Date.now()
+      texto: txt,
+      criadoEm: Date.now()
     });
     await addXP(2, "comentar");
     const snap = await get(ref(db, `posts/${postAberto}/comentarios`));
@@ -670,15 +603,12 @@ window.enviarComentario = async function() {
   } catch(e) { toast("Erro: " + e.message, "err"); }
 };
 
-/* ══════════════════════════════════════
-   CRIAR POST
-══════════════════════════════════════ */
 window.selecionarFotoPost = async function(inp) {
   if (!inp.files[0]) return;
   postImg64 = await toBase64(inp.files[0]);
-  const pi  = document.getElementById("post-prev");
+  const pi = document.getElementById("post-prev");
   if (pi) pi.src = postImg64;
-  const pv  = document.getElementById("post-img-prev");
+  const pv = document.getElementById("post-img-prev");
   if (pv) pv.style.display = "block";
 };
 
@@ -694,11 +624,9 @@ window.publicarPost = async function() {
   const txt = document.getElementById("post-txt")?.value.trim();
   if (!txt && !postImg64) { toast("Escreva algo ou adicione uma imagem.", "err"); return; }
   if (!EU || !PERFIL) return;
-
   const btn = document.getElementById("btn-pub");
   btn.disabled = true;
   btn.innerHTML = '<span class="material-icons-round" style="animation:girar .7s linear infinite">refresh</span> Publicando...';
-
   try {
     let imgURL = null;
     if (postImg64) {
@@ -706,15 +634,15 @@ window.publicarPost = async function() {
       imgURL = await uploadImgBB(postImg64);
     }
     await push(ref(db, "posts"), {
-      autorId:   EU.uid,
+      autorId: EU.uid,
       autorNome: PERFIL.nome || "Estudante",
       autorFoto: PERFIL.foto || "",
-      texto:     txt,
+      texto: txt,
       imgURL,
-      criadoEm:  Date.now()
+      criadoEm: Date.now()
     });
     await addXP(5, "postar");
-    toast("Publicado! +5 XP 🎉", "ok");
+    toast("Publicado! +5 XP", "ok");
     document.getElementById("post-txt").value = "";
     postImg64 = null;
     const pv = document.getElementById("post-img-prev");
@@ -730,15 +658,10 @@ window.publicarPost = async function() {
   }
 };
 
-/* ══════════════════════════════════════
-   MÓDULOS — LISTAGEM E FILTRO
-══════════════════════════════════════ */
 function carregarModulos() {
   const g = document.getElementById("grade-mods");
   if (!g) return;
   g.innerHTML = '<div class="load-box"><div class="spin"></div><p>Carregando módulos...</p></div>';
-
-  // Usa onValue para atualização em tempo real
   onValue(ref(db, "modulos"), snap => {
     todosModulos = [];
     snap.forEach(c => todosModulos.unshift({ id: c.key, ...c.val() }));
@@ -752,7 +675,7 @@ function renderMods(lista, cid) {
   const g = document.getElementById(cid);
   if (!g) return;
   const busca = (document.getElementById("busca-mod")?.value || "").toLowerCase();
-  const fil   = lista.filter(m => {
+  const fil = lista.filter(m => {
     const bOk = !busca || (m.titulo||"").toLowerCase().includes(busca) || (m.descricao||"").toLowerCase().includes(busca);
     const mOk = !filtroMat || m.materia === filtroMat;
     return bOk && mOk;
@@ -783,7 +706,6 @@ function renderMods(lista, cid) {
 
 window.filtrarMods = function() { renderMods(todosModulos, "grade-mods"); };
 
-// Chips de matéria
 document.getElementById("chips-mat")?.addEventListener("click", e => {
   const chip = e.target.closest(".chip");
   if (!chip) return;
@@ -793,35 +715,25 @@ document.getElementById("chips-mat")?.addEventListener("click", e => {
   renderMods(todosModulos, "grade-mods");
 });
 
-/* ══════════════════════════════════════
-   VER MÓDULO COMPLETO
-══════════════════════════════════════ */
 window.verMod = async function(mid) {
   try {
     const snap = await get(ref(db, `modulos/${mid}`));
     if (!snap.exists()) { toast("Módulo não encontrado.", "err"); return; }
     const m = { id: mid, ...snap.val() };
-
-    // Incrementar acessos sem bloquear
     update(ref(db, `modulos/${mid}`), { acessos: (m.acessos || 0) + 1 }).catch(() => {});
-
     const capaH = m.capaURL
       ? `<div class="mod-view-capa"><img src="${esc(m.capaURL)}" alt="Capa"/></div>`
       : `<div class="mod-view-capa">${matEmoji(m.materia)}</div>`;
-
     const vids = m.videos
       ? Object.values(m.videos).filter(Boolean).map(url => {
           const vid = ytId(url);
           return vid ? `<div class="vid-embed"><iframe src="https://www.youtube.com/embed/${vid}" allowfullscreen loading="lazy"></iframe></div>` : "";
         }).join("")
       : "";
-
-    const qs     = m.quiz ? Object.values(m.quiz) : [];
-    const quizH  = qs.length ? renderQuizMod(qs, mid) : "";
-
+    const qs = m.quiz ? Object.values(m.quiz) : [];
+    const quizH = qs.length ? renderQuizMod(qs, mid) : "";
     const view = document.getElementById("mod-view");
     if (!view) return;
-
     view.innerHTML = `
       ${capaH}
       <div class="mod-view-meta">
@@ -835,9 +747,8 @@ window.verMod = async function(mid) {
         ${m.descricao ? `<div class="mod-view-desc">${esc(m.descricao)}</div>` : ""}
       </div>
       ${m.conteudo ? `<div class="mod-sec"><h3><span class="material-icons-round">article</span> Conteúdo</h3><div class="mod-txt">${esc(m.conteudo)}</div></div>` : ""}
-      ${vids        ? `<div class="mod-sec"><h3><span class="material-icons-round">play_circle</span> Vídeos</h3>${vids}</div>` : ""}
-      ${quizH       ? `<div class="mod-sec"><h3><span class="material-icons-round">quiz</span> Quiz</h3>${quizH}</div>` : ""}`;
-
+      ${vids ? `<div class="mod-sec"><h3><span class="material-icons-round">play_circle</span> Vídeos</h3>${vids}</div>` : ""}
+      ${quizH ? `<div class="mod-sec"><h3><span class="material-icons-round">quiz</span> Quiz</h3>${quizH}</div>` : ""}`;
     openModal("m-ver-mod");
   } catch(e) { toast("Erro ao abrir módulo: " + e.message, "err"); }
 };
@@ -861,26 +772,25 @@ function renderQuizMod(qs, mid) {
 }
 
 window.respMod = async function(mid, qi, sel, correta) {
-  document.querySelectorAll(`[id^="qmb-${mid}-${qi}-"]`).forEach(b => { b.disabled = true; });
-  const bs  = document.getElementById(`qmb-${mid}-${qi}-${sel}`);
-  const bc  = document.getElementById(`qmb-${mid}-${qi}-${correta}`);
-  const fb  = document.getElementById(`qmf-${mid}-${qi}`);
-  const ok  = sel === correta;
+  const prefix = `qmb-${mid}-${qi}-`;
+  document.querySelectorAll(`[id^="${prefix}"]`).forEach(b => { b.disabled = true; });
+  const bs = document.getElementById(`${prefix}${sel}`);
+  const bc = document.getElementById(`${prefix}${correta}`);
+  const fb = document.getElementById(`qmf-${mid}-${qi}`);
+  const ok = sel === correta;
   if (bs) bs.classList.add(ok ? "certa" : "errada");
   if (bc && !ok) bc.classList.add("certa");
-  if (fb) fb.innerHTML = `<span class="quiz-fb ${ok?"ok":"fail"}">${ok?"✅ Correto! +10 XP":"❌ Errado"}</span>`;
+  if (fb) fb.innerHTML = `<span class="quiz-fb ${ok?"ok":"fail"}">${ok?"Correto! +10 XP":"Errado"}</span>`;
   if (ok) await addXP(10, "acertar_questao");
-
-  // Verificar se todas respondidas
-  const total   = document.querySelectorAll(`#qmod-${mid} .quiz-q`).length;
-  const respost = document.querySelectorAll(`#qmod-${mid} .quiz-opt-btn[disabled]`).length;
-  const opcsQ   = document.querySelectorAll(`#qmod-${mid} .quiz-opt-btn`).length;
-  if (respost >= opcsQ) {
+  const allBtns = document.querySelectorAll(`#qmod-${mid} .quiz-opt-btn`);
+  const disabledBtns = document.querySelectorAll(`#qmod-${mid} .quiz-opt-btn[disabled]`);
+  if (allBtns.length === disabledBtns.length) {
+    const total = document.querySelectorAll(`#qmod-${mid} .quiz-q`).length;
     const acertos = document.querySelectorAll(`#qmod-${mid} .quiz-opt-btn.certa`).length;
-    const res     = document.getElementById(`qmr-${mid}`);
+    const res = document.getElementById(`qmr-${mid}`);
     if (res) {
       res.style.display = "block";
-      res.innerHTML = `<div class="quiz-res"><h3>${acertos}/${total} corretas 🎉</h3><p>Módulo concluído!</p><span class="xp-tag">+50 XP</span></div>`;
+      res.innerHTML = `<div class="quiz-res"><h3>${acertos}/${total} corretas</h3><p>Módulo concluído!</p><span class="xp-tag">+50 XP</span></div>`;
     }
     await addXP(50, "completar_modulo");
     try { await set(ref(db, `progresso/${EU?.uid}/modulos/${mid}`), { concluidoEm: Date.now(), acertos, total }); } catch(e) {}
@@ -906,14 +816,11 @@ function renderMeusModulos(snapMods) {
     </div>`).join("");
 }
 
-/* ══════════════════════════════════════
-   CRIAR MÓDULO
-══════════════════════════════════════ */
 window.prevCapa = async function(inp) {
   if (!inp.files[0]) return;
   capaImg64 = await toBase64(inp.files[0]);
-  const p   = document.getElementById("capa-prev");
-  const s   = document.getElementById("capa-span");
+  const p = document.getElementById("capa-prev");
+  const s = document.getElementById("capa-span");
   if (p) { p.src = capaImg64; p.style.display = "block"; }
   if (s) s.style.display = "none";
 };
@@ -930,10 +837,10 @@ window.addVideo = function() {
 
 window.addQuestao = function() {
   const idx = qIdx++;
-  const b   = document.createElement("div");
-  b.className  = "q-bloco";
-  b.dataset.q  = idx;
-  b.innerHTML  = `
+  const b = document.createElement("div");
+  b.className = "q-bloco";
+  b.dataset.q = idx;
+  b.innerHTML = `
     <div class="q-topo">
       <input type="text" class="q-in" placeholder="Enunciado da pergunta..."/>
       <button class="btn-icon-sm" onclick="this.closest('.q-bloco').remove()">
@@ -956,50 +863,44 @@ window.salvarModulo = async function() {
   if (!tit) { toast("Informe o título do módulo.", "err"); return; }
   if (!mat) { toast("Selecione a matéria.", "err"); return; }
   if (!EU || !PERFIL) return;
-
   const btn = document.getElementById("btn-salvar-mod");
   btn.disabled = true;
   btn.innerHTML = '<span class="material-icons-round" style="animation:girar .7s linear infinite">refresh</span> Salvando...';
-
   try {
     let capaURL = null;
     if (capaImg64) {
       toast("Enviando capa...");
       capaURL = await uploadImgBB(capaImg64);
     }
-
     const videos = {};
     document.querySelectorAll(".video-in").forEach((inp, i) => {
       if (inp.value.trim()) videos[i] = inp.value.trim();
     });
-
     const quiz = {};
     let qi = 0;
     document.querySelectorAll(".q-bloco").forEach(bloco => {
-      const en   = bloco.querySelector(".q-in")?.value.trim();
+      const en = bloco.querySelector(".q-in")?.value.trim();
       if (!en) return;
       const opts = [...bloco.querySelectorAll(".opt-in")].map(i => i.value.trim());
       const rSel = bloco.querySelector("input[type=radio]:checked");
       const corr = rSel ? parseInt(rSel.value) : 0;
       quiz[qi++] = { enunciado: en, opcoes: opts, correta: corr };
     });
-
     await push(ref(db, "modulos"), {
-      titulo:    tit,
+      titulo: tit,
       descricao: document.getElementById("mod-desc")?.value.trim() || "",
-      materia:   mat,
-      conteudo:  document.getElementById("mod-cont")?.value.trim() || "",
+      materia: mat,
+      conteudo: document.getElementById("mod-cont")?.value.trim() || "",
       capaURL, videos, quiz,
-      autorId:   EU.uid,
+      autorId: EU.uid,
       autorNome: PERFIL.nome || "Estudante",
       autorFoto: PERFIL.foto || "",
-      oficial:   false,
-      acessos:   0,
-      criadoEm:  Date.now()
+      oficial: false,
+      acessos: 0,
+      criadoEm: Date.now()
     });
-
     await addXP(20, "criar_modulo");
-    toast("Módulo criado! +20 XP 🎉", "ok");
+    toast("Módulo criado! +20 XP", "ok");
     closeModal("m-mod");
     resetFormModulo();
   } catch(e) {
@@ -1017,9 +918,9 @@ function resetFormModulo() {
   });
   const sel = document.getElementById("mod-mat");
   if (sel) sel.value = "";
-  const cp  = document.getElementById("capa-prev");
+  const cp = document.getElementById("capa-prev");
   if (cp) { cp.src = ""; cp.style.display = "none"; }
-  const cs  = document.getElementById("capa-span");
+  const cs = document.getElementById("capa-span");
   if (cs) cs.style.display = "";
   const vw = document.getElementById("videos-wrap");
   if (vw) vw.innerHTML = `<div class="video-row">
@@ -1032,17 +933,11 @@ function resetFormModulo() {
   qIdx = 0;
 }
 
-/* ══════════════════════════════════════
-   TRILHA DE FASES
-══════════════════════════════════════ */
 async function carregarTrilha() {
   const tr = document.getElementById("trilha");
   if (!tr) return;
   tr.innerHTML = '<div class="load-box"><div class="spin"></div><p>Carregando trilha...</p></div>';
-
   const xp = PERFIL?.xp || 0;
-
-  // Fases extras do admin
   let fases = [...FASES];
   try {
     const sa = await get(ref(db, "fases_admin"));
@@ -1051,35 +946,28 @@ async function carregarTrilha() {
       if (!fases.find(x => x.id === f.id)) fases.push(f);
     });
   } catch(e) {}
-
-  // Progresso do usuário
   let conc = {};
   try {
     const sp = await get(ref(db, `progresso/${EU?.uid}/fases`));
     if (sp.exists()) conc = sp.val();
   } catch(e) {}
-
-  // Atualizar barra de nível
   const nv = nivel(xp); const pg = progXP(xp);
-  const eNT = document.getElementById("nivel-txt");     if (eNT) eNT.textContent   = "Nível " + nv;
-  const eNX = document.getElementById("nivel-xp-info"); if (eNX) eNX.textContent   = pg + "/100 XP";
-  const eBa = document.getElementById("xp-barra");      if (eBa) eBa.style.width   = pg + "%";
-
-  // Grupos de 5 fases
+  const eNT = document.getElementById("nivel-txt"); if (eNT) eNT.textContent = "Nível " + nv;
+  const eNX = document.getElementById("nivel-xp-info"); if (eNX) eNX.textContent = pg + "/100 XP";
+  const eBa = document.getElementById("xp-barra"); if (eBa) eBa.style.width = pg + "%";
   const grupos = [];
   for (let i = 0; i < fases.length; i += 5) grupos.push(fases.slice(i, i+5));
-
   tr.innerHTML = grupos.map((grupo, gi) => {
     const nosHTML = grupo.map((f, fi) => {
-      const idx      = gi * 5 + fi;
-      const done     = !!conc[f.id];
+      const idx = gi * 5 + fi;
+      const done = !!conc[f.id];
       const prevDone = idx === 0 || !!conc[fases[idx-1]?.id];
-      const disp     = !done && xp >= f.xpReq && prevDone;
-      const trav     = !done && !disp;
-      const cls      = trav ? "trav" : done ? "conc" : "disp";
-      const ests     = done ? "⭐⭐⭐" : disp ? "⭐☆☆" : "☆☆☆";
-      const pos      = POSICOES[idx % POSICOES.length] || "cen";
-      const con      = idx > 0
+      const disp = !done && xp >= f.xpReq && prevDone;
+      const trav = !done && !disp;
+      const cls = trav ? "trav" : done ? "conc" : "disp";
+      const ests = done ? "Concluída" : disp ? "Disponível" : "Bloqueada";
+      const pos = POSICOES[idx % POSICOES.length] || "cen";
+      const con = idx > 0
         ? `<div class="conector ${conc[fases[idx-1]?.id] ? "feito" : "normal"}"></div>`
         : "";
       return `${con}
@@ -1118,23 +1006,21 @@ window.verFase = async function(fid) {
   } catch(e) {}
   const disp = xp >= f.xpReq && prevDone;
   const trav = !done && !disp;
-  const difN = ["","🟢 Iniciante","🟡 Básico","🟠 Intermediário","🔴 Avançado","💀 Expert"][f.dif] || "";
-
+  const difN = ["","Iniciante","Básico","Intermediário","Avançado","Expert"][f.dif] || "";
   document.getElementById("fase-corpo").innerHTML = `
     <div class="fase-dh">
       <span class="fase-dh-em">${f.em}</span>
       <div class="fase-dh-tit">${esc(f.tit)}</div>
       <div class="fase-dh-sub">${esc(f.mat)} · ${difN}</div>
       <div class="fase-dh-xp"><span class="material-icons-round">bolt</span>+${f.xpP} XP ao concluir</div>
-      ${done ? '<div style="margin-top:.5rem;font-size:1.5rem">⭐⭐⭐</div>' : ""}
+      ${done ? '<div style="margin-top:.5rem;font-size:1.2rem;font-weight:600;color:var(--ok)">Concluída</div>' : ""}
     </div>
     ${trav ? `<div class="fase-trav-info"><span class="material-icons-round">lock</span>
       <p>Você precisa de <strong>${f.xpReq} XP</strong> para desbloquear.<br>Você tem <strong>${xp} XP</strong>.</p>
     </div>` : ""}`;
-
   const rod = document.getElementById("fase-footer");
   if (trav) {
-    rod.innerHTML = `<button class="btn-prim" style="background:var(--borda);color:var(--mt);box-shadow:none;cursor:not-allowed">🔒 Fase bloqueada</button>`;
+    rod.innerHTML = `<button class="btn-prim" style="background:var(--borda);color:var(--mt);cursor:not-allowed">Fase bloqueada</button>`;
   } else {
     const lbl = done ? "Refazer fase" : "Iniciar fase";
     rod.innerHTML = `<button class="btn-prim" onclick="closeModal('m-fase');abrirQuizFase('${fid}')">
@@ -1145,7 +1031,7 @@ window.verFase = async function(fid) {
 };
 
 window.abrirQuizFase = async function(fid) {
-  const f    = FASES.find(x => x.id === fid);
+  const f = FASES.find(x => x.id === fid);
   if (!f) return;
   const titEl = document.getElementById("quiz-fase-tit");
   if (titEl) titEl.textContent = f.em + " " + f.tit;
@@ -1162,7 +1048,7 @@ window.abrirQuizFase = async function(fid) {
     return;
   }
   body.innerHTML = `
-    <p style="font-size:.82rem;color:var(--mt);margin-bottom:1rem">📝 ${qs.length} pergunta${qs.length!==1?"s":""}</p>
+    <p style="font-size:.8rem;color:var(--mt);margin-bottom:1rem">${qs.length} pergunta${qs.length!==1?"s":""}</p>
     ${qs.map((q, qi) => `
       <div class="quiz-q" id="fq-${qi}">
         <div class="quiz-q-txt">${qi+1}. ${esc(q.enunciado)}</div>
@@ -1179,36 +1065,32 @@ window.abrirQuizFase = async function(fid) {
 };
 
 window.respFase = async function(qi, sel, correta, fid, total, xpP) {
-  document.querySelectorAll(`#fqops-${qi} .quiz-opt-btn`).forEach(b => { b.disabled = true; });
-  const bs  = document.getElementById(`fqb-${qi}-${sel}`);
-  const bc  = document.getElementById(`fqb-${qi}-${correta}`);
-  const fb  = document.getElementById(`ffb-${qi}`);
-  const ok  = sel === correta;
+  const opsDiv = document.getElementById(`fqops-${qi}`);
+  if (opsDiv) opsDiv.querySelectorAll(".quiz-opt-btn").forEach(b => { b.disabled = true; });
+  const bs = document.getElementById(`fqb-${qi}-${sel}`);
+  const bc = document.getElementById(`fqb-${qi}-${correta}`);
+  const fb = document.getElementById(`ffb-${qi}`);
+  const ok = sel === correta;
   if (bs) bs.classList.add(ok ? "certa" : "errada");
   if (bc && !ok) bc.classList.add("certa");
-  if (fb) fb.innerHTML = `<span class="quiz-fb ${ok?"ok":"fail"}">${ok?"✅ Correto! +10 XP":"❌ Errado"}</span>`;
+  if (fb) fb.innerHTML = `<span class="quiz-fb ${ok?"ok":"fail"}">${ok?"Correto! +10 XP":"Errado"}</span>`;
   if (ok) await addXP(10, "acertar_questao");
-
-  // Verificar se todas respondidas
-  const todBt  = document.querySelectorAll("#quiz-fase-body .quiz-opt-btn").length;
-  const disBt  = document.querySelectorAll("#quiz-fase-body .quiz-opt-btn[disabled]").length;
-  if (disBt >= todBt) {
-    const ac  = document.querySelectorAll("#quiz-fase-body .quiz-opt-btn.certa").length;
+  const allBtns = document.querySelectorAll("#quiz-fase-body .quiz-opt-btn");
+  const disabledBtns = document.querySelectorAll("#quiz-fase-body .quiz-opt-btn[disabled]");
+  if (allBtns.length === disabledBtns.length) {
+    const ac = document.querySelectorAll("#quiz-fase-body .quiz-opt-btn.certa").length;
     const res = document.getElementById("fres");
     if (res) {
       res.style.display = "block";
-      res.innerHTML     = `<div class="quiz-res"><h3>${ac}/${total} corretas 🎉</h3><p>Fase concluída!</p><span class="xp-tag">+${xpP} XP de bônus</span></div>`;
+      res.innerHTML = `<div class="quiz-res"><h3>${ac}/${total} corretas</h3><p>Fase concluída!</p><span class="xp-tag">+${xpP} XP de bônus</span></div>`;
     }
     await addXP(xpP, "completar_fase");
     try { await set(ref(db, `progresso/${EU?.uid}/fases/${fid}`), { concluidoEm: Date.now(), acertos: ac, total }); } catch(e) {}
-    toast(`Fase concluída! +${xpP} XP 🎉`, "ok");
+    toast(`Fase concluída! +${xpP} XP`, "ok");
     setTimeout(() => carregarTrilha(), 500);
   }
 };
 
-/* ══════════════════════════════════════
-   MISSÕES
-══════════════════════════════════════ */
 async function carregarMissoes() {
   const lista = document.getElementById("lista-missoes");
   const strip = document.getElementById("missoes-strip");
@@ -1224,12 +1106,12 @@ async function carregarMissoes() {
       if (strip) strip.innerHTML = "";
       return;
     }
-    const prog   = sprog.exists() ? sprog.val() : {};
+    const prog = sprog.exists() ? sprog.val() : {};
     const missoes = [];
     smis.forEach(c => missoes.push({ id: c.key, ...c.val() }));
     let pendentes = 0;
     lista.innerHTML = missoes.map(m => {
-      const pr  = prog[m.id] || { atual: 0, concluida: false };
+      const pr = prog[m.id] || { atual: 0, concluida: false };
       const pct = Math.min(100, Math.round(((pr.atual||0) / m.meta) * 100));
       if (!pr.concluida) pendentes++;
       return `<div class="missao-card">
@@ -1244,14 +1126,12 @@ async function carregarMissoes() {
              <div class="missao-pct">${pr.atual||0}/${m.meta} · ${pct}%</div>`}
       </div>`;
     }).join("");
-    // Badge nav
     const badge = document.getElementById("nav-badge");
     if (badge) { badge.textContent = pendentes; badge.style.display = pendentes > 0 ? "flex" : "none"; }
-    // Strip home
     if (strip) {
       const ativas = missoes.filter(m => !(prog[m.id]?.concluida)).slice(0, 4);
       strip.innerHTML = ativas.map(m => {
-        const pr  = prog[m.id] || { atual: 0 };
+        const pr = prog[m.id] || { atual: 0 };
         const pct = Math.min(100, Math.round(((pr.atual||0) / m.meta) * 100));
         return `<div class="missao-mini" onclick="irAba('missoes')">
           <div class="missao-mini-tit">${m.emoji||"🎯"} ${esc(m.titulo)}</div>
@@ -1274,17 +1154,17 @@ async function verificarMissoes(acao) {
     ]);
     if (!smis.exists()) return;
     const prog = sprog.exists() ? sprog.val() : {};
-    const upd  = {};
+    const upd = {};
     smis.forEach(c => {
-      const m   = { id: c.key, ...c.val() };
-      const pr  = prog[m.id] || { atual: 0, concluida: false };
+      const m = { id: c.key, ...c.val() };
+      const pr = prog[m.id] || { atual: 0, concluida: false };
       if (pr.concluida || m.acao !== acao) return;
-      const novoAt  = (pr.atual||0) + 1;
-      const concl   = novoAt >= m.meta;
+      const novoAt = (pr.atual||0) + 1;
+      const concl = novoAt >= m.meta;
       upd[m.id] = { atual: novoAt, concluida: concl };
       if (concl) {
         addXP(m.xpPremio || 100, null);
-        toast(`🎯 Missão: ${m.titulo}! +${m.xpPremio} XP`, "ok");
+        toast(`Missão: ${m.titulo}! +${m.xpPremio} XP`, "ok");
         if (m.medalha && EU) {
           set(ref(db, `usuarios/${EU.uid}/medalhas/${m.id}`), {
             nome: m.medalha, em: Date.now()
@@ -1298,9 +1178,6 @@ async function verificarMissoes(acao) {
   } catch(e) {}
 }
 
-/* ══════════════════════════════════════
-   RANKING
-══════════════════════════════════════ */
 async function carregarRanking() {
   const podio = document.getElementById("podio");
   const lista = document.getElementById("lista-rank");
@@ -1308,23 +1185,19 @@ async function carregarRanking() {
   lista.innerHTML = '<div class="load-box"><div class="spin"></div><p>Carregando...</p></div>';
   try {
     const snap = await get(ref(db, "usuarios"));
-    const us   = [];
+    const us = [];
     snap.forEach(c => {
       const d = c.val();
       if (!d.banido) us.push({ uid: c.key, ...d });
     });
     us.sort((a, b) => (b.xp||0) - (a.xp||0));
-
-    const top3  = us.slice(0, 3);
+    const top3 = us.slice(0, 3);
     const resto = us.slice(3, 20);
-
-    // Pódio: 2º esq, 1º centro, 3º dir
     const ord = [
-      { u: top3[1], p: "p2", crown: "🥈" },
-      { u: top3[0], p: "p1", crown: "👑" },
-      { u: top3[2], p: "p3", crown: "🥉" }
+      { u: top3[1], p: "p2", crown: "2º" },
+      { u: top3[0], p: "p1", crown: "1º" },
+      { u: top3[2], p: "p3", crown: "3º" }
     ].filter(x => x.u);
-
     podio.innerHTML = ord.map(({ u, p, crown }) => `
       <div class="podio-item ${p}">
         <span class="podio-crown">${crown}</span>
@@ -1333,7 +1206,6 @@ async function carregarRanking() {
         <span class="podio-xp">${u.xp||0} XP</span>
         <div class="podio-plat">${p==="p1"?"1º":p==="p2"?"2º":"3º"}</div>
       </div>`).join("");
-
     if (!resto.length) {
       lista.innerHTML = '<p style="text-align:center;color:var(--mt);padding:1.5rem;font-size:.85rem">Estude mais para aparecer aqui!</p>';
     } else {
@@ -1353,18 +1225,15 @@ async function carregarRanking() {
   }
 }
 
-/* ══════════════════════════════════════
-   PERFIL — EDIÇÃO
-══════════════════════════════════════ */
 window.salvarPerfil = async function() {
   const nome = document.getElementById("edit-nome")?.value.trim();
-  const bio  = document.getElementById("edit-bio")?.value.trim();
+  const bio = document.getElementById("edit-bio")?.value.trim();
   if (!nome) { toast("Nome não pode ser vazio.", "err"); return; }
   if (!EU) return;
   try {
     await update(ref(db, `usuarios/${EU.uid}`), { nome, bio });
     PERFIL.nome = nome;
-    PERFIL.bio  = bio;
+    PERFIL.bio = bio;
     atualizarHeader();
     atualizarPerfilUI();
     closeModal("m-edit-pf");
@@ -1375,7 +1244,7 @@ window.salvarPerfil = async function() {
 window.trocarFoto = async function(inp) {
   if (!inp.files[0] || !EU) return;
   const btn = document.querySelector(".pf-av-edit");
-  if (btn) btn.innerHTML = '<span class="material-icons-round" style="animation:girar .7s linear infinite;font-size:13px">refresh</span>';
+  if (btn) btn.innerHTML = '<span class="material-icons-round" style="animation:girar .7s linear infinite;font-size:12px">refresh</span>';
   try {
     const b64 = await toBase64(inp.files[0]);
     toast("Enviando foto...");
@@ -1384,7 +1253,7 @@ window.trocarFoto = async function(inp) {
     PERFIL.foto = url;
     atualizarHeader();
     atualizarPerfilUI();
-    toast("Foto atualizada! 🎉", "ok");
+    toast("Foto atualizada!", "ok");
   } catch(e) {
     toast("Erro ao enviar foto: " + e.message, "err");
   } finally {
