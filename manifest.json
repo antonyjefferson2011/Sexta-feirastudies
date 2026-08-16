@@ -1,6 +1,7 @@
 {
   "name": "Sexta Feira Studies",
   "short_name": "SF Studies",
+  "description": "Plataforma de estudos colaborativa",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F5F6F8",
