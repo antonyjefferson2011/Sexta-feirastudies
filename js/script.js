@@ -17,8 +17,7 @@ const FB_CONFIG = {
   projectId: "sf-studios-a58b1",
   storageBucket: "sf-studios-a58b1.firebasestorage.app",
   messagingSenderId: "876592442561",
-  appId: "1:876592442561:web:87b6150b97d8b0a92ef840",
-  measurementId: "G-8ZM0GNDW1E"
+  appId: "1:876592442561:web:87b6150b97d8b0a92ef840"
 };
 const IMGBB_KEY = "86427cccd2a94fb42a0754ffd7f19e79";
 
@@ -37,6 +36,8 @@ let filtroMat = "";
 let todosModulos = [];
 let qIdx = 0;
 let abaAtual = "home";
+let notifUnSub = null;
+let respostasQuiz = {};
 
 const FASES = [
   {id:"f01",em:"🌱",tit:"Início da Jornada",mat:"Geral",xpReq:0,xpP:30,dif:1},
@@ -264,6 +265,7 @@ window.recuperarSenha = async function() {
 
 window.fazerLogout = async function() {
   if (feedUnSub) { feedUnSub(); feedUnSub = null; }
+  if (notifUnSub) { notifUnSub(); notifUnSub = null; }
   await signOut(auth);
 };
 
@@ -292,6 +294,7 @@ onAuthStateChanged(auth, async user => {
     EU = null;
     PERFIL = null;
     if (feedUnSub) { feedUnSub(); feedUnSub = null; }
+    if (notifUnSub) { notifUnSub(); notifUnSub = null; }
     ocultarOverlay();
     mostrarTela("tela-auth");
     setBtnEstado("btn-entrar", false, '<span class="material-icons-round">login</span> Entrar');
@@ -356,6 +359,7 @@ function iniciarApp() {
   carregarModulos();
   carregarMissoes();
   carregarAviso();
+  carregarNotificacoes();
 }
 
 function atualizarHeader() {
@@ -439,6 +443,7 @@ window.irAba = function(aba, btn) {
   if (aba === "trilha") carregarTrilha();
   if (aba === "perfil") { atualizarPerfilUI(); }
   if (aba === "missoes") carregarMissoes();
+  if (aba === "notificacoes") carregarNotificacoes();
 };
 
 async function addXP(quantidade, acao) {
@@ -473,12 +478,57 @@ async function carregarAviso() {
   } catch(e) {}
 }
 
+function carregarNotificacoes() {
+  if (!EU) return;
+  if (notifUnSub) notifUnSub();
+  
+  const notifRef = ref(db, `usuarios/${EU.uid}/notificacoes`);
+  notifUnSub = onValue(notifRef, snap => {
+    const lista = document.getElementById("lista-notifs");
+    const badge = document.getElementById("notif-badge");
+    if (!lista) return;
+    
+    const notifs = [];
+    snap.forEach(c => notifs.unshift({ id: c.key, ...c.val() }));
+    
+    const naoLidas = notifs.filter(n => !n.lida).length;
+    if (badge) {
+      badge.textContent = naoLidas;
+      badge.style.display = naoLidas > 0 ? "flex" : "none";
+    }
+    
+    if (!notifs.length) {
+      lista.innerHTML = '<div class="vazio"><span class="material-icons-round">notifications_none</span><p>Nenhuma notificação.</p></div>';
+      return;
+    }
+    
+    lista.innerHTML = notifs.map(n => `
+      <div class="notif-item ${!n.lida ? 'nao-lida' : ''}" onclick="marcarNotifLida('${n.id}')">
+        <div class="notif-ico">${n.tipo === 'aviso' ? '📢' : n.tipo === 'missao' ? '🎯' : '🔔'}</div>
+        <div class="notif-body">
+          <strong>${esc(n.titulo || "Notificação")}</strong>
+          <p>${esc(n.msg || n.mensagem || "")}</p>
+          <small>${ago(n.ts || n.criadoEm)}</small>
+        </div>
+      </div>
+    `).join("");
+  });
+}
+
+window.marcarNotifLida = async function(nid) {
+  if (!EU) return;
+  try {
+    await update(ref(db, `usuarios/${EU.uid}/notificacoes/${nid}`), { lida: true });
+  } catch(e) { console.error(e); }
+};
+
 function carregarFeed() {
   const fd = document.getElementById("feed");
   if (!fd) return;
   fd.innerHTML = '<div class="load-box"><div class="spin"></div><p>Carregando feed...</p></div>';
   if (feedUnSub) feedUnSub();
-  const q = query(ref(db, "posts"), orderByChild("criadoEm"), limitToLast(30));
+  
+  const q = query(ref(db, "posts"), orderByChild("criadoEm"), limitToLast(50));
   feedUnSub = onValue(q, snap => {
     const posts = [];
     snap.forEach(c => posts.unshift({ id: c.key, ...c.val() }));
@@ -721,19 +771,24 @@ window.verMod = async function(mid) {
     if (!snap.exists()) { toast("Módulo não encontrado.", "err"); return; }
     const m = { id: mid, ...snap.val() };
     update(ref(db, `modulos/${mid}`), { acessos: (m.acessos || 0) + 1 }).catch(() => {});
+    
     const capaH = m.capaURL
       ? `<div class="mod-view-capa"><img src="${esc(m.capaURL)}" alt="Capa"/></div>`
       : `<div class="mod-view-capa">${matEmoji(m.materia)}</div>`;
+    
     const vids = m.videos
       ? Object.values(m.videos).filter(Boolean).map(url => {
           const vid = ytId(url);
           return vid ? `<div class="vid-embed"><iframe src="https://www.youtube.com/embed/${vid}" allowfullscreen loading="lazy"></iframe></div>` : "";
         }).join("")
       : "";
+    
     const qs = m.quiz ? Object.values(m.quiz) : [];
     const quizH = qs.length ? renderQuizMod(qs, mid) : "";
+    
     const view = document.getElementById("mod-view");
     if (!view) return;
+    
     view.innerHTML = `
       ${capaH}
       <div class="mod-view-meta">
@@ -749,6 +804,8 @@ window.verMod = async function(mid) {
       ${m.conteudo ? `<div class="mod-sec"><h3><span class="material-icons-round">article</span> Conteúdo</h3><div class="mod-txt">${esc(m.conteudo)}</div></div>` : ""}
       ${vids ? `<div class="mod-sec"><h3><span class="material-icons-round">play_circle</span> Vídeos</h3>${vids}</div>` : ""}
       ${quizH ? `<div class="mod-sec"><h3><span class="material-icons-round">quiz</span> Quiz</h3>${quizH}</div>` : ""}`;
+    
+    respostasQuiz = {};
     openModal("m-ver-mod");
   } catch(e) { toast("Erro ao abrir módulo: " + e.message, "err"); }
 };
@@ -778,22 +835,29 @@ window.respMod = async function(mid, qi, sel, correta) {
   const bc = document.getElementById(`${prefix}${correta}`);
   const fb = document.getElementById(`qmf-${mid}-${qi}`);
   const ok = sel === correta;
+  
   if (bs) bs.classList.add(ok ? "certa" : "errada");
   if (bc && !ok) bc.classList.add("certa");
-  if (fb) fb.innerHTML = `<span class="quiz-fb ${ok?"ok":"fail"}">${ok?"Correto! +10 XP":"Errado"}</span>`;
+  if (fb) fb.innerHTML = `<span class="quiz-fb ${ok?"ok":"fail"}">${ok?"Correto!":"Errado"}</span>`;
+  
+  respostasQuiz[qi] = ok;
+  
   if (ok) await addXP(10, "acertar_questao");
-  const allBtns = document.querySelectorAll(`#qmod-${mid} .quiz-opt-btn`);
-  const disabledBtns = document.querySelectorAll(`#qmod-${mid} .quiz-opt-btn[disabled]`);
-  if (allBtns.length === disabledBtns.length) {
-    const total = document.querySelectorAll(`#qmod-${mid} .quiz-q`).length;
-    const acertos = document.querySelectorAll(`#qmod-${mid} .quiz-opt-btn.certa`).length;
+  
+  const totalQt = document.querySelectorAll(`#qmod-${mid} .quiz-q`).length;
+  const respondidas = Object.keys(respostasQuiz).length;
+  
+  if (respondidas >= totalQt) {
+    const acertos = Object.values(respostasQuiz).filter(v => v).length;
     const res = document.getElementById(`qmr-${mid}`);
     if (res) {
       res.style.display = "block";
-      res.innerHTML = `<div class="quiz-res"><h3>${acertos}/${total} corretas</h3><p>Módulo concluído!</p><span class="xp-tag">+50 XP</span></div>`;
+      res.innerHTML = `<div class="quiz-res"><h3>${acertos}/${totalQt} corretas</h3><p>${acertos === totalQt ? "Módulo concluído!" : "Tente novamente para melhorar."}</p><span class="xp-tag">${acertos === totalQt ? "+50 XP de bônus" : "Sem bônus"}</span></div>`;
     }
-    await addXP(50, "completar_modulo");
-    try { await set(ref(db, `progresso/${EU?.uid}/modulos/${mid}`), { concluidoEm: Date.now(), acertos, total }); } catch(e) {}
+    if (acertos === totalQt) {
+      await addXP(50, "completar_modulo");
+      try { await set(ref(db, `progresso/${EU?.uid}/modulos/${mid}`), { concluidoEm: Date.now(), acertos, total: totalQt }); } catch(e) {}
+    }
   }
 };
 
@@ -1047,6 +1111,7 @@ window.abrirQuizFase = async function(fid) {
     body.innerHTML = '<div class="vazio"><span class="material-icons-round">quiz</span><p>Esta fase ainda não tem questões.<br>Peça ao admin para adicioná-las no painel.</p></div>';
     return;
   }
+  respostasQuiz = {};
   body.innerHTML = `
     <p style="font-size:.8rem;color:var(--mt);margin-bottom:1rem">${qs.length} pergunta${qs.length!==1?"s":""}</p>
     ${qs.map((q, qi) => `
@@ -1073,21 +1138,27 @@ window.respFase = async function(qi, sel, correta, fid, total, xpP) {
   const ok = sel === correta;
   if (bs) bs.classList.add(ok ? "certa" : "errada");
   if (bc && !ok) bc.classList.add("certa");
-  if (fb) fb.innerHTML = `<span class="quiz-fb ${ok?"ok":"fail"}">${ok?"Correto! +10 XP":"Errado"}</span>`;
+  if (fb) fb.innerHTML = `<span class="quiz-fb ${ok?"ok":"fail"}">${ok?"Correto!":"Errado"}</span>`;
+  
+  respostasQuiz[qi] = ok;
+  
   if (ok) await addXP(10, "acertar_questao");
-  const allBtns = document.querySelectorAll("#quiz-fase-body .quiz-opt-btn");
-  const disabledBtns = document.querySelectorAll("#quiz-fase-body .quiz-opt-btn[disabled]");
-  if (allBtns.length === disabledBtns.length) {
-    const ac = document.querySelectorAll("#quiz-fase-body .quiz-opt-btn.certa").length;
+  
+  const respondidas = Object.keys(respostasQuiz).length;
+  
+  if (respondidas >= total) {
+    const acertos = Object.values(respostasQuiz).filter(v => v).length;
     const res = document.getElementById("fres");
     if (res) {
       res.style.display = "block";
-      res.innerHTML = `<div class="quiz-res"><h3>${ac}/${total} corretas</h3><p>Fase concluída!</p><span class="xp-tag">+${xpP} XP de bônus</span></div>`;
+      res.innerHTML = `<div class="quiz-res"><h3>${acertos}/${total} corretas</h3><p>${acertos === total ? "Fase concluída!" : "Tente novamente."}</p><span class="xp-tag">${acertos === total ? "+"+xpP+" XP de bônus" : "Sem bônus"}</span></div>`;
     }
-    await addXP(xpP, "completar_fase");
-    try { await set(ref(db, `progresso/${EU?.uid}/fases/${fid}`), { concluidoEm: Date.now(), acertos: ac, total }); } catch(e) {}
-    toast(`Fase concluída! +${xpP} XP`, "ok");
-    setTimeout(() => carregarTrilha(), 500);
+    if (acertos === total) {
+      await addXP(xpP, "completar_fase");
+      try { await set(ref(db, `progresso/${EU?.uid}/fases/${fid}`), { concluidoEm: Date.now(), acertos, total }); } catch(e) {}
+      toast(`Fase concluída! +${xpP} XP`, "ok");
+      setTimeout(() => carregarTrilha(), 500);
+    }
   }
 };
 
@@ -1165,6 +1236,13 @@ async function verificarMissoes(acao) {
       if (concl) {
         addXP(m.xpPremio || 100, null);
         toast(`Missão: ${m.titulo}! +${m.xpPremio} XP`, "ok");
+        push(ref(db, `usuarios/${EU.uid}/notificacoes`), {
+          tipo: "missao",
+          titulo: "Missão concluída!",
+          msg: m.titulo + " - +" + (m.xpPremio||100) + " XP",
+          lida: false,
+          criadoEm: Date.now()
+        }).catch(() => {});
         if (m.medalha && EU) {
           set(ref(db, `usuarios/${EU.uid}/medalhas/${m.id}`), {
             nome: m.medalha, em: Date.now()
