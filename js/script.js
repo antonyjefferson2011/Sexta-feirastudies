@@ -38,6 +38,11 @@ let qIdx = 0;
 let abaAtual = "home";
 let notifUnSub = null;
 let respostasQuiz = {};
+let interessesUsuario = [];
+let postsCarregados = [];
+let paginaAtual = 0;
+const POSTS_POR_PAGINA = 10;
+let carregandoMais = false;
 
 const FASES = [
   {id:"f01",em:"🌱",tit:"Início da Jornada",mat:"Geral",xpReq:0,xpP:30,dif:1},
@@ -59,9 +64,7 @@ const POSICOES = ["cen","esq","cen","dir","cen","esq","cen","dir","cen","esq","c
 
 function esc(s) {
   if (!s) return "";
-  return String(s)
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 function ago(ts) {
   if (!ts) return "";
@@ -278,21 +281,15 @@ onAuthStateChanged(auth, async user => {
     } catch(e) {
       console.error("Erro ao carregar perfil:", e.message);
       PERFIL = {
-        uid: user.uid,
-        nome: user.displayName || "Estudante",
-        email: user.email || "",
-        foto: user.photoURL || "",
-        bio: "",
-        xp: 0,
-        streak: 0
+        uid: user.uid, nome: user.displayName || "Estudante", email: user.email || "",
+        foto: user.photoURL || "", bio: "", xp: 0, streak: 0
       };
     }
     iniciarApp();
     ocultarOverlay();
     mostrarTela("tela-app");
   } else {
-    EU = null;
-    PERFIL = null;
+    EU = null; PERFIL = null;
     if (feedUnSub) { feedUnSub(); feedUnSub = null; }
     if (notifUnSub) { notifUnSub(); notifUnSub = null; }
     ocultarOverlay();
@@ -308,23 +305,12 @@ async function garantirPerfil(user) {
   const hoje = new Date().toDateString();
   if (!snap.exists()) {
     await set(r, {
-      nome: user.displayName || "Estudante",
-      email: user.email || "",
-      foto: user.photoURL || "",
-      bio: "",
-      xp: 0,
-      streak: 1,
-      ultimaData: hoje,
-      criadoEm: Date.now(),
-      isAdmin: false,
-      banido: false
+      nome: user.displayName || "Estudante", email: user.email || "", foto: user.photoURL || "",
+      bio: "", xp: 0, streak: 1, ultimaData: hoje, criadoEm: Date.now(), isAdmin: false, banido: false
     });
   } else {
     const d = snap.val();
-    if (d.banido) {
-      await signOut(auth);
-      throw new Error("Conta banida.");
-    }
+    if (d.banido) { await signOut(auth); throw new Error("Conta banida."); }
     if (d.ultimaData !== hoje) {
       const ontem = new Date(Date.now() - 86400000).toDateString();
       const novoStreak = d.ultimaData === ontem ? (d.streak || 0) + 1 : 1;
@@ -355,6 +341,7 @@ function ocultarOverlay() {
 function iniciarApp() {
   atualizarHeader();
   atualizarPerfilUI();
+  carregarInteresses();
   carregarFeed();
   carregarModulos();
   carregarMissoes();
@@ -413,10 +400,7 @@ function atualizarPerfilUI() {
 async function contarConteudo() {
   if (!EU) return;
   try {
-    const [sm, sp] = await Promise.all([
-      get(ref(db, "modulos")),
-      get(ref(db, "posts"))
-    ]);
+    const [sm, sp] = await Promise.all([get(ref(db, "modulos")), get(ref(db, "posts"))]);
     let cMods = 0, cPosts = 0;
     sm.forEach(c => { if (c.val().autorId === EU.uid) cMods++; });
     sp.forEach(c => { if (c.val().autorId === EU.uid) cPosts++; });
@@ -428,16 +412,9 @@ async function contarConteudo() {
 
 window.irAba = function(aba, btn) {
   abaAtual = aba;
-  
-  // Atualizar URL
   const urlMap = {
-    home: "/home",
-    modulos: "/modulos",
-    trilha: "/trilha",
-    missoes: "/missoes",
-    ranking: "/ranking",
-    notificacoes: "/notificacoes",
-    pesquisa: "/pesquisa",
+    home: "/home", modulos: "/modulos", trilha: "/trilha", missoes: "/missoes",
+    ranking: "/ranking", notificacoes: "/notificacoes", pesquisa: "/pesquisa",
     perfil: "/perfil/" + (EU?.uid || "")
   };
   const novaUrl = urlMap[aba] || "/" + aba;
@@ -456,12 +433,11 @@ window.irAba = function(aba, btn) {
   if (m) m.scrollTop = 0;
   if (aba === "ranking") carregarRanking();
   if (aba === "trilha") carregarTrilha();
-  if (aba === "perfil") { atualizarPerfilUI(); }
+  if (aba === "perfil") { atualizarPerfilUI(); carregarInteresses(); }
   if (aba === "missoes") carregarMissoes();
   if (aba === "notificacoes") carregarNotificacoes();
 };
 
-// Para quando o usuário voltar/avançar no navegador
 window.addEventListener("popstate", () => {
   const path = window.location.pathname;
   let aba = "home";
@@ -470,17 +446,15 @@ window.addEventListener("popstate", () => {
   else if (path.includes("/missoes")) aba = "missoes";
   else if (path.includes("/ranking")) aba = "ranking";
   else if (path.includes("/notificacoes")) aba = "notificacoes";
+  else if (path.includes("/pesquisa")) aba = "pesquisa";
   else if (path.includes("/perfil")) aba = "perfil";
-  else if (path.includes("/home")) aba = "home";
   irAba(aba);
 });
 
 async function addXP(quantidade, acao) {
   if (!EU || !PERFIL) return;
   const novoXP = (PERFIL.xp || 0) + quantidade;
-  try {
-    await update(ref(db, `usuarios/${EU.uid}`), { xp: novoXP });
-  } catch(e) { console.error("addXP:", e.message); }
+  try { await update(ref(db, `usuarios/${EU.uid}`), { xp: novoXP }); } catch(e) {}
   PERFIL.xp = novoXP;
   showXP(quantidade);
   atualizarHeader();
@@ -488,70 +462,45 @@ async function addXP(quantidade, acao) {
   if (acao) verificarMissoes(acao);
 }
 
-async function carregarAviso() {
+// ============ SISTEMA DE INTERESSES ============
+
+async function carregarInteresses() {
+  if (!EU) return;
   try {
-    const snap = await get(ref(db, "avisos"));
-    if (!snap.exists()) return;
-    const avisos = [];
-    snap.forEach(c => avisos.push({ id: c.key, ...c.val() }));
-    avisos.sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
-    const a = avisos[0];
-    if (!a || !a.ativo) return;
-    const box = document.getElementById("aviso-box");
-    const t = document.getElementById("aviso-titulo");
-    const m = document.getElementById("aviso-msg");
-    if (box && t && m) {
-      t.textContent = a.titulo || "Aviso";
-      m.textContent = a.mensagem || "";
-      box.style.display = "flex";
+    const snap = await get(ref(db, `usuarios/${EU.uid}/interesses`));
+    if (snap.exists()) {
+      interessesUsuario = snap.val() || [];
+      document.querySelectorAll("#interesses-wrap .chip").forEach(chip => {
+        if (interessesUsuario.includes(chip.dataset.int)) {
+          chip.classList.add("ativo");
+        } else {
+          chip.classList.remove("ativo");
+        }
+      });
     }
   } catch(e) {}
 }
 
-function carregarNotificacoes() {
-  if (!EU) return;
-  if (notifUnSub) notifUnSub();
-  
-  const notifRef = ref(db, `usuarios/${EU.uid}/notificacoes`);
-  notifUnSub = onValue(notifRef, snap => {
-    const lista = document.getElementById("lista-notifs");
-    const badge = document.getElementById("notif-badge");
-    if (!lista) return;
-    
-    const notifs = [];
-    snap.forEach(c => notifs.push({ id: c.key, ...c.val() }));
-    notifs.sort((a, b) => (b.criadoEm || b.ts || 0) - (a.criadoEm || a.ts || 0));
-    
-    const naoLidas = notifs.filter(n => !n.lida).length;
-    if (badge) {
-      badge.textContent = naoLidas;
-      badge.style.display = naoLidas > 0 ? "flex" : "none";
-    }
-    
-    if (!notifs.length) {
-      lista.innerHTML = '<div class="vazio"><span class="material-icons-round">notifications_none</span><p>Nenhuma notificação.</p></div>';
-      return;
-    }
-    
-    lista.innerHTML = notifs.map(n => `
-      <div class="notif-item ${!n.lida ? 'nao-lida' : ''}" onclick="marcarNotifLida('${n.id}')">
-        <div class="notif-ico">${n.tipo === 'aviso' ? '📢' : n.tipo === 'missao' ? '🎯' : '🔔'}</div>
-        <div class="notif-body">
-          <strong>${esc(n.titulo || "Notificação")}</strong>
-          <p>${esc(n.msg || n.mensagem || "")}</p>
-          <small>${ago(n.criadoEm || n.ts)}</small>
-        </div>
-      </div>
-    `).join("");
+window.toggleInteresse = function(interesse, btn) {
+  btn.classList.toggle("ativo");
+  const interesses = [];
+  document.querySelectorAll("#interesses-wrap .chip.ativo").forEach(c => {
+    interesses.push(c.dataset.int);
   });
-}
+  definirInteresses(interesses);
+};
 
-window.marcarNotifLida = async function(nid) {
+window.definirInteresses = async function(interesses) {
   if (!EU) return;
   try {
-    await update(ref(db, `usuarios/${EU.uid}/notificacoes/${nid}`), { lida: true });
-  } catch(e) { console.error(e); }
+    await set(ref(db, `usuarios/${EU.uid}/interesses`), interesses);
+    interessesUsuario = interesses;
+    toast("Interesses atualizados!", "ok");
+    carregarFeed();
+  } catch(e) { toast("Erro: " + e.message, "err"); }
 };
+
+// ============ FEED PERSONALIZADO COM SCROLL INFINITO ============
 
 function carregarFeed() {
   const fd = document.getElementById("feed");
@@ -559,28 +508,120 @@ function carregarFeed() {
   fd.innerHTML = '<div class="load-box"><div class="spin"></div><p>Carregando feed...</p></div>';
   if (feedUnSub) feedUnSub();
   
+  paginaAtual = 0;
+  postsCarregados = [];
+  carregandoMais = false;
+  
   const postsRef = ref(db, "posts");
   feedUnSub = onValue(postsRef, snap => {
-    const posts = [];
+    const todosPosts = [];
     snap.forEach(c => {
       const post = c.val();
       post.id = c.key;
-      posts.push(post);
+      todosPosts.push(post);
     });
-    posts.sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+    todosPosts.sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
     
-    console.log("Posts carregados:", posts.length);
+    let postsFiltrados = todosPosts;
+    if (interessesUsuario.length > 0) {
+      const postsInteresse = todosPosts.filter(p => 
+        interessesUsuario.some(int => 
+          (p.materia || "").includes(int) || 
+          (p.texto || "").toLowerCase().includes(int.toLowerCase())
+        )
+      );
+      const postsOutros = todosPosts.filter(p => 
+        !interessesUsuario.some(int => 
+          (p.materia || "").includes(int) || 
+          (p.texto || "").toLowerCase().includes(int.toLowerCase())
+        )
+      );
+      postsFiltrados = [...postsInteresse, ...postsOutros];
+    }
     
-    if (!posts.length) {
+    postsCarregados = postsFiltrados.slice(0, POSTS_POR_PAGINA);
+    paginaAtual = 1;
+    
+    if (!postsCarregados.length) {
       fd.innerHTML = '<div class="vazio"><span class="material-icons-round">feed</span><p>Nenhuma publicação ainda.<br>Seja o primeiro!</p></div>';
       return;
     }
-    fd.innerHTML = posts.map(htmlPost).join("");
+    
+    fd.innerHTML = postsCarregados.map(htmlPost).join("");
+    fd.innerHTML += '<div id="sentinela" style="height:20px"></div>';
+    setupScrollInfinito();
   }, err => {
-    console.error("Erro ao carregar feed:", err);
     fd.innerHTML = `<div class="vazio"><span class="material-icons-round">error</span><p>Erro ao carregar feed.<br><small>${esc(err.message)}</small></p></div>`;
   });
 }
+
+function setupScrollInfinito() {
+  const sentinela = document.getElementById("sentinela");
+  if (!sentinela) return;
+  
+  const observer = new IntersectionObserver(async (entries) => {
+    if (entries[0].isIntersecting && !carregandoMais) {
+      carregandoMais = true;
+      await carregarMaisPosts();
+      carregandoMais = false;
+    }
+  }, { root: document.querySelector(".app-main"), threshold: 0.1 });
+  
+  observer.observe(sentinela);
+}
+
+async function carregarMaisPosts() {
+  if (!EU) return;
+  const fd = document.getElementById("feed");
+  if (!fd) return;
+  
+  const sentinela = document.getElementById("sentinela");
+  if (sentinela) sentinela.innerHTML = '<div class="load-box"><div class="spin"></div><p>Carregando mais...</p></div>';
+  
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const snap = await get(ref(db, "posts"));
+  const todosPosts = [];
+  snap.forEach(c => {
+    const post = c.val();
+    post.id = c.key;
+    todosPosts.push(post);
+  });
+  todosPosts.sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+  
+  let postsFiltrados = todosPosts;
+  if (interessesUsuario.length > 0) {
+    const postsInteresse = todosPosts.filter(p => 
+      interessesUsuario.some(int => 
+        (p.materia || "").includes(int) || 
+        (p.texto || "").toLowerCase().includes(int.toLowerCase())
+      )
+    );
+    const postsOutros = todosPosts.filter(p => 
+      !interessesUsuario.some(int => 
+        (p.materia || "").includes(int) || 
+        (p.texto || "").toLowerCase().includes(int.toLowerCase())
+      )
+    );
+    postsFiltrados = [...postsInteresse, ...postsOutros];
+  }
+  
+  const inicio = paginaAtual * POSTS_POR_PAGINA;
+  const fim = inicio + POSTS_POR_PAGINA;
+  const novosPosts = postsFiltrados.slice(inicio, fim);
+  
+  if (novosPosts.length) {
+    if (sentinela) sentinela.remove();
+    fd.insertAdjacentHTML("beforeend", novosPosts.map(htmlPost).join(""));
+    fd.insertAdjacentHTML("beforeend", '<div id="sentinela" style="height:20px"></div>');
+    paginaAtual++;
+    setupScrollInfinito();
+  } else {
+    if (sentinela) sentinela.innerHTML = '<p style="text-align:center;color:var(--mt);font-size:.8rem;padding:1rem">Você chegou ao fim!</p>';
+  }
+}
+
+// ============ POSTS ============
 
 function htmlPost(p) {
   const foto = p.autorFoto || avDefault(p.autorNome);
@@ -604,12 +645,10 @@ function htmlPost(p) {
     </div>
     <div class="post-footer">
       <button class="btn-curtir ${curtido ? "curtido" : ""}" onclick="curtirPost('${esc(p.id)}')">
-        <span class="material-icons-round">${curtido ? "favorite" : "favorite_border"}</span>
-        ${nCurt}
+        <span class="material-icons-round">${curtido ? "favorite" : "favorite_border"}</span>${nCurt}
       </button>
       <button class="btn-coment" onclick="abrirComents('${esc(p.id)}')">
-        <span class="material-icons-round">chat_bubble_outline</span>
-        ${nComt}
+        <span class="material-icons-round">chat_bubble_outline</span>${nComt}
       </button>
     </div>
   </div>`;
@@ -625,10 +664,8 @@ window.curtirPost = async function(pid) {
 
 window.delPost = async function(pid) {
   if (!confirm("Excluir este post?")) return;
-  try {
-    await remove(ref(db, `posts/${pid}`));
-    toast("Post excluído.", "ok");
-  } catch(e) { toast("Erro: " + e.message, "err"); }
+  try { await remove(ref(db, `posts/${pid}`)); toast("Post excluído.", "ok"); }
+  catch(e) { toast("Erro: " + e.message, "err"); }
 };
 
 window.abrirComents = async function(pid) {
@@ -641,10 +678,8 @@ window.abrirComents = async function(pid) {
     document.getElementById("ver-post-corpo").innerHTML = `
       <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.65rem">
         <img src="${esc(foto)}" style="width:38px;height:38px;border-radius:50%;object-fit:cover"/>
-        <div>
-          <strong style="font-size:.85rem">${esc(p.autorNome || "Anônimo")}</strong><br>
-          <small style="font-size:.7rem;color:var(--mt)">${ago(p.criadoEm)}</small>
-        </div>
+        <div><strong style="font-size:.85rem">${esc(p.autorNome || "Anônimo")}</strong><br>
+        <small style="font-size:.7rem;color:var(--mt)">${ago(p.criadoEm)}</small></div>
       </div>
       ${p.texto ? `<p style="font-size:.88rem;line-height:1.55;color:var(--sub);margin-bottom:.5rem">${esc(p.texto).replace(/\n/g,"<br>")}</p>` : ""}
       ${p.imgURL ? `<img src="${esc(p.imgURL)}" style="width:100%;border-radius:4px;max-height:220px;object-fit:cover"/>` : ""}`;
@@ -666,10 +701,7 @@ function renderComents(snap) {
   l.innerHTML = cs.map(c => `
     <div class="coment-item">
       <img src="${esc(c.autorFoto || avDefault(c.autorNome))}" alt=""/>
-      <div class="coment-bolha">
-        <strong>${esc(c.autorNome || "Anônimo")}</strong>
-        <span>${esc(c.texto)}</span>
-      </div>
+      <div class="coment-bolha"><strong>${esc(c.autorNome || "Anônimo")}</strong><span>${esc(c.texto)}</span></div>
     </div>`).join("");
 }
 
@@ -680,11 +712,8 @@ window.enviarComentario = async function() {
   inp.value = "";
   try {
     await push(ref(db, `posts/${postAberto}/comentarios`), {
-      autorId: EU.uid,
-      autorNome: PERFIL.nome || "Estudante",
-      autorFoto: PERFIL.foto || "",
-      texto: txt,
-      criadoEm: Date.now()
+      autorId: EU.uid, autorNome: PERFIL.nome || "Estudante", autorFoto: PERFIL.foto || "",
+      texto: txt, criadoEm: Date.now()
     });
     await addXP(2, "comentar");
     const snap = await get(ref(db, `posts/${postAberto}/comentarios`));
@@ -719,32 +748,19 @@ window.publicarPost = async function() {
   btn.innerHTML = '<span class="material-icons-round" style="animation:girar .7s linear infinite">refresh</span> Publicando...';
   try {
     let imgURL = null;
-    if (postImg64) {
-      toast("Enviando imagem...");
-      imgURL = await uploadImgBB(postImg64);
-    }
-    const postRef = await push(ref(db, "posts"), {
-      autorId: EU.uid,
-      autorNome: PERFIL.nome || "Estudante",
-      autorFoto: PERFIL.foto || "",
-      texto: txt,
-      imgURL: imgURL,
-      criadoEm: Date.now(),
-      curtidas: {},
-      comentarios: {}
+    if (postImg64) { toast("Enviando imagem..."); imgURL = await uploadImgBB(postImg64); }
+    await push(ref(db, "posts"), {
+      autorId: EU.uid, autorNome: PERFIL.nome || "Estudante", autorFoto: PERFIL.foto || "",
+      texto: txt, imgURL: imgURL, criadoEm: Date.now(), curtidas: {}, comentarios: {}
     });
-    console.log("Post criado com ID:", postRef.key);
     await addXP(5, "postar");
     toast("Publicado! +5 XP", "ok");
     document.getElementById("post-txt").value = "";
     postImg64 = null;
     const pv = document.getElementById("post-img-prev");
     if (pv) pv.style.display = "none";
-    const pf = document.getElementById("post-file");
-    if (pf) pf.value = "";
     closeModal("m-post");
   } catch(e) {
-    console.error("Erro ao publicar:", e);
     toast("Erro ao publicar: " + e.message, "err");
   } finally {
     btn.disabled = false;
@@ -752,11 +768,12 @@ window.publicarPost = async function() {
   }
 };
 
+// ============ MÓDULOS ============
+
 function carregarModulos() {
   const g = document.getElementById("grade-mods");
   if (!g) return;
   g.innerHTML = '<div class="load-box"><div class="spin"></div><p>Carregando módulos...</p></div>';
-  
   const modsRef = ref(db, "modulos");
   onValue(modsRef, snap => {
     todosModulos = [];
@@ -765,10 +782,8 @@ function carregarModulos() {
       mod.id = c.key;
       todosModulos.push(mod);
     });
-    console.log("Módulos carregados:", todosModulos.length);
     renderMods(todosModulos, "grade-mods");
   }, err => {
-    console.error("Erro ao carregar módulos:", err);
     g.innerHTML = `<div class="vazio"><span class="material-icons-round">error</span><p>Erro ao carregar módulos.<br><small>${esc(err.message)}</small></p></div>`;
   });
 }
@@ -790,9 +805,7 @@ function renderMods(lista, cid) {
     const nc = m.curtidas ? Object.keys(m.curtidas).length : 0;
     return `<div class="mod-card" onclick="verMod('${esc(m.id)}')">
       ${m.oficial ? '<div class="mod-oficial"><span class="material-icons-round">verified</span> Oficial</div>' : ""}
-      <div class="mod-capa">
-        ${m.capaURL ? `<img src="${esc(m.capaURL)}" alt="" loading="lazy"/>` : matEmoji(m.materia)}
-      </div>
+      <div class="mod-capa">${m.capaURL ? `<img src="${esc(m.capaURL)}" alt="" loading="lazy"/>` : matEmoji(m.materia)}</div>
       <div class="mod-corpo">
         <span class="mod-mat-tag">${esc(m.materia || "Geral")}</span>
         <div class="mod-tit">${esc(m.titulo)}</div>
@@ -823,40 +836,27 @@ window.verMod = async function(mid) {
     if (!snap.exists()) { toast("Módulo não encontrado.", "err"); return; }
     const m = { id: mid, ...snap.val() };
     update(ref(db, `modulos/${mid}`), { acessos: (m.acessos || 0) + 1 }).catch(() => {});
-    
-    const capaH = m.capaURL
-      ? `<div class="mod-view-capa"><img src="${esc(m.capaURL)}" alt="Capa"/></div>`
-      : `<div class="mod-view-capa">${matEmoji(m.materia)}</div>`;
-    
-    const vids = m.videos
-      ? Object.values(m.videos).filter(Boolean).map(url => {
-          const vid = ytId(url);
-          return vid ? `<div class="vid-embed"><iframe src="https://www.youtube.com/embed/${vid}" allowfullscreen loading="lazy"></iframe></div>` : "";
-        }).join("")
-      : "";
-    
+    const capaH = m.capaURL ? `<div class="mod-view-capa"><img src="${esc(m.capaURL)}" alt="Capa"/></div>` : `<div class="mod-view-capa">${matEmoji(m.materia)}</div>`;
+    const vids = m.videos ? Object.values(m.videos).filter(Boolean).map(url => {
+      const vid = ytId(url);
+      return vid ? `<div class="vid-embed"><iframe src="https://www.youtube.com/embed/${vid}" allowfullscreen loading="lazy"></iframe></div>` : "";
+    }).join("") : "";
     const qs = m.quiz ? Object.values(m.quiz) : [];
     const quizH = qs.length ? renderQuizMod(qs, mid) : "";
-    
     const view = document.getElementById("mod-view");
     if (!view) return;
-    
     view.innerHTML = `
       ${capaH}
       <div class="mod-view-meta">
         ${m.oficial ? '<div class="mod-oficial" style="display:inline-flex;margin-bottom:.5rem"><span class="material-icons-round">verified</span> Oficial</div>' : ""}
         <div class="mod-mat-tag">${esc(m.materia || "Geral")}</div>
         <div class="mod-view-tit">${esc(m.titulo)}</div>
-        <div class="mod-view-autor">
-          <img src="${esc(m.autorFoto || avDefault(m.autorNome))}" alt=""/>
-          <span>por ${esc(m.autorNome || "Anônimo")}</span>
-        </div>
+        <div class="mod-view-autor"><img src="${esc(m.autorFoto || avDefault(m.autorNome))}" alt=""/><span>por ${esc(m.autorNome || "Anônimo")}</span></div>
         ${m.descricao ? `<div class="mod-view-desc">${esc(m.descricao)}</div>` : ""}
       </div>
       ${m.conteudo ? `<div class="mod-sec"><h3><span class="material-icons-round">article</span> Conteúdo</h3><div class="mod-txt">${esc(m.conteudo)}</div></div>` : ""}
       ${vids ? `<div class="mod-sec"><h3><span class="material-icons-round">play_circle</span> Vídeos</h3>${vids}</div>` : ""}
       ${quizH ? `<div class="mod-sec"><h3><span class="material-icons-round">quiz</span> Quiz</h3>${quizH}</div>` : ""}`;
-    
     respostasQuiz = {};
     openModal("m-ver-mod");
   } catch(e) { toast("Erro ao abrir módulo: " + e.message, "err"); }
@@ -869,8 +869,7 @@ function renderQuizMod(qs, mid) {
         <div class="quiz-q-txt">${qi+1}. ${esc(q.enunciado)}</div>
         <div class="quiz-opts">
           ${(q.opcoes||[]).map((op, oi) => `
-            <button class="quiz-opt-btn" id="qmb-${esc(mid)}-${qi}-${oi}"
-              onclick="respMod('${esc(mid)}',${qi},${oi},${q.correta})">
+            <button class="quiz-opt-btn" id="qmb-${esc(mid)}-${qi}-${oi}" onclick="respMod('${esc(mid)}',${qi},${oi},${q.correta})">
               ${"ABCD"[oi]}) ${esc(op)}
             </button>`).join("")}
         </div>
@@ -890,19 +889,16 @@ window.respMod = async function(mid, qi, sel, correta) {
   if (bs) bs.classList.add(ok ? "certa" : "errada");
   if (bc && !ok) bc.classList.add("certa");
   if (fb) fb.innerHTML = `<span class="quiz-fb ${ok?"ok":"fail"}">${ok?"Correto!":"Errado"}</span>`;
-  
   respostasQuiz[qi] = ok;
   if (ok) await addXP(10, "acertar_questao");
-  
   const totalQt = document.querySelectorAll(`#qmod-${mid} .quiz-q`).length;
   const respondidas = Object.keys(respostasQuiz).length;
-  
   if (respondidas >= totalQt) {
     const acertos = Object.values(respostasQuiz).filter(v => v).length;
     const res = document.getElementById(`qmr-${mid}`);
     if (res) {
       res.style.display = "block";
-      res.innerHTML = `<div class="quiz-res"><h3>${acertos}/${totalQt} corretas</h3><p>${acertos === totalQt ? "Módulo concluído!" : "Tente novamente para melhorar."}</p><span class="xp-tag">${acertos === totalQt ? "+50 XP de bônus" : "Sem bônus"}</span></div>`;
+      res.innerHTML = `<div class="quiz-res"><h3>${acertos}/${totalQt} corretas</h3><p>${acertos === totalQt ? "Módulo concluído!" : "Tente novamente."}</p><span class="xp-tag">${acertos === totalQt ? "+50 XP de bônus" : "Sem bônus"}</span></div>`;
     }
     if (acertos === totalQt) {
       await addXP(50, "completar_modulo");
@@ -943,9 +939,7 @@ window.addVideo = function() {
   const w = document.createElement("div");
   w.className = "video-row";
   w.innerHTML = `<input type="text" class="video-in" placeholder="Cole a URL do YouTube..."/>
-    <button class="btn-icon-sm" onclick="this.closest('.video-row').remove()">
-      <span class="material-icons-round">remove</span>
-    </button>`;
+    <button class="btn-icon-sm" onclick="this.closest('.video-row').remove()"><span class="material-icons-round">remove</span></button>`;
   document.getElementById("videos-wrap")?.appendChild(w);
 };
 
@@ -957,27 +951,14 @@ window.addQuestao = function() {
   b.innerHTML = `
     <div class="q-topo">
       <input type="text" class="q-in" placeholder="Enunciado da pergunta..."/>
-      <button class="btn-icon-sm" onclick="this.closest('.q-bloco').remove()">
-        <span class="material-icons-round">delete</span>
-      </button>
+      <button class="btn-icon-sm" onclick="this.closest('.q-bloco').remove()"><span class="material-icons-round">delete</span></button>
     </div>
     <div class="opts-wrap">
-      <div class="opt-row">
-        <input type="radio" name="qc-${idx}" value="0" checked/>
-        <input type="text" class="opt-in" placeholder="Alternativa A (correta)"/>
-      </div>
-      <div class="opt-row">
-        <input type="radio" name="qc-${idx}" value="1"/>
-        <input type="text" class="opt-in" placeholder="Alternativa B"/>
-      </div>
-      <div class="opt-row">
-        <input type="radio" name="qc-${idx}" value="2"/>
-        <input type="text" class="opt-in" placeholder="Alternativa C"/>
-      </div>
-      <div class="opt-row">
-        <input type="radio" name="qc-${idx}" value="3"/>
-        <input type="text" class="opt-in" placeholder="Alternativa D"/>
-      </div>
+      ${[0,1,2,3].map(i => `
+        <div class="opt-row">
+          <input type="radio" name="qc-${idx}" value="${i}" ${i===0?"checked":""}/>
+          <input type="text" class="opt-in" placeholder="Alternativa ${"ABCD"[i]}${i===0?" (correta)":""}"/>
+        </div>`).join("")}
     </div>`;
   document.getElementById("quiz-wrap")?.appendChild(b);
 };
@@ -988,98 +969,58 @@ window.salvarModulo = async function() {
   if (!tit) { toast("Informe o título do módulo.", "err"); return; }
   if (!mat) { toast("Selecione a matéria.", "err"); return; }
   if (!EU || !PERFIL) return;
-  
   const btn = document.getElementById("btn-salvar-mod");
   btn.disabled = true;
   btn.innerHTML = '<span class="material-icons-round" style="animation:girar .7s linear infinite">refresh</span> Salvando...';
-  
   try {
     let capaURL = null;
-    if (capaImg64) {
-      toast("Enviando capa...");
-      capaURL = await uploadImgBB(capaImg64);
-    }
-    
+    if (capaImg64) { toast("Enviando capa..."); capaURL = await uploadImgBB(capaImg64); }
     const videos = {};
-    document.querySelectorAll(".video-in").forEach((inp, i) => {
-      if (inp.value.trim()) videos[i] = inp.value.trim();
-    });
-    
+    document.querySelectorAll(".video-in").forEach((inp, i) => { if (inp.value.trim()) videos[i] = inp.value.trim(); });
     const quiz = {};
     let qi = 0;
     document.querySelectorAll("#quiz-wrap .q-bloco").forEach(bloco => {
       const en = bloco.querySelector(".q-in")?.value.trim();
       if (!en) return;
-      
       const opts = [];
-      const opInputs = bloco.querySelectorAll(".opt-in");
-      opInputs.forEach(inp => opts.push(inp.value.trim()));
-      
+      bloco.querySelectorAll(".opt-in").forEach(i => opts.push(i.value.trim()));
       const rSel = bloco.querySelector("input[type=radio]:checked");
       const corr = rSel ? parseInt(rSel.value) : 0;
-      
-      quiz[qi] = { enunciado: en, opcoes: opts, correta: corr };
-      qi++;
+      quiz[qi++] = { enunciado: en, opcoes: opts, correta: corr };
     });
-    
-    console.log("Quiz salvo:", quiz);
-    
-    const modRef = await push(ref(db, "modulos"), {
-      titulo: tit,
-      descricao: document.getElementById("mod-desc")?.value.trim() || "",
-      materia: mat,
-      conteudo: document.getElementById("mod-cont")?.value.trim() || "",
-      capaURL: capaURL,
-      videos: videos,
-      quiz: quiz,
-      autorId: EU.uid,
-      autorNome: PERFIL.nome || "Estudante",
-      autorFoto: PERFIL.foto || "",
-      oficial: false,
-      acessos: 0,
-      criadoEm: Date.now()
+    await push(ref(db, "modulos"), {
+      titulo: tit, descricao: document.getElementById("mod-desc")?.value.trim() || "",
+      materia: mat, conteudo: document.getElementById("mod-cont")?.value.trim() || "",
+      capaURL, videos, quiz, autorId: EU.uid, autorNome: PERFIL.nome || "Estudante",
+      autorFoto: PERFIL.foto || "", oficial: false, acessos: 0, criadoEm: Date.now()
     });
-    
-    console.log("Módulo criado com ID:", modRef.key);
     await addXP(20, "criar_modulo");
     toast("Módulo criado! +20 XP", "ok");
     closeModal("m-mod");
     resetFormModulo();
   } catch(e) {
-    console.error("Erro ao salvar módulo:", e);
     toast("Erro ao salvar: " + e.message, "err");
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<span class="material-icons-round">save</span> Salvar módulo';
   }
 };
+
 function resetFormModulo() {
   ["mod-tit","mod-desc","mod-cont"].forEach(id => {
     const e = document.getElementById(id);
     if (e) e.value = "";
   });
-  
-  const sel = document.getElementById("mod-mat");
-  if (sel) sel.value = "";
-  
-  const cp = document.getElementById("capa-prev");
-  if (cp) { cp.src = ""; cp.style.display = "none"; }
-  
-  const cs = document.getElementById("capa-span");
-  if (cs) cs.style.display = "";
-  
+  const sel = document.getElementById("mod-mat"); if (sel) sel.value = "";
+  const cp = document.getElementById("capa-prev"); if (cp) { cp.src = ""; cp.style.display = "none"; }
+  const cs = document.getElementById("capa-span"); if (cs) cs.style.display = "";
   const vw = document.getElementById("videos-wrap");
-  if (vw) vw.innerHTML = `<div class="video-row">
-    <input type="text" class="video-in" placeholder="Cole a URL do YouTube..."/>
-    <button class="btn-icon-sm" onclick="addVideo()"><span class="material-icons-round">add</span></button>
-  </div>`;
-  
-  const qw = document.getElementById("quiz-wrap");
-  if (qw) qw.innerHTML = "";
-  
+  if (vw) vw.innerHTML = `<div class="video-row"><input type="text" class="video-in" placeholder="Cole a URL do YouTube..."/><button class="btn-icon-sm" onclick="addVideo()"><span class="material-icons-round">add</span></button></div>`;
+  const qw = document.getElementById("quiz-wrap"); if (qw) qw.innerHTML = "";
   capaImg64 = null;
-  qIdx = 0;
 }
+
+// ============ TRILHA ============
 
 async function carregarTrilha() {
   const tr = document.getElementById("trilha");
@@ -1115,26 +1056,10 @@ async function carregarTrilha() {
       const cls = trav ? "trav" : done ? "conc" : "disp";
       const ests = done ? "Concluída" : disp ? "Disponível" : "Bloqueada";
       const pos = POSICOES[idx % POSICOES.length] || "cen";
-      const con = idx > 0
-        ? `<div class="conector ${conc[fases[idx-1]?.id] ? "feito" : "normal"}"></div>`
-        : "";
-      return `${con}
-        <div class="no-wrap ${pos}">
-          <div class="fase-no" onclick="verFase('${f.id}')">
-            <button class="fase-circulo ${cls}" ${trav ? "disabled" : ""} title="${esc(f.tit)}">${f.em}</button>
-            <span class="fase-lbl">${esc(f.tit)}</span>
-            <span class="fase-ests">${ests}</span>
-          </div>
-        </div>`;
+      const con = idx > 0 ? `<div class="conector ${conc[fases[idx-1]?.id] ? "feito" : "normal"}"></div>` : "";
+      return `${con}<div class="no-wrap ${pos}"><div class="fase-no" onclick="verFase('${f.id}')"><button class="fase-circulo ${cls}" ${trav ? "disabled" : ""} title="${esc(f.tit)}">${f.em}</button><span class="fase-lbl">${esc(f.tit)}</span><span class="fase-ests">${ests}</span></div></div>`;
     }).join("");
-    return `<div class="trilha-sec">
-      <div style="text-align:center;margin-bottom:1rem">
-        <span class="trilha-sec-tit">Seção ${gi+1}</span>
-      </div>
-      <div style="display:flex;justify-content:center">
-        <div class="trilha-nos">${nosHTML}</div>
-      </div>
-    </div>`;
+    return `<div class="trilha-sec"><div style="text-align:center;margin-bottom:1rem"><span class="trilha-sec-tit">Seção ${gi+1}</span></div><div style="display:flex;justify-content:center"><div class="trilha-nos">${nosHTML}</div></div></div>`;
   }).join("");
 }
 
@@ -1163,17 +1088,13 @@ window.verFase = async function(fid) {
       <div class="fase-dh-xp"><span class="material-icons-round">bolt</span>+${f.xpP} XP ao concluir</div>
       ${done ? '<div style="margin-top:.5rem;font-size:1.2rem;font-weight:600;color:var(--ok)">Concluída</div>' : ""}
     </div>
-    ${trav ? `<div class="fase-trav-info"><span class="material-icons-round">lock</span>
-      <p>Você precisa de <strong>${f.xpReq} XP</strong> para desbloquear.<br>Você tem <strong>${xp} XP</strong>.</p>
-    </div>` : ""}`;
+    ${trav ? `<div class="fase-trav-info"><span class="material-icons-round">lock</span><p>Você precisa de <strong>${f.xpReq} XP</strong> para desbloquear.<br>Você tem <strong>${xp} XP</strong>.</p></div>` : ""}`;
   const rod = document.getElementById("fase-footer");
   if (trav) {
     rod.innerHTML = `<button class="btn-prim" style="background:var(--borda);color:var(--mt);cursor:not-allowed">Fase bloqueada</button>`;
   } else {
     const lbl = done ? "Refazer fase" : "Iniciar fase";
-    rod.innerHTML = `<button class="btn-prim" onclick="closeModal('m-fase');abrirQuizFase('${fid}')">
-      <span class="material-icons-round">${done?"replay":"play_arrow"}</span> ${lbl}
-    </button>`;
+    rod.innerHTML = `<button class="btn-prim" onclick="closeModal('m-fase');abrirQuizFase('${fid}')"><span class="material-icons-round">${done?"replay":"play_arrow"}</span> ${lbl}</button>`;
   }
   openModal("m-fase");
 };
@@ -1192,7 +1113,7 @@ window.abrirQuizFase = async function(fid) {
     if (snap.exists()) snap.forEach(c => qs.push({ id: c.key, ...c.val() }));
   } catch(e) {}
   if (!qs.length) {
-    body.innerHTML = '<div class="vazio"><span class="material-icons-round">quiz</span><p>Esta fase ainda não tem questões.<br>Peça ao admin para adicioná-las no painel.</p></div>';
+    body.innerHTML = '<div class="vazio"><span class="material-icons-round">quiz</span><p>Esta fase ainda não tem questões.<br>Peça ao admin para adicioná-las.</p></div>';
     return;
   }
   respostasQuiz = {};
@@ -1203,10 +1124,7 @@ window.abrirQuizFase = async function(fid) {
         <div class="quiz-q-txt">${qi+1}. ${esc(q.enunciado)}</div>
         <div class="quiz-opts" id="fqops-${qi}">
           ${(q.opcoes||[]).map((op, oi) => `
-            <button class="quiz-opt-btn" id="fqb-${qi}-${oi}"
-              onclick="respFase(${qi},${oi},${q.correta},'${fid}',${qs.length},${f.xpP})">
-              ${"ABCD"[oi]}) ${esc(op)}
-            </button>`).join("")}
+            <button class="quiz-opt-btn" id="fqb-${qi}-${oi}" onclick="respFase(${qi},${oi},${q.correta},'${fid}',${qs.length},${f.xpP})">${"ABCD"[oi]}) ${esc(op)}</button>`).join("")}
         </div>
         <div id="ffb-${qi}"></div>
       </div>`).join("")}
@@ -1223,10 +1141,8 @@ window.respFase = async function(qi, sel, correta, fid, total, xpP) {
   if (bs) bs.classList.add(ok ? "certa" : "errada");
   if (bc && !ok) bc.classList.add("certa");
   if (fb) fb.innerHTML = `<span class="quiz-fb ${ok?"ok":"fail"}">${ok?"Correto!":"Errado"}</span>`;
-  
   respostasQuiz[qi] = ok;
   if (ok) await addXP(10, "acertar_questao");
-  
   const respondidas = Object.keys(respostasQuiz).length;
   if (respondidas >= total) {
     const acertos = Object.values(respostasQuiz).filter(v => v).length;
@@ -1243,6 +1159,8 @@ window.respFase = async function(qi, sel, correta, fid, total, xpP) {
     }
   }
 };
+
+// ============ MISSÕES ============
 
 async function carregarMissoes() {
   const lista = document.getElementById("lista-missoes");
@@ -1273,10 +1191,7 @@ async function carregarMissoes() {
           <div class="missao-info"><h4>${esc(m.titulo)}</h4><p>${esc(m.descricao||"")}</p></div>
           <div class="missao-xp"><span class="material-icons-round">bolt</span>+${m.xpPremio||100} XP</div>
         </div>
-        ${pr.concluida
-          ? `<div class="missao-badge"><span class="material-icons-round">check_circle</span> Concluída!</div>`
-          : `<div class="missao-bw"><div class="missao-bf" style="width:${pct}%"></div></div>
-             <div class="missao-pct">${pr.atual||0}/${m.meta} · ${pct}%</div>`}
+        ${pr.concluida ? `<div class="missao-badge"><span class="material-icons-round">check_circle</span> Concluída!</div>` : `<div class="missao-bw"><div class="missao-bf" style="width:${pct}%"></div></div><div class="missao-pct">${pr.atual||0}/${m.meta} · ${pct}%</div>`}
       </div>`;
     }).join("");
     const badge = document.getElementById("nav-badge");
@@ -1286,11 +1201,7 @@ async function carregarMissoes() {
       strip.innerHTML = ativas.map(m => {
         const pr = prog[m.id] || { atual: 0 };
         const pct = Math.min(100, Math.round(((pr.atual||0) / m.meta) * 100));
-        return `<div class="missao-mini" onclick="irAba('missoes')">
-          <div class="missao-mini-tit">${m.emoji||"🎯"} ${esc(m.titulo)}</div>
-          <div class="missao-mini-bw"><div class="missao-mini-bf" style="width:${pct}%"></div></div>
-          <div class="missao-mini-txt">${pr.atual||0}/${m.meta}</div>
-        </div>`;
+        return `<div class="missao-mini" onclick="irAba('missoes')"><div class="missao-mini-tit">${m.emoji||"🎯"} ${esc(m.titulo)}</div><div class="missao-mini-bw"><div class="missao-mini-bf" style="width:${pct}%"></div></div><div class="missao-mini-txt">${pr.atual||0}/${m.meta}</div></div>`;
       }).join("");
     }
   } catch(e) {
@@ -1318,25 +1229,17 @@ async function verificarMissoes(acao) {
       if (concl) {
         addXP(m.xpPremio || 100, null);
         toast(`Missão: ${m.titulo}! +${m.xpPremio} XP`, "ok");
-        push(ref(db, `usuarios/${EU.uid}/notificacoes`), {
-          tipo: "missao",
-          titulo: "Missão concluída!",
-          msg: m.titulo + " - +" + (m.xpPremio||100) + " XP",
-          lida: false,
-          criadoEm: Date.now()
-        }).catch(() => {});
-        if (m.medalha && EU) {
-          set(ref(db, `usuarios/${EU.uid}/medalhas/${m.id}`), {
-            nome: m.medalha, em: Date.now()
-          }).catch(() => {});
+        push(ref(db, `usuarios/${EU.uid}/notificacoes`), { tipo: "missao", titulo: "Missão concluída!", msg: m.titulo + " - +" + (m.xpPremio||100) + " XP", lida: false, criadoEm: Date.now() }).catch(() => {});
+        if (m.medalha) {
+          set(ref(db, `usuarios/${EU.uid}/medalhas/${m.id}`), { nome: m.medalha, em: Date.now() }).catch(() => {});
         }
       }
     });
-    if (Object.keys(upd).length) {
-      await update(ref(db, `progresso/${EU.uid}/missoes`), upd);
-    }
+    if (Object.keys(upd).length) await update(ref(db, `progresso/${EU.uid}/missoes`), upd);
   } catch(e) {}
 }
+
+// ============ RANKING ============
 
 async function carregarRanking() {
   const podio = document.getElementById("podio");
@@ -1346,18 +1249,11 @@ async function carregarRanking() {
   try {
     const snap = await get(ref(db, "usuarios"));
     const us = [];
-    snap.forEach(c => {
-      const d = c.val();
-      if (!d.banido) us.push({ uid: c.key, ...d });
-    });
+    snap.forEach(c => { const d = c.val(); if (!d.banido) us.push({ uid: c.key, ...d }); });
     us.sort((a, b) => (b.xp||0) - (a.xp||0));
     const top3 = us.slice(0, 3);
     const resto = us.slice(3, 20);
-    const ord = [
-      { u: top3[1], p: "p2", crown: "2º" },
-      { u: top3[0], p: "p1", crown: "1º" },
-      { u: top3[2], p: "p3", crown: "3º" }
-    ].filter(x => x.u);
+    const ord = [{ u: top3[1], p: "p2", crown: "2º" }, { u: top3[0], p: "p1", crown: "1º" }, { u: top3[2], p: "p3", crown: "3º" }].filter(x => x.u);
     podio.innerHTML = ord.map(({ u, p, crown }) => `
       <div class="podio-item ${p}">
         <span class="podio-crown">${crown}</span>
@@ -1373,10 +1269,7 @@ async function carregarRanking() {
         <div class="rank-item ${u.uid === EU?.uid ? "meu" : ""}">
           <span class="rank-pos">${i+4}º</span>
           <img src="${esc(u.foto || avDefault(u.nome))}" alt=""/>
-          <div class="rank-info">
-            <strong>${esc(u.nome || "Anônimo")}</strong>
-            <small>Nível ${nivel(u.xp)}</small>
-          </div>
+          <div class="rank-info"><strong>${esc(u.nome || "Anônimo")}</strong><small>Nível ${nivel(u.xp)}</small></div>
           <span class="rank-xp">${u.xp||0} XP</span>
         </div>`).join("");
     }
@@ -1385,6 +1278,62 @@ async function carregarRanking() {
   }
 }
 
+// ============ NOTIFICAÇÕES ============
+
+function carregarNotificacoes() {
+  if (!EU) return;
+  if (notifUnSub) notifUnSub();
+  const notifRef = ref(db, `usuarios/${EU.uid}/notificacoes`);
+  notifUnSub = onValue(notifRef, snap => {
+    const lista = document.getElementById("lista-notifs");
+    const badge = document.getElementById("notif-badge");
+    if (!lista) return;
+    const notifs = [];
+    snap.forEach(c => notifs.push({ id: c.key, ...c.val() }));
+    notifs.sort((a, b) => (b.criadoEm || b.ts || 0) - (a.criadoEm || a.ts || 0));
+    const naoLidas = notifs.filter(n => !n.lida).length;
+    if (badge) { badge.textContent = naoLidas; badge.style.display = naoLidas > 0 ? "flex" : "none"; }
+    if (!notifs.length) {
+      lista.innerHTML = '<div class="vazio"><span class="material-icons-round">notifications_none</span><p>Nenhuma notificação.</p></div>';
+      return;
+    }
+    lista.innerHTML = notifs.map(n => `
+      <div class="notif-item ${!n.lida ? 'nao-lida' : ''}" onclick="marcarNotifLida('${n.id}')">
+        <div class="notif-ico">${n.tipo === 'aviso' ? '📢' : n.tipo === 'missao' ? '🎯' : '🔔'}</div>
+        <div class="notif-body"><strong>${esc(n.titulo || "Notificação")}</strong><p>${esc(n.msg || n.mensagem || "")}</p><small>${ago(n.criadoEm || n.ts)}</small></div>
+      </div>`).join("");
+  });
+}
+
+window.marcarNotifLida = async function(nid) {
+  if (!EU) return;
+  try { await update(ref(db, `usuarios/${EU.uid}/notificacoes/${nid}`), { lida: true }); } catch(e) {}
+};
+
+// ============ AVISO GLOBAL ============
+
+async function carregarAviso() {
+  try {
+    const snap = await get(ref(db, "avisos"));
+    if (!snap.exists()) return;
+    const avisos = [];
+    snap.forEach(c => avisos.push({ id: c.key, ...c.val() }));
+    avisos.sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+    const a = avisos[0];
+    if (!a || !a.ativo) return;
+    const box = document.getElementById("aviso-box");
+    const t = document.getElementById("aviso-titulo");
+    const m = document.getElementById("aviso-msg");
+    if (box && t && m) {
+      t.textContent = a.titulo || "Aviso";
+      m.textContent = a.mensagem || "";
+      box.style.display = "flex";
+    }
+  } catch(e) {}
+}
+
+// ============ PERFIL ============
+
 window.salvarPerfil = async function() {
   const nome = document.getElementById("edit-nome")?.value.trim();
   const bio = document.getElementById("edit-bio")?.value.trim();
@@ -1392,10 +1341,8 @@ window.salvarPerfil = async function() {
   if (!EU) return;
   try {
     await update(ref(db, `usuarios/${EU.uid}`), { nome, bio });
-    PERFIL.nome = nome;
-    PERFIL.bio = bio;
-    atualizarHeader();
-    atualizarPerfilUI();
+    PERFIL.nome = nome; PERFIL.bio = bio;
+    atualizarHeader(); atualizarPerfilUI();
     closeModal("m-edit-pf");
     toast("Perfil atualizado!", "ok");
   } catch(e) { toast("Erro: " + e.message, "err"); }
@@ -1411,315 +1358,8 @@ window.trocarFoto = async function(inp) {
     const url = await uploadImgBB(b64);
     await update(ref(db, `usuarios/${EU.uid}`), { foto: url });
     PERFIL.foto = url;
-    atualizarHeader();
-    atualizarPerfilUI();
+    atualizarHeader(); atualizarPerfilUI();
     toast("Foto atualizada!", "ok");
-  } catch(e) {
-    toast("Erro ao enviar foto: " + e.message, "err");
-  } finally {
-    if (btn) btn.innerHTML = '<span class="material-icons-round">photo_camera</span>';
-  }
+  } catch(e) { toast("Erro ao enviar foto: " + e.message, "err"); }
+  finally { if (btn) btn.innerHTML = '<span class="material-icons-round">photo_camera</span>'; }
 };
-let tipoPesquisaAtual = "geral";
-
-window.trocarTipoPesquisa = function(tipo, btn) {
-  tipoPesquisaAtual = tipo;
-  document.querySelectorAll("#chips-pesquisa .chip").forEach(c => c.classList.remove("ativo"));
-  if (btn) btn.classList.add("ativo");
-  const busca = document.getElementById("busca-geral")?.value || "";
-  pesquisarGeral(busca);
-};
-
-window.pesquisarGeral = function(termo) {
-  const container = document.getElementById("resultados-pesquisa");
-  if (!container) return;
-  
-  termo = termo.trim().toLowerCase();
-  
-  if (!termo) {
-    container.innerHTML = '<div class="vazio"><span class="material-icons-round">search</span><p>Digite algo para pesquisar...</p></div>';
-    return;
-  }
-  
-  container.innerHTML = '<div class="load-row"><div class="spin"></div><span>Pesquisando...</span></div>';
-  
-  // Buscar usuários
-  const buscarUsuarios = async () => {
-    const snap = await get(ref(db, "usuarios"));
-    const us = [];
-    snap.forEach(c => {
-      const u = c.val();
-      if (!u.banido) us.push({ uid: c.key, ...u });
-    });
-    return us.filter(u => 
-      (u.nome || "").toLowerCase().includes(termo) ||
-      (u.email || "").toLowerCase().includes(termo) ||
-      (u.bio || "").toLowerCase().includes(termo)
-    );
-  };
-  
-  // Buscar posts
-  const buscarPosts = async () => {
-    const snap = await get(ref(db, "posts"));
-    const ps = [];
-    snap.forEach(c => ps.push({ id: c.key, ...c.val() }));
-    return ps.filter(p => 
-      (p.texto || "").toLowerCase().includes(termo) ||
-      (p.autorNome || "").toLowerCase().includes(termo)
-    );
-  };
-  
-  // Buscar módulos
-  const buscarModulos = async () => {
-    const snap = await get(ref(db, "modulos"));
-    const ms = [];
-    snap.forEach(c => ms.push({ id: c.key, ...c.val() }));
-    return ms.filter(m => 
-      (m.titulo || "").toLowerCase().includes(termo) ||
-      (m.descricao || "").toLowerCase().includes(termo) ||
-      (m.materia || "").toLowerCase().includes(termo) ||
-      (m.autorNome || "").toLowerCase().includes(termo)
-    );
-  };
-  
-  Promise.all([buscarUsuarios(), buscarPosts(), buscarModulos()]).then(([usuarios, posts, modulos]) => {
-    let html = "";
-    
-    if (tipoPesquisaAtual === "geral" || tipoPesquisaAtual === "usuarios") {
-      if (usuarios.length) {
-        html += usuarios.map(u => `
-          <div class="resultado-item" onclick="irPerfilUsuario('${u.uid}')">
-            <div class="resultado-tipo"><span class="material-icons-round">person</span> Usuário</div>
-            <div class="resultado-user">
-              <img src="${esc(u.foto || avDefault(u.nome))}" alt=""/>
-              <div>
-                <strong>${esc(u.nome || "Anônimo")}</strong>
-                <small>Nível ${nivel(u.xp)} · ${u.xp||0} XP</small>
-              </div>
-            </div>
-          </div>`).join("");
-      }
-    }
-    
-    if (tipoPesquisaAtual === "geral" || tipoPesquisaAtual === "posts") {
-      if (posts.length) {
-        html += posts.map(p => {
-          const nCurt = p.curtidas ? Object.keys(p.curtidas).length : 0;
-          const nComt = p.comentarios ? Object.keys(p.comentarios).length : 0;
-          return `
-          <div class="resultado-item" onclick="abrirComents('${p.id}')">
-            <div class="resultado-tipo"><span class="material-icons-round">feed</span> Post</div>
-            <div class="resultado-titulo">${esc(p.autorNome || "Anônimo")}</div>
-            <div class="resultado-sub">${esc((p.texto || "").substring(0, 100))}${p.texto && p.texto.length > 100 ? "..." : ""}</div>
-            <div class="resultado-meta">
-              <span><span class="material-icons-round">favorite</span>${nCurt}</span>
-              <span><span class="material-icons-round">chat_bubble_outline</span>${nComt}</span>
-              <span><span class="material-icons-round">schedule</span>${ago(p.criadoEm)}</span>
-            </div>
-          </div>`;
-        }).join("");
-      }
-    }
-    
-    if (tipoPesquisaAtual === "geral" || tipoPesquisaAtual === "modulos") {
-      if (modulos.length) {
-        html += modulos.map(m => {
-          const nCurt = m.curtidas ? Object.keys(m.curtidas).length : 0;
-          return `
-          <div class="resultado-item" onclick="verMod('${m.id}')">
-            <div class="resultado-tipo"><span class="material-icons-round">layers</span> Módulo</div>
-            <div class="resultado-titulo">${esc(m.titulo)}</div>
-            <div class="resultado-sub">${esc(m.materia || "Geral")} · por ${esc(m.autorNome || "Anônimo")}</div>
-            <div class="resultado-meta">
-              <span><span class="material-icons-round">favorite</span>${nCurt}</span>
-              <span><span class="material-icons-round">visibility</span>${m.acessos || 0}</span>
-              ${m.oficial ? '<span style="color:var(--gold)"><span class="material-icons-round">verified</span>Oficial</span>' : ""}
-            </div>
-          </div>`;
-        }).join("");
-      }
-    }
-    
-    if (!html) {
-      container.innerHTML = '<div class="vazio"><span class="material-icons-round">search_off</span><p>Nenhum resultado encontrado.</p></div>';
-      return;
-    }
-    
-    container.innerHTML = html;
-  }).catch(err => {
-    container.innerHTML = '<div class="vazio"><span class="material-icons-round">error</span><p>Erro ao pesquisar.</p></div>';
-  });
-};
-
-// Função para ver perfil de outro usuário
-window.irPerfilUsuario = function(uid) {
-  if (uid === EU?.uid) {
-    irAba("perfil");
-    return;
-  }
-  toast("Perfil de outro usuário em breve!", "ok");
-};
-
-// ============ FEED PERSONALIZADO ============
-let postsCarregados = [];
-let paginaAtual = 0;
-const POSTS_POR_PAGINA = 10;
-let carregandoMais = false;
-let interessesUsuario = [];
-
-// Função para carregar interesses do usuário
-async function carregarInteresses() {
-  if (!EU) return;
-  try {
-    const snap = await get(ref(db, `usuarios/${EU.uid}/interesses`));
-    if (snap.exists()) {
-      interessesUsuario = snap.val() || [];
-    }
-  } catch(e) {}
-}
-
-// Função para definir interesses
-window.definirInteresses = async function(interesses) {
-  if (!EU) return;
-  try {
-    await set(ref(db, `usuarios/${EU.uid}/interesses`), interesses);
-    interessesUsuario = interesses;
-    toast("Interesses atualizados!", "ok");
-    carregarFeed();
-  } catch(e) { toast("Erro: " + e.message, "err"); }
-};
-
-// Função principal do feed
-function carregarFeed() {
-  const fd = document.getElementById("feed");
-  if (!fd) return;
-  fd.innerHTML = '<div class="load-box"><div class="spin"></div><p>Carregando feed...</p></div>';
-  
-  if (feedUnSub) feedUnSub();
-  
-  paginaAtual = 0;
-  postsCarregados = [];
-  
-  carregarInteresses().then(() => {
-    const postsRef = ref(db, "posts");
-    feedUnSub = onValue(postsRef, snap => {
-      const todosPosts = [];
-      snap.forEach(c => {
-        const post = c.val();
-        post.id = c.key;
-        todosPosts.push(post);
-      });
-      
-      todosPosts.sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
-      
-      // Filtrar por interesses
-      let postsFiltrados = todosPosts;
-      if (interessesUsuario.length > 0) {
-        const postsInteresse = todosPosts.filter(p => 
-          interessesUsuario.some(int => 
-            (p.materia || "").includes(int) || 
-            (p.texto || "").toLowerCase().includes(int.toLowerCase())
-          )
-        );
-        const postsOutros = todosPosts.filter(p => 
-          !interessesUsuario.some(int => 
-            (p.materia || "").includes(int) || 
-            (p.texto || "").toLowerCase().includes(int.toLowerCase())
-          )
-        );
-        postsFiltrados = [...postsInteresse, ...postsOutros];
-      }
-      
-      postsCarregados = postsFiltrados.slice(0, POSTS_POR_PAGINA);
-      paginaAtual = 1;
-      
-      if (!postsCarregados.length) {
-        fd.innerHTML = '<div class="vazio"><span class="material-icons-round">feed</span><p>Nenhuma publicação ainda.<br>Seja o primeiro!</p></div>';
-        return;
-      }
-      
-      fd.innerHTML = postsCarregados.map(htmlPost).join("");
-      
-      // Adicionar sentinela para scroll infinito
-      fd.innerHTML += '<div id="sentinela" style="height:20px"></div>';
-      setupScrollInfinito();
-    });
-  });
-}
-
-// Setup do scroll infinito
-function setupScrollInfinito() {
-  const sentinela = document.getElementById("sentinela");
-  if (!sentinela) return;
-  
-  const observer = new IntersectionObserver(async (entries) => {
-    if (entries[0].isIntersecting && !carregandoMais) {
-      carregandoMais = true;
-      await carregarMaisPosts();
-      carregandoMais = false;
-    }
-  }, { root: document.querySelector(".app-main"), threshold: 0.1 });
-  
-  observer.observe(sentinela);
-}
-
-// Carregar mais posts
-async function carregarMaisPosts() {
-  if (!EU) return;
-  
-  const fd = document.getElementById("feed");
-  if (!fd) return;
-  
-  // Mostrar loader
-  const sentinela = document.getElementById("sentinela");
-  if (sentinela) sentinela.innerHTML = '<div class="load-box"><div class="spin"></div><p>Carregando mais...</p></div>';
-  
-  // Simular delay para parecer natural
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const snap = await get(ref(db, "posts"));
-  const todosPosts = [];
-  snap.forEach(c => {
-    const post = c.val();
-    post.id = c.key;
-    todosPosts.push(post);
-  });
-  
-  todosPosts.sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
-  
-  // Filtrar por interesses
-  let postsFiltrados = todosPosts;
-  if (interessesUsuario.length > 0) {
-    const postsInteresse = todosPosts.filter(p => 
-      interessesUsuario.some(int => 
-        (p.materia || "").includes(int) || 
-        (p.texto || "").toLowerCase().includes(int.toLowerCase())
-      )
-    );
-    const postsOutros = todosPosts.filter(p => 
-      !interessesUsuario.some(int => 
-        (p.materia || "").includes(int) || 
-        (p.texto || "").toLowerCase().includes(int.toLowerCase())
-      )
-    );
-    postsFiltrados = [...postsInteresse, ...postsOutros];
-  }
-  
-  const inicio = paginaAtual * POSTS_POR_PAGINA;
-  const fim = inicio + POSTS_POR_PAGINA;
-  const novosPosts = postsFiltrados.slice(inicio, fim);
-  
-  if (novosPosts.length) {
-    // Remover sentinela antiga
-    if (sentinela) sentinela.remove();
-    
-    // Adicionar novos posts
-    fd.insertAdjacentHTML("beforeend", novosPosts.map(htmlPost).join(""));
-    fd.insertAdjacentHTML("beforeend", '<div id="sentinela" style="height:20px"></div>');
-    
-    paginaAtual++;
-    setupScrollInfinito();
-  } else {
-    if (sentinela) sentinela.innerHTML = '<p style="text-align:center;color:var(--mt);font-size:.8rem;padding:1rem">Você chegou ao fim!</p>';
-  }
-}
