@@ -1559,3 +1559,167 @@ window.irPerfilUsuario = function(uid) {
   }
   toast("Perfil de outro usuário em breve!", "ok");
 };
+
+// ============ FEED PERSONALIZADO ============
+let postsCarregados = [];
+let paginaAtual = 0;
+const POSTS_POR_PAGINA = 10;
+let carregandoMais = false;
+let interessesUsuario = [];
+
+// Função para carregar interesses do usuário
+async function carregarInteresses() {
+  if (!EU) return;
+  try {
+    const snap = await get(ref(db, `usuarios/${EU.uid}/interesses`));
+    if (snap.exists()) {
+      interessesUsuario = snap.val() || [];
+    }
+  } catch(e) {}
+}
+
+// Função para definir interesses
+window.definirInteresses = async function(interesses) {
+  if (!EU) return;
+  try {
+    await set(ref(db, `usuarios/${EU.uid}/interesses`), interesses);
+    interessesUsuario = interesses;
+    toast("Interesses atualizados!", "ok");
+    carregarFeed();
+  } catch(e) { toast("Erro: " + e.message, "err"); }
+};
+
+// Função principal do feed
+function carregarFeed() {
+  const fd = document.getElementById("feed");
+  if (!fd) return;
+  fd.innerHTML = '<div class="load-box"><div class="spin"></div><p>Carregando feed...</p></div>';
+  
+  if (feedUnSub) feedUnSub();
+  
+  paginaAtual = 0;
+  postsCarregados = [];
+  
+  carregarInteresses().then(() => {
+    const postsRef = ref(db, "posts");
+    feedUnSub = onValue(postsRef, snap => {
+      const todosPosts = [];
+      snap.forEach(c => {
+        const post = c.val();
+        post.id = c.key;
+        todosPosts.push(post);
+      });
+      
+      todosPosts.sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+      
+      // Filtrar por interesses
+      let postsFiltrados = todosPosts;
+      if (interessesUsuario.length > 0) {
+        const postsInteresse = todosPosts.filter(p => 
+          interessesUsuario.some(int => 
+            (p.materia || "").includes(int) || 
+            (p.texto || "").toLowerCase().includes(int.toLowerCase())
+          )
+        );
+        const postsOutros = todosPosts.filter(p => 
+          !interessesUsuario.some(int => 
+            (p.materia || "").includes(int) || 
+            (p.texto || "").toLowerCase().includes(int.toLowerCase())
+          )
+        );
+        postsFiltrados = [...postsInteresse, ...postsOutros];
+      }
+      
+      postsCarregados = postsFiltrados.slice(0, POSTS_POR_PAGINA);
+      paginaAtual = 1;
+      
+      if (!postsCarregados.length) {
+        fd.innerHTML = '<div class="vazio"><span class="material-icons-round">feed</span><p>Nenhuma publicação ainda.<br>Seja o primeiro!</p></div>';
+        return;
+      }
+      
+      fd.innerHTML = postsCarregados.map(htmlPost).join("");
+      
+      // Adicionar sentinela para scroll infinito
+      fd.innerHTML += '<div id="sentinela" style="height:20px"></div>';
+      setupScrollInfinito();
+    });
+  });
+}
+
+// Setup do scroll infinito
+function setupScrollInfinito() {
+  const sentinela = document.getElementById("sentinela");
+  if (!sentinela) return;
+  
+  const observer = new IntersectionObserver(async (entries) => {
+    if (entries[0].isIntersecting && !carregandoMais) {
+      carregandoMais = true;
+      await carregarMaisPosts();
+      carregandoMais = false;
+    }
+  }, { root: document.querySelector(".app-main"), threshold: 0.1 });
+  
+  observer.observe(sentinela);
+}
+
+// Carregar mais posts
+async function carregarMaisPosts() {
+  if (!EU) return;
+  
+  const fd = document.getElementById("feed");
+  if (!fd) return;
+  
+  // Mostrar loader
+  const sentinela = document.getElementById("sentinela");
+  if (sentinela) sentinela.innerHTML = '<div class="load-box"><div class="spin"></div><p>Carregando mais...</p></div>';
+  
+  // Simular delay para parecer natural
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const snap = await get(ref(db, "posts"));
+  const todosPosts = [];
+  snap.forEach(c => {
+    const post = c.val();
+    post.id = c.key;
+    todosPosts.push(post);
+  });
+  
+  todosPosts.sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+  
+  // Filtrar por interesses
+  let postsFiltrados = todosPosts;
+  if (interessesUsuario.length > 0) {
+    const postsInteresse = todosPosts.filter(p => 
+      interessesUsuario.some(int => 
+        (p.materia || "").includes(int) || 
+        (p.texto || "").toLowerCase().includes(int.toLowerCase())
+      )
+    );
+    const postsOutros = todosPosts.filter(p => 
+      !interessesUsuario.some(int => 
+        (p.materia || "").includes(int) || 
+        (p.texto || "").toLowerCase().includes(int.toLowerCase())
+      )
+    );
+    postsFiltrados = [...postsInteresse, ...postsOutros];
+  }
+  
+  const inicio = paginaAtual * POSTS_POR_PAGINA;
+  const fim = inicio + POSTS_POR_PAGINA;
+  const novosPosts = postsFiltrados.slice(inicio, fim);
+  
+  if (novosPosts.length) {
+    // Remover sentinela antiga
+    if (sentinela) sentinela.remove();
+    
+    // Adicionar novos posts
+    fd.insertAdjacentHTML("beforeend", novosPosts.map(htmlPost).join(""));
+    fd.insertAdjacentHTML("beforeend", '<div id="sentinela" style="height:20px"></div>');
+    
+    paginaAtual++;
+    setupScrollInfinito();
+  } else {
+    if (sentinela) sentinela.innerHTML = '<p style="text-align:center;color:var(--mt);font-size:.8rem;padding:1rem">Você chegou ao fim!</p>';
+  }
+}
