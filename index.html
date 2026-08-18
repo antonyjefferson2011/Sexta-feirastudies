@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <link rel="manifest" href="manifest.json"/>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
   <meta name="mobile-web-app-capable" content="yes"/>
@@ -9,18 +8,14 @@
   <meta name="theme-color" content="#00A896"/>
   <title>Sexta Feira Studies</title>
   <link rel="icon" type="image/png" href="https://i.ibb.co/G3MwH684/logo.png"/>
-  <link rel="stylesheet" href="css/style.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="manifest" href="/manifest.json"/>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
 </head>
-  <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js');
-  }
-</script>
 <body>
 
-<!-- OVERLAY CARREGANDO -->
+<!-- OVERLAY -->
 <div id="overlay" class="overlay">
   <div class="overlay-inner">
     <div class="logo-pulse"><img src="https://i.ibb.co/G3MwH684/logo.png" alt="SF Studies" style="width:48px;height:48px;border-radius:8px"/></div>
@@ -43,7 +38,6 @@
       <button class="auth-aba" onclick="trocarAba('cadastro')">Criar conta</button>
     </div>
 
-    <!-- PAINEL ENTRAR -->
     <div id="painel-entrar" class="auth-painel ativo">
       <button class="btn-google" onclick="loginGoogle()">
         <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
@@ -57,7 +51,6 @@
       <button class="btn-link" onclick="recuperarSenha()">Esqueci minha senha</button>
     </div>
 
-    <!-- PAINEL CADASTRO -->
     <div id="painel-cadastro" class="auth-painel">
       <button class="btn-google" onclick="loginGoogle()">
         <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
@@ -82,9 +75,9 @@
     <div class="hdr-dir">
       <div class="hdr-pill xp-pill"><span class="material-icons-round">bolt</span><span id="hdr-xp">0 XP</span></div>
       <div class="hdr-pill streak-pill"><span class="material-icons-round">local_fire_department</span><span id="hdr-streak">0</span></div>
-      <button class="hdr-notif-btn" onclick="irAba('notificacoes')" style="position:relative;background:none;border:none;cursor:pointer;display:flex;align-items:center">
-        <span class="material-icons-round" style="font-size:24px;color:var(--sub)">notifications</span>
-        <span id="notif-badge" style="display:none;position:absolute;top:-2px;right:-2px;background:var(--red);color:#fff;font-size:.6rem;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid var(--card)">0</span>
+      <button class="hdr-notif-btn" onclick="irAba('notificacoes')">
+        <span class="material-icons-round">notifications</span>
+        <span id="notif-badge" style="display:none">0</span>
       </button>
       <div class="hdr-av" onclick="irAba('perfil')"><img id="hdr-av-img" src="https://ui-avatars.com/api/?name=U&background=00A896&color=fff" alt=""/></div>
     </div>
@@ -108,20 +101,6 @@
       <div id="feed" class="feed"><div class="load-box"><div class="spin"></div><p>Carregando...</p></div></div>
     </section>
 
-    <div class="sec-hdr" style="margin-top:1rem"><h3>Seus interesses</h3></div>
-    <div class="interesses-wrap" id="interesses-wrap">
-      <button class="chip" data-int="Matemática" onclick="toggleInteresse('Matemática',this)">Matemática</button>
-      <button class="chip" data-int="Português" onclick="toggleInteresse('Português',this)">Português</button>
-      <button class="chip" data-int="História" onclick="toggleInteresse('História',this)">História</button>
-      <button class="chip" data-int="Geografia" onclick="toggleInteresse('Geografia',this)">Geografia</button>
-      <button class="chip" data-int="Biologia" onclick="toggleInteresse('Biologia',this)">Biologia</button>
-      <button class="chip" data-int="Física" onclick="toggleInteresse('Física',this)">Física</button>
-      <button class="chip" data-int="Química" onclick="toggleInteresse('Química',this)">Química</button>
-      <button class="chip" data-int="Inglês" onclick="toggleInteresse('Inglês',this)">Inglês</button>
-      <button class="chip" data-int="Redação" onclick="toggleInteresse('Redação',this)">Redação</button>
-      <button class="chip" data-int="Programação" onclick="toggleInteresse('Programação',this)">Programação</button>
-    </div>
-    
     <!-- MÓDULOS -->
     <section id="aba-modulos" class="aba">
       <div class="sec-hdr"><h2>Módulos</h2><button class="btn-sm" onclick="openModal('m-mod')"><span class="material-icons-round">add</span> Criar</button></div>
@@ -134,7 +113,6 @@
         <button class="chip" data-m="Redação">Redação</button>
         <button class="chip" data-m="História">História</button>
         <button class="chip" data-m="Geografia">Geografia</button>
-        <button class="chip" data-m="Ciências">Ciências</button>
         <button class="chip" data-m="Biologia">Biologia</button>
         <button class="chip" data-m="Física">Física</button>
         <button class="chip" data-m="Química">Química</button>
@@ -142,11 +120,7 @@
         <button class="chip" data-m="Espanhol">Espanhol</button>
         <button class="chip" data-m="Filosofia">Filosofia</button>
         <button class="chip" data-m="Sociologia">Sociologia</button>
-        <button class="chip" data-m="Artes">Artes</button>
-        <button class="chip" data-m="Ed. Física">Ed. Física</button>
         <button class="chip" data-m="Programação">Programação</button>
-        <button class="chip" data-m="Robótica">Robótica</button>
-        <button class="chip" data-m="Empreend.">Empreend.</button>
       </div>
       <div id="grade-mods" class="grade-mods"><div class="load-box"><div class="spin"></div><p>Carregando...</p></div></div>
     </section>
@@ -211,45 +185,45 @@
           <button class="btn-danger" onclick="fazerLogout()"><span class="material-icons-round">logout</span> Sair</button>
         </div>
       </div>
+
+      <!-- INTERESSES -->
+      <div class="sec-hdr" style="margin-top:1rem"><h3>Seus interesses</h3></div>
+      <p style="font-size:.75rem;color:var(--mt);margin-bottom:.75rem">Toque nas matérias que você quer ver primeiro no feed</p>
+      <div class="chips-row" id="interesses-wrap" style="flex-wrap:wrap;margin-bottom:1rem">
+        <button class="chip" data-int="Matemática" onclick="toggleInteresse('Matemática',this)">Matemática</button>
+        <button class="chip" data-int="Português" onclick="toggleInteresse('Português',this)">Português</button>
+        <button class="chip" data-int="Redação" onclick="toggleInteresse('Redação',this)">Redação</button>
+        <button class="chip" data-int="História" onclick="toggleInteresse('História',this)">História</button>
+        <button class="chip" data-int="Geografia" onclick="toggleInteresse('Geografia',this)">Geografia</button>
+        <button class="chip" data-int="Biologia" onclick="toggleInteresse('Biologia',this)">Biologia</button>
+        <button class="chip" data-int="Física" onclick="toggleInteresse('Física',this)">Física</button>
+        <button class="chip" data-int="Química" onclick="toggleInteresse('Química',this)">Química</button>
+        <button class="chip" data-int="Inglês" onclick="toggleInteresse('Inglês',this)">Inglês</button>
+        <button class="chip" data-int="Espanhol" onclick="toggleInteresse('Espanhol',this)">Espanhol</button>
+        <button class="chip" data-int="Literatura" onclick="toggleInteresse('Literatura',this)">Literatura</button>
+        <button class="chip" data-int="Filosofia" onclick="toggleInteresse('Filosofia',this)">Filosofia</button>
+        <button class="chip" data-int="Sociologia" onclick="toggleInteresse('Sociologia',this)">Sociologia</button>
+        <button class="chip" data-int="Programação" onclick="toggleInteresse('Programação',this)">Programação</button>
+      </div>
+
       <div class="sec-hdr" style="margin-top:1rem"><h3>Meus módulos</h3></div>
       <div id="meus-mods" class="grade-mods"></div>
     </section>
 
-    <!-- PESQUISA -->
-<section id="aba-pesquisa" class="aba">
-  <div class="sec-hdr"><h2>Pesquisa</h2></div>
-  <div class="busca-wrap" style="margin-bottom:.5rem">
-    <span class="material-icons-round">search</span>
-    <input type="text" id="busca-geral" placeholder="Buscar usuários, posts e módulos..." oninput="pesquisarGeral(this.value)"/>
-  </div>
-  <div class="chips-row" id="chips-pesquisa">
-    <button class="chip ativo" data-tipo="geral" onclick="trocarTipoPesquisa('geral',this)">Geral</button>
-    <button class="chip" data-tipo="usuarios" onclick="trocarTipoPesquisa('usuarios',this)">Usuários</button>
-    <button class="chip" data-tipo="posts" onclick="trocarTipoPesquisa('posts',this)">Posts</button>
-    <button class="chip" data-tipo="modulos" onclick="trocarTipoPesquisa('modulos',this)">Módulos</button>
-  </div>
-  <div id="resultados-pesquisa" class="resultados-pesquisa">
-    <div class="vazio"><span class="material-icons-round">search</span><p>Digite algo para pesquisar...</p></div>
-  </div>
-</section>
-    
   </main>
 
   <nav class="nav-bar">
-    <button class="nav-btn" data-tab="pesquisa" onclick="irAba('pesquisa',this)"><span class="material-icons-round">search</span><span>Pesquisa</span></button>
-    <button class="nav-btn ativo" data-tab="home"    onclick="irAba('home',this)"><span class="material-icons-round">home</span><span>Home</span></button>
-    <button class="nav-btn"       data-tab="modulos" onclick="irAba('modulos',this)"><span class="material-icons-round">layers</span><span>Módulos</span></button>
+    <button class="nav-btn ativo" data-tab="home" onclick="irAba('home',this)"><span class="material-icons-round">home</span><span>Home</span></button>
+    <button class="nav-btn" data-tab="modulos" onclick="irAba('modulos',this)"><span class="material-icons-round">layers</span><span>Módulos</span></button>
     <button class="nav-btn nav-add-btn" onclick="openModal('m-post')"><div class="nav-add-circulo"><span class="material-icons-round">add</span></div></button>
-    <button class="nav-btn"       data-tab="trilha"  onclick="irAba('trilha',this)"><span class="material-icons-round">map</span><span>Trilha</span></button>
-    <button class="nav-btn"       data-tab="missoes" onclick="irAba('missoes',this)"><span class="material-icons-round">emoji_events</span><span>Missões</span><span class="nav-badge" id="nav-badge" style="display:none">0</span></button>
-    <button class="nav-btn"       data-tab="ranking" onclick="irAba('ranking',this)"><span class="material-icons-round">leaderboard</span><span>Ranking</span></button>
-    <button class="nav-btn"       data-tab="perfil"  onclick="irAba('perfil',this)"><span class="material-icons-round">person</span><span>Perfil</span></button>
+    <button class="nav-btn" data-tab="trilha" onclick="irAba('trilha',this)"><span class="material-icons-round">map</span><span>Trilha</span></button>
+    <button class="nav-btn" data-tab="missoes" onclick="irAba('missoes',this)"><span class="material-icons-round">emoji_events</span><span>Missões</span><span class="nav-badge" id="nav-badge" style="display:none">0</span></button>
+    <button class="nav-btn" data-tab="ranking" onclick="irAba('ranking',this)"><span class="material-icons-round">leaderboard</span><span>Ranking</span></button>
+    <button class="nav-btn" data-tab="perfil" onclick="irAba('perfil',this)"><span class="material-icons-round">person</span><span>Perfil</span></button>
   </nav>
 </div>
 
 <!-- MODAIS -->
-
-<!-- Modal Criar Post -->
 <div id="m-post" class="modal-ov" style="display:none">
   <div class="modal-sh">
     <div class="modal-hdr"><h3>Nova publicação</h3><button class="modal-x" onclick="closeModal('m-post')"><span class="material-icons-round">close</span></button></div>
@@ -271,7 +245,6 @@
   </div>
 </div>
 
-<!-- Modal Ver Post / Comentários -->
 <div id="m-ver-post" class="modal-ov" style="display:none">
   <div class="modal-sh">
     <div class="modal-hdr"><h3>Publicação</h3><button class="modal-x" onclick="closeModal('m-ver-post')"><span class="material-icons-round">close</span></button></div>
@@ -288,7 +261,6 @@
   </div>
 </div>
 
-<!-- Modal Criar Módulo -->
 <div id="m-mod" class="modal-ov" style="display:none">
   <div class="modal-sh modal-alto">
     <div class="modal-hdr"><h3>Novo Módulo</h3><button class="modal-x" onclick="closeModal('m-mod')"><span class="material-icons-round">close</span></button></div>
@@ -299,14 +271,13 @@
         <select id="mod-mat">
           <option value="">Selecione...</option>
           <option>Matemática</option><option>Português</option><option>Literatura</option><option>Redação</option>
-          <option>História</option><option>Geografia</option><option>Ciências</option><option>Biologia</option>
+          <option>História</option><option>Geografia</option><option>Biologia</option>
           <option>Física</option><option>Química</option><option>Inglês</option><option>Espanhol</option>
-          <option>Filosofia</option><option>Sociologia</option><option>Artes</option><option>Ed. Física</option>
-          <option>Programação</option><option>Robótica</option><option>Empreend.</option>
+          <option>Filosofia</option><option>Sociologia</option><option>Programação</option>
         </select>
       </div>
       <div class="fgrp"><label>Capa</label>
-        <div class="capa-area" id="capa-area" onclick="document.getElementById('capa-file').click()">
+        <div class="capa-area" onclick="document.getElementById('capa-file').click()">
           <span class="material-icons-round">add_photo_alternate</span><span id="capa-span">Clique para adicionar capa</span>
           <img id="capa-prev" src="" style="display:none"/>
           <input type="file" id="capa-file" accept="image/*" style="display:none" onchange="prevCapa(this)"/>
@@ -329,7 +300,6 @@
   </div>
 </div>
 
-<!-- Modal Ver Módulo -->
 <div id="m-ver-mod" class="modal-ov" style="display:none">
   <div class="modal-sh modal-full">
     <button class="modal-x-float" onclick="closeModal('m-ver-mod')"><span class="material-icons-round">close</span></button>
@@ -337,7 +307,6 @@
   </div>
 </div>
 
-<!-- Modal Editar Perfil -->
 <div id="m-edit-pf" class="modal-ov" style="display:none">
   <div class="modal-sh">
     <div class="modal-hdr"><h3>Editar Perfil</h3><button class="modal-x" onclick="closeModal('m-edit-pf')"><span class="material-icons-round">close</span></button></div>
@@ -351,7 +320,6 @@
   </div>
 </div>
 
-<!-- Modal Ver Fase -->
 <div id="m-fase" class="modal-ov" style="display:none">
   <div class="modal-sh">
     <div id="fase-corpo" class="modal-body" style="padding-top:0"></div>
@@ -359,7 +327,6 @@
   </div>
 </div>
 
-<!-- Modal Quiz Fase -->
 <div id="m-quiz-fase" class="modal-ov" style="display:none">
   <div class="modal-sh modal-alto">
     <div class="modal-hdr"><h3 id="quiz-fase-tit">Quiz</h3><button class="modal-x" onclick="closeModal('m-quiz-fase')"><span class="material-icons-round">close</span></button></div>
@@ -367,12 +334,9 @@
   </div>
 </div>
 
-<!-- XP Popup -->
 <div id="xp-pop" class="xp-pop" style="display:none"><span class="material-icons-round">bolt</span><span id="xp-pop-txt">+10 XP</span></div>
-
-<!-- Toast -->
 <div id="toast" class="toast"></div>
 
-<script type="module" src="js/script.js"></script>
+<script type="module" src="/js/script.js"></script>
 </body>
 </html>
